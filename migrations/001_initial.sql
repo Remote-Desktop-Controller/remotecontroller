@@ -1,0 +1,18 @@
+PRAGMA foreign_keys=ON;
+CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, applied_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS workspaces(id TEXT PRIMARY KEY, root TEXT NOT NULL UNIQUE, status TEXT NOT NULL DEFAULT 'open', graph_version INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id), label TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS operations(id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id), task_id TEXT REFERENCES tasks(id), trace_id TEXT NOT NULL, tool TEXT NOT NULL, input BLOB NOT NULL, status TEXT NOT NULL CHECK(status IN ('Queued','Running','Succeeded','Failed','Cancelled','TimedOut')), output BLOB, error TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS tool_calls(id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id), operation_id TEXT NOT NULL REFERENCES operations(id), tool TEXT NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS events(seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT NOT NULL UNIQUE, workspace_id TEXT NOT NULL REFERENCES workspaces(id), operation_id TEXT NOT NULL REFERENCES operations(id), type TEXT NOT NULL, summary TEXT NOT NULL, payload BLOB NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS event_nodes(id TEXT PRIMARY KEY REFERENCES events(id), workspace_id TEXT NOT NULL REFERENCES workspaces(id), operation_id TEXT NOT NULL REFERENCES operations(id));
+CREATE TABLE IF NOT EXISTS event_edges(source TEXT NOT NULL REFERENCES event_nodes(id), target TEXT NOT NULL REFERENCES event_nodes(id), type TEXT NOT NULL CHECK(type IN ('CausedBy','DependsOn','FollowedBy','Mutated','Produced','RolledBackFrom')), PRIMARY KEY(source,target,type));
+CREATE TABLE IF NOT EXISTS artifacts(id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id), operation_id TEXT NOT NULL REFERENCES operations(id), path TEXT NOT NULL, type TEXT NOT NULL, payload BLOB, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS checkpoints(id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id), operation_id TEXT NOT NULL REFERENCES operations(id), status TEXT NOT NULL CHECK(status IN ('prepared','committed','rolled_back')), payload BLOB NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS processes(id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id), operation_id TEXT NOT NULL REFERENCES operations(id), os_pid INTEGER, cwd TEXT NOT NULL, started_at INTEGER NOT NULL, status TEXT NOT NULL, exit_code INTEGER, stdout BLOB, stderr BLOB);
+CREATE INDEX IF NOT EXISTS operations_workspace_status ON operations(workspace_id,status);
+CREATE INDEX IF NOT EXISTS events_workspace_seq ON events(workspace_id,seq DESC);
+CREATE INDEX IF NOT EXISTS events_operation_seq ON events(operation_id,seq);
+CREATE INDEX IF NOT EXISTS edges_target ON event_edges(target,type);
+CREATE INDEX IF NOT EXISTS artifacts_operation ON artifacts(operation_id);
+CREATE INDEX IF NOT EXISTS checkpoints_pending ON checkpoints(workspace_id,status);

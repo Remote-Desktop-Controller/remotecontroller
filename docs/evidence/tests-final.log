@@ -1,0 +1,172 @@
+   Compiling runtime-application v0.1.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\application)
+   Compiling runtime-infrastructure v0.1.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\infrastructure)
+   Compiling local-daemon v0.1.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\apps\local-daemon)
+    Finished `test` profile [unoptimized] target(s) in 1m 21s
+     Running unittests src\main.rs (target\debug\deps\local_daemon-887d5d6a8c5e0711.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\fullstack.rs (target\debug\deps\fullstack-bec0b2da3432d6ed.exe)
+
+running 2 tests
+test mcp_to_daemon_abrupt_restart_reconnect_idempotency_and_stdout ... ok
+test abrupt_crash_during_batch_restores_journal_before_reconnect ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.28s
+
+     Running unittests src\main.rs (target\debug\deps\mcp_gateway-aa3c89c9788c6e44.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_application-fa8997b280952881.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_domain-35c5a71420017538.exe)
+
+running 2 tests
+test tests::terminal_operations_cannot_restart ... ok
+test tests::policy_never_grants_unlisted_capability ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_infrastructure-d71dd5f99b91898f.exe)
+
+running 1 test
+test tools::tests::poisoned_workspace_is_checked_under_mutation_lock ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests\files.rs (target\debug\deps\files-949f3635aa22f228.exe)
+
+running 3 tests
+test oversized_ignore_policy_is_denied ... ok
+test traversal_ignore_and_atomic_write ... ok
+test directory_link_escape_rejected ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running tests\ipc.rs (target\debug\deps\ipc-605c5ebe60d64937.exe)
+
+running 1 test
+test local_ipc_round_trip_progress_version_and_reconnect ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+     Running tests\kernel.rs (target\debug\deps\kernel-8d3531f308076ca8.exe)
+
+running 11 tests
+test cancellation_after_commit_preserves_successful_result ... ok
+test case_variant_cannot_modify_ignore_policy ... ok
+test cancellation_does_not_hide_cleanup_failure ... ok
+test binary_checkpoint_and_raw_event_are_restorable ... ok
+test duplicate_mutation_executes_once_and_conflicting_payload_is_rejected ... ok
+test partial_batch_failure_restores_earlier_files ... ok
+test policy_and_payload_validation_fail_closed ... ok
+test checkpoint_rollback_restores_existing_and_removes_created_files ... ok
+test restart_restores_prepared_journal_and_marks_interrupted_operation ... ok
+test versioned_context_never_reuses_pre_mutation_projection ... ok
+test rust_ast_query_and_git_read_tools_are_real ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.96s
+
+     Running tests\processes.rs (target\debug\deps\processes-89d583aeef8f3d3b.exe)
+
+running 4 tests
+test sleeper ... ignored, process fixture, intentionally sleeps until killed
+test operation_cancellation_kills_child_and_records_cancelled ... ok
+test scheduler_applies_backpressure_to_live_operations ... ok
+test deadline_times_out_child_and_unlisted_arguments_are_denied ... ok
+
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.56s
+
+     Running tests\storage.rs (target\debug\deps\storage-6330b9aaebe971df.exe)
+
+running 1 test
+test operation_claim_is_durable_and_unique ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running tests\stress.rs (target\debug\deps\stress-199ac43db1036483.exe)
+
+running 1 test
+test ten_thousand_files_thousand_edits_cancel_rollback_restart has been running for over 60 seconds
+stress files=10000 edits=1000 cancellation+rollback+restart elapsed_ms=129186
+test ten_thousand_files_thousand_edits_cancel_rollback_restart ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 134.49s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_ports-e79c53d6c6c2570e.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_protocol-f2c44e5bd74bfb29.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_transport-fb9c9f7f97435a7d.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\authentication.rs (target\debug\deps\authentication-a70a66190b1d6398.exe)
+
+running 1 test
+test wrong_secret_and_wrong_version_are_rejected ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\framing.rs (target\debug\deps\framing-9668e4711fb6b435.exe)
+
+running 2 tests
+test excessive_frame_rejected_before_allocation ... ok
+test framed_message_round_trip ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests runtime_application
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_domain
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_infrastructure
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_ports
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_transport
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

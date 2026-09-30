@@ -1,0 +1,46 @@
+[workspace]
+members = ["crates/domain", "crates/ports", "crates/application", "crates/protocol", "crates/transport", "crates/infrastructure", "apps/local-daemon", "apps/mcp-gateway"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+
+[workspace.dependencies]
+runtime-domain = { path = "crates/domain" }
+runtime-ports = { path = "crates/ports" }
+runtime-application = { path = "crates/application" }
+runtime-protocol = { path = "crates/protocol" }
+runtime-transport = { path = "crates/transport" }
+runtime-infrastructure = { path = "crates/infrastructure" }
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["codec", "rt"] }
+async-trait = "0.1"
+uuid = { version = "1", features = ["v4"] }
+thiserror = "2"
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rmp-serde = "1"
+bytes = "1"
+futures-util = { version = "0.3", features = ["sink"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4", features = ["derive", "env"] }
+tempfile = "3"
+criterion = { version = "0.7", features = ["async_tokio"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"
+
+[profile.dev]
+debug = 0
+incremental = false
+
+[profile.test]
+debug = 0
+incremental = false

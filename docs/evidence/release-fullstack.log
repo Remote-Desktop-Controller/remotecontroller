@@ -1,0 +1,10 @@
+   Compiling runtime-infrastructure v0.1.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\infrastructure)
+   Compiling local-daemon v0.1.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\apps\local-daemon)
+    Finished `test` profile [unoptimized] target(s) in 31.20s
+     Running tests\fullstack.rs (target\debug\deps\fullstack-bec0b2da3432d6ed.exe)
+
+running 2 tests
+test mcp_to_daemon_abrupt_restart_reconnect_idempotency_and_stdout ... ok
+test abrupt_crash_during_batch_restores_journal_before_reconnect ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.06s

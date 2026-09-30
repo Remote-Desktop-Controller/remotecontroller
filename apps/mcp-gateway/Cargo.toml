@@ -1,0 +1,19 @@
+[package]
+name = "mcp-gateway"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+[dependencies]
+runtime-protocol.workspace = true
+runtime-transport.workspace = true
+tokio.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+rmcp = { version = "3.5", features = ["server", "transport-io"] }
+[dev-dependencies]
+tempfile.workspace = true
+uuid.workspace = true

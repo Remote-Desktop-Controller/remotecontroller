@@ -1,0 +1,37 @@
+   Compiling runtime-infrastructure v0.1.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\infrastructure)
+    Finished `bench` profile [optimized] target(s) in 6m 21s
+     Running benches\runtime.rs (target\release\deps\runtime-052ec451a6cef11e.exe)
+Gnuplot not found, using plotters backend
+Benchmarking cache_hit
+Benchmarking cache_hit: Warming up for 1.0000 s
+Benchmarking cache_hit: Collecting 10 samples in estimated 2.0001 s (847k iterations)
+Benchmarking cache_hit: Analyzing
+cache_hit               time:   [1.3690 µs 1.5925 µs 1.8355 µs]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking cache_miss
+Benchmarking cache_miss: Warming up for 1.0000 s
+Benchmarking cache_miss: Collecting 10 samples in estimated 2.0000 s (2.4M iterations)
+Benchmarking cache_miss: Analyzing
+cache_miss              time:   [773.81 ns 851.46 ns 980.55 ns]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking event_insert
+Benchmarking event_insert: Warming up for 1.0000 s
+
+Warning: Unable to complete 10 samples in 2.0s. You may wish to increase target time to 2.0s or enable flat sampling.
+Benchmarking event_insert: Collecting 10 samples in estimated 2.0333 s (55 iterations)
+Benchmarking event_insert: Analyzing
+event_insert            time:   [27.655 ms 34.135 ms 44.225 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking causal_query
+Benchmarking causal_query: Warming up for 1.0000 s
+Benchmarking causal_query: Collecting 10 samples in estimated 2.2951 s (165 iterations)
+error: bench failed, to rerun pass `-p runtime-infrastructure --bench runtime`
+
+Caused by:
+  process didn't exit successfully: `C:\Users\Notebook\Documents\Remote Desktop Controller\target\release\deps\runtime-052ec451a6cef11e.exe --noplot --bench` (exit code: 0xc0000005, STATUS_ACCESS_VIOLATION)

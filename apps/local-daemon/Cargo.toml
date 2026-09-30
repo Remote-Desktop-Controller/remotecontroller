@@ -1,0 +1,24 @@
+[package]
+name = "local-daemon"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+[dependencies]
+runtime-infrastructure.workspace = true
+runtime-protocol.workspace = true
+runtime-transport.workspace = true
+runtime-domain.workspace = true
+runtime-ports.workspace = true
+runtime-application.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+sha2 = "0.10"
+fs2 = "0.4"
+[dev-dependencies]
+tempfile.workspace = true

@@ -1,0 +1,67 @@
+   Compiling runtime-application v0.1.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\application)
+   Compiling runtime-infrastructure v0.1.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\infrastructure)
+    Finished `bench` profile [optimized] target(s) in 5m 40s
+     Running benches\runtime.rs (target\release\deps\runtime-052ec451a6cef11e.exe)
+Gnuplot not found, using plotters backend
+Benchmarking cache_hit
+Benchmarking cache_hit: Warming up for 1.0000 s
+Benchmarking cache_hit: Collecting 10 samples in estimated 2.0000 s (2.1M iterations)
+Benchmarking cache_hit: Analyzing
+cache_hit               time:   [583.48 ns 627.22 ns 735.29 ns]
+                        change: [−57.729% −48.210% −36.245%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+Benchmarking cache_miss
+Benchmarking cache_miss: Warming up for 1.0000 s
+Benchmarking cache_miss: Collecting 10 samples in estimated 2.0000 s (4.9M iterations)
+Benchmarking cache_miss: Analyzing
+cache_miss              time:   [398.02 ns 405.03 ns 409.29 ns]
+                        change: [−70.179% −60.908% −50.480%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+Benchmarking event_insert
+Benchmarking event_insert: Warming up for 1.0000 s
+Benchmarking event_insert: Collecting 10 samples in estimated 2.9983 s (165 iterations)
+Benchmarking event_insert: Analyzing
+event_insert            time:   [13.616 ms 15.911 ms 20.897 ms]
+                        change: [−12.057% +6.3607% +33.610%] (p = 0.62 > 0.05)
+                        No change in performance detected.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking causal_query
+Benchmarking causal_query: Warming up for 1.0000 s
+Benchmarking causal_query: Collecting 10 samples in estimated 2.0014 s (330 iterations)
+Benchmarking causal_query: Analyzing
+causal_query            time:   [5.1705 ms 5.5680 ms 6.0380 ms]
+                        change: [−88.032% −80.979% −70.814%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking file_scan_1000
+Benchmarking file_scan_1000: Warming up for 1.0000 s
+Benchmarking file_scan_1000: Collecting 10 samples in estimated 3.8779 s (20 iterations)
+Benchmarking file_scan_1000: Analyzing
+file_scan_1000          time:   [188.60 ms 191.29 ms 194.38 ms]
+
+Benchmarking batch_read_100
+Benchmarking batch_read_100: Warming up for 1.0000 s
+Benchmarking batch_read_100: Collecting 10 samples in estimated 2.9418 s (165 iterations)
+Benchmarking batch_read_100: Analyzing
+batch_read_100          time:   [16.968 ms 17.435 ms 18.138 ms]
+
+Benchmarking context_compilation_128
+Benchmarking context_compilation_128: Warming up for 1.0000 s
+Benchmarking context_compilation_128: Collecting 10 samples in estimated 2.0024 s (26k iterations)
+Benchmarking context_compilation_128: Analyzing
+context_compilation_128 time:   [73.145 µs 74.834 µs 76.454 µs]
+
+Benchmarking ipc_round_trip_with_handshake
+Benchmarking ipc_round_trip_with_handshake: Warming up for 1.0000 s
+Benchmarking ipc_round_trip_with_handshake: Collecting 10 samples in estimated 2.0356 s (3135 iterations)
+Benchmarking ipc_round_trip_with_handshake: Analyzing
+ipc_round_trip_with_handshake
+                        time:   [535.23 µs 556.79 µs 578.29 µs]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
