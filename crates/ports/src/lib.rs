@@ -52,6 +52,12 @@ pub trait OperationRepository: Send + Sync {
 }
 #[async_trait]
 pub trait EventRepository: Send + Sync {
+    async fn task_events(
+        &self,
+        workspace: WorkspaceId,
+        task: TaskId,
+        limit: usize,
+    ) -> Result<Vec<Event>>;
     async fn raw_event(&self, workspace: WorkspaceId, id: EventId) -> Result<Event>;
     async fn recent(&self, workspace: WorkspaceId, limit: usize) -> Result<Vec<Event>>;
     async fn causal(
@@ -138,6 +144,15 @@ pub trait CodeAnalysisPort: Send + Sync {
 pub trait PermissionPort: Send + Sync {
     fn authorize(&self, capabilities: &[Capability]) -> Result<()>;
 }
+impl PermissionPort for ExecutionPolicy {
+    fn authorize(&self, capabilities: &[Capability]) -> Result<()> {
+        for capability in capabilities {
+            ExecutionPolicy::authorize(self, *capability)
+                .map_err(|e| PortError::Policy(e.to_string()))?;
+        }
+        Ok(())
+    }
+}
 pub trait ClockPort: Send + Sync {
     fn now_ms(&self) -> u64;
 }
@@ -179,7 +194,5 @@ pub trait Tool: Send + Sync {
     fn metadata(&self) -> ToolMetadata;
     async fn execute(&self, input: Value, context: ToolContext) -> Result<Value>;
 }
-#[async_trait]
-pub trait IpcTransportPort: Send + Sync {
-    async fn exchange(&self, request: Vec<u8>) -> Result<Vec<u8>>;
-}
+pub trait IpcTransportPort: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send {}
+impl<T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send> IpcTransportPort for T {}

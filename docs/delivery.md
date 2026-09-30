@@ -1,4 +1,8 @@
-# Entrega do runtime local — Windows v0.1.0
+# Registro histórico da entrega v0.1.0
+
+Este documento registra a primeira versão. A finalização v0.2 está documentada
+em [readiness/progress](readiness/progress.md) e o uso atual em [install](install.md).
+As limitações abaixo correspondem ao marco original, não ao estado v0.2.
 
 Arquitetura implementada: seis crates de biblioteca e dois apps nativos,
 gateway MCP separado do daemon por Named Pipe/UDS. Domain puro com IDs/estados,

@@ -25,6 +25,14 @@ fn binary(name: &str) -> std::path::PathBuf {
     })
 }
 async fn start(root: &Path, state: &Path, endpoint: &str) -> Child {
+    start_configured(root, state, endpoint, None).await
+}
+async fn start_configured(
+    root: &Path,
+    state: &Path,
+    endpoint: &str,
+    config: Option<&Path>,
+) -> Child {
     let mut command = Command::new(binary("local-daemon"));
     command
         .args(["--workspace"])
@@ -35,6 +43,13 @@ async fn start(root: &Path, state: &Path, endpoint: &str) -> Child {
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::piped())
         .kill_on_drop(true);
+    if let Some(config) = config {
+        command.arg("--config").arg(config).args([
+            "--allow-process",
+            "--allow-process-outside-workspace",
+            "--allow-process-network",
+        ]);
+    }
     #[cfg(windows)]
     command.creation_flags(0x08000000);
     let mut child = command.spawn().unwrap();
@@ -85,6 +100,234 @@ async fn start(root: &Path, state: &Path, endpoint: &str) -> Child {
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
     child
+}
+
+#[test]
+#[ignore = "native process fixture; invoked by crash test"]
+fn native_process_leaf_fixture() {
+    std::thread::sleep(Duration::from_secs(60));
+}
+#[test]
+#[ignore = "native process tree fixture; invoked by crash test"]
+fn native_process_tree_fixture() {
+    use std::io::Write;
+    let mut command = std::process::Command::new(std::env::current_exe().unwrap());
+    command
+        .args([
+            "--exact",
+            "native_process_leaf_fixture",
+            "--ignored",
+            "--nocapture",
+        ])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000);
+    }
+    let mut child = command.spawn().unwrap();
+    println!("tree_pid={} leaf_pid={}", std::process::id(), child.id());
+    std::io::stdout().flush().unwrap();
+    let _ = child.wait();
+}
+fn process_alive(pid: u32) -> bool {
+    #[cfg(windows)]
+    {
+        #[link(name = "kernel32")]
+        unsafe extern "system" {
+            fn OpenProcess(access: u32, inherit: i32, pid: u32) -> *mut std::ffi::c_void;
+            fn GetExitCodeProcess(handle: *mut std::ffi::c_void, code: *mut u32) -> i32;
+            fn CloseHandle(handle: *mut std::ffi::c_void) -> i32;
+        }
+        // SAFETY: query-only handle for the native fixture, closed once.
+        unsafe {
+            let handle = OpenProcess(0x1000, 0, pid);
+            if handle.is_null() {
+                return false;
+            }
+            let mut code = 0;
+            let ok = GetExitCodeProcess(handle, &mut code);
+            CloseHandle(handle);
+            ok != 0 && code == 259
+        }
+    }
+    #[cfg(unix)]
+    {
+        #[cfg(target_os = "linux")]
+        if std::fs::read_to_string(format!("/proc/{pid}/stat"))
+            .ok()
+            .is_some_and(|s| {
+                s.split_once(") ")
+                    .is_some_and(|(_, rest)| rest.starts_with("Z "))
+            })
+        {
+            return false;
+        }
+        unsafe extern "C" {
+            fn kill(pid: i32, signal: i32) -> i32;
+        }
+        // SAFETY: signal zero checks existence without signalling the process.
+        unsafe { kill(pid as i32, 0) == 0 }
+    }
+}
+#[tokio::test]
+async fn abrupt_daemon_crash_kills_native_tree_and_preserves_synced_output() {
+    use runtime_infrastructure::{config::RuntimeConfig, processes::ProgramRule};
+    let root = tempfile::tempdir().unwrap();
+    let state = tempfile::tempdir().unwrap();
+    #[cfg(windows)]
+    let endpoint = format!(r"\\.\pipe\rdc-tree-{}", uuid::Uuid::new_v4());
+    #[cfg(unix)]
+    let endpoint = state.path().join("tree.sock").to_string_lossy().to_string();
+    let program = std::env::current_exe().unwrap().canonicalize().unwrap();
+    let args: Vec<String> = [
+        "--exact",
+        "native_process_tree_fixture",
+        "--ignored",
+        "--nocapture",
+    ]
+    .into_iter()
+    .map(String::from)
+    .collect();
+    let config = RuntimeConfig {
+        allowed_programs: vec![ProgramRule {
+            fingerprint: Some(ProgramRule::fingerprint(&program).unwrap()),
+            program: program.clone(),
+            args: args.clone(),
+            trusted_unconfined: true,
+        }],
+        ..Default::default()
+    };
+    let config_path = state.path().join("runtime.json");
+    std::fs::write(&config_path, serde_json::to_vec(&config).unwrap()).unwrap();
+    let mut daemon =
+        start_configured(root.path(), state.path(), &endpoint, Some(&config_path)).await;
+    let secret = read_secret(&state.path().join("ipc.secret")).unwrap();
+    let client = Client::new(endpoint.clone(), secret.clone());
+    let catalog = client
+        .request(
+            &RequestEnvelope {
+                meta: Metadata::new(None, 5000),
+                payload: Request::Catalog,
+            },
+            |_| {},
+        )
+        .await
+        .unwrap()
+        .payload
+        .unwrap();
+    let workspace = catalog["workspace_id"].as_str().unwrap().parse().unwrap();
+    let spawn_client = Client::new(endpoint.clone(), secret);
+    let spawn = tokio::spawn(async move {
+        spawn_client
+            .request(
+                &RequestEnvelope {
+                    meta: Metadata::new(Some(workspace), 60000),
+                    payload: Request::Execute {
+                        tool: "process.spawn".into(),
+                        input: json!({"program":program,"args":args,"cwd":"."}),
+                    },
+                },
+                |_| {},
+            )
+            .await
+    });
+    let deadline = std::time::Instant::now() + Duration::from_secs(20);
+    let (process_id, output, tree_pid, leaf_pid) = loop {
+        let mut found = None;
+        if let Ok(entries) = std::fs::read_dir(state.path().join("process-spool")) {
+            for entry in entries.flatten() {
+                if let Ok(output) = std::fs::read_to_string(entry.path().join("stdout"))
+                    && let Some(line) = output.lines().find(|line| line.contains("tree_pid="))
+                {
+                    let durable = std::fs::read(entry.path().join("metadata.json"))
+                        .ok()
+                        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
+                        .and_then(|m| m["stdout_stored"].as_u64())
+                        .is_some_and(|bytes| bytes >= output.len() as u64);
+                    if !durable {
+                        continue;
+                    }
+                    let mut pids = line
+                        .split_whitespace()
+                        .filter_map(|v| {
+                            v.strip_prefix("tree_pid=")
+                                .or_else(|| v.strip_prefix("leaf_pid="))
+                        })
+                        .map(|v| v.parse::<u32>().unwrap());
+                    let tree = pids.next().unwrap();
+                    let leaf = pids.next().unwrap();
+                    found = Some((
+                        entry.file_name().to_string_lossy().into_owned(),
+                        output,
+                        tree,
+                        leaf,
+                    ));
+                    break;
+                }
+            }
+        }
+        if let Some(found) = found {
+            break found;
+        }
+        assert!(
+            std::time::Instant::now() < deadline,
+            "fixture stdout did not become durable"
+        );
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    };
+    assert!(process_alive(tree_pid) && process_alive(leaf_pid));
+    daemon.kill().await.unwrap();
+    daemon.wait().await.unwrap();
+    spawn.abort();
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    while process_alive(tree_pid) || process_alive(leaf_pid) {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "descendant survived abrupt daemon crash"
+        );
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    assert!(
+        std::fs::read_to_string(
+            state
+                .path()
+                .join("process-spool")
+                .join(&process_id)
+                .join("stdout")
+        )
+        .unwrap()
+        .contains(&output)
+    );
+    let mut restarted =
+        start_configured(root.path(), state.path(), &endpoint, Some(&config_path)).await;
+    let status = client
+        .request(
+            &RequestEnvelope {
+                meta: Metadata::new(Some(workspace), 5000),
+                payload: Request::Execute {
+                    tool: "process.stdout".into(),
+                    input: json!({"process_id":process_id}),
+                },
+            },
+            |_| {},
+        )
+        .await
+        .unwrap()
+        .payload
+        .unwrap();
+    assert_eq!(status["status"], "Succeeded", "{status}");
+    assert_eq!(status["result"]["status"], "interrupted");
+    assert_eq!(status["result"]["capture_incomplete"], true);
+    assert!(
+        status["result"]["output"]
+            .as_str()
+            .unwrap()
+            .contains("leaf_pid=")
+    );
+    restarted.kill().await.unwrap();
+    restarted.wait().await.unwrap();
 }
 async fn message(
     input: &mut tokio::process::ChildStdin,

@@ -20,9 +20,12 @@ jobs:
       - run: cargo test --workspace --locked
       - run: cargo bench --no-run --locked
       - run: cargo build --release --workspace --locked
+      - name: Package verified native executables
+        shell: pwsh
+        run: ./tools/package.ps1
       - uses: actions/upload-artifact@v4
         with:
           name: runtime-${{ matrix.os }}
           path: |
-            target/release/local-daemon*
-            target/release/mcp-gateway*
+            dist/*.zip
+            dist/*.sha256

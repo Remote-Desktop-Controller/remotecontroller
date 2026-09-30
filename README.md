@@ -8,6 +8,11 @@ Arquitetura e critérios de evolução: [RFC-0001](docs/rfcs/0001-runtime-local.
 
 ## Executar
 
+Para usar o pacote nativo sem compilação, veja [instalar e conectar](docs/install.md).
+`local-daemon connect` inicia o daemon e o gateway; `register-host` configura o
+host MCP preservando suas configurações. Segurança e finalização v0.2:
+[matriz de evidências](docs/readiness/progress.md).
+
 Compilação de desenvolvimento requer Rust **1.98.1** e toolchain C/C++ (libSQL,
 libgit2 e tree-sitter são compilados e incorporados aos binários).
 

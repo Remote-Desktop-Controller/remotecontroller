@@ -12,16 +12,17 @@ de nós para evitar percorrer história ilimitada por uma consulta pequena.
 ContextCompiler é função pura: estado/version header; prioridade para erros,
 timeouts, arquivos alterados e decisões; depois eventos recentes. Cada linha
 preserva event_id e operation_id para consulta raw. O budget é **bytes UTF-8**,
-entre 128 e 131072, não uma estimativa fictícia de tokens. Truncamento respeita
+entre 0 e 131072, não uma estimativa fictícia de tokens. Truncamento respeita
 fronteiras de caractere. Terminal extenso não é incluído no contexto.
 
 Rollups usam resumo, status e tamanho com referência raw. Logs/resultados
 operacionais completos até os limites de captura permanecem locais. O compiler
-nunca substitui nem apaga raw events. Intenção/query semântica e embeddings não
-são dependências do v1; retrieval atual é temporal/causal/arquivos/AST.
+nunca substitui nem apaga raw events. A v0.2 aceita task_id e query para ranking
+por palavras, paths e prioridade da tarefa atual; erros e métricas reais de
+processos produzem rollups com referências raw. Embeddings/cloud são opcionais.
 
 Moka é bounded por capacidade, TTL configurável (default 3 h). A chave contém
-workspace_id, graph_version, operation selecionada e budget. Workspace version
+workspace_id, graph_version, operation/task/query selecionadas e budget. Workspace version
 é relida depois da compilação/cache hit; se mudar, o engine tenta novamente.
 Após cinco alterações concorrentes retorna Busy em vez de contexto obsoleto.
 Entradas de versões antigas expiram; não podem satisfazer chave nova.

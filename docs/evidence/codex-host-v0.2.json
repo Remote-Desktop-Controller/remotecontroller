@@ -1,0 +1,29 @@
+{
+  "name": "local-runtime",
+  "enabled": true,
+  "disabled_reason": null,
+  "transport": {
+    "type": "stdio",
+    "command": "C:\\Users\\Notebook\\Documents\\Remote Desktop Controller\\target\\debug\\local-daemon.exe",
+    "args": [
+      "connect",
+      "--profile",
+      "\\\\?\\C:\\Users\\Notebook\\AppData\\Local\\Temp\\runtime-host-6b9dd4dc-d646-4711-b3d6-fe2114ed7d68\\profile",
+      "--workspace",
+      "\\\\?\\C:\\Users\\Notebook\\AppData\\Local\\Temp\\runtime-host-6b9dd4dc-d646-4711-b3d6-fe2114ed7d68\\workspace",
+      "--state-dir",
+      "\\\\?\\C:\\Users\\Notebook\\AppData\\Local\\Temp\\runtime-host-6b9dd4dc-d646-4711-b3d6-fe2114ed7d68\\profile\\states\\857699a1d1a4dcb4923fc018",
+      "--config",
+      "\\\\?\\C:\\Users\\Notebook\\AppData\\Local\\Temp\\runtime-host-6b9dd4dc-d646-4711-b3d6-fe2114ed7d68\\profile\\states\\857699a1d1a4dcb4923fc018\\runtime.json",
+      "--allow-write"
+    ],
+    "env": null,
+    "env_vars": [],
+    "cwd": null
+  },
+  "enabled_tools": null,
+  "disabled_tools": null,
+  "startup_timeout_sec": null,
+  "tool_timeout_sec": null
+}
+

@@ -1,5 +1,7 @@
 # Evidências e limites de validação
 
+Registro histórico v0.1 abaixo. Evidências v0.2: [readiness/progress](readiness/progress.md).
+
 Ambiente desta sessão: Windows x86_64, Rust 1.98.1 GNU, GCC/MinGW existente.
 Repositório novo; nenhum remoto Git configurado. Não há deploy/cloud nesta tarefa.
 

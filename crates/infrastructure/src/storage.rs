@@ -6,7 +6,7 @@ use runtime_ports::*;
 use serde::{Deserialize, Serialize};
 use std::{
     future::Future,
-    path::Path,
+    path::{Path, PathBuf},
     sync::{
         Arc,
         atomic::{AtomicU64, Ordering},
@@ -21,6 +21,7 @@ pub(crate) fn storage_error(e: impl std::fmt::Display) -> PortError {
 #[derive(Clone)]
 pub struct LocalStore {
     db: Arc<Database>,
+    database_path: PathBuf,
     workers: Arc<Semaphore>,
     pub metrics: Arc<StorageMetrics>,
 }
@@ -32,6 +33,7 @@ pub struct StorageMetrics {
 impl LocalStore {
     pub async fn open(path: &Path) -> Result<Self> {
         let path = path.to_owned();
+        let database_path = path.clone();
         let handle = tokio::runtime::Handle::current();
         let db = tokio::task::spawn_blocking(move || {
             handle.block_on(async {
@@ -45,6 +47,7 @@ impl LocalStore {
         .map_err(storage_error)??;
         let store = Self {
             db: Arc::new(db),
+            database_path,
             workers: Arc::new(Semaphore::new(4)),
             metrics: Arc::new(StorageMetrics::default()),
         };
@@ -70,6 +73,12 @@ impl LocalStore {
             })
             .await?;
         Ok(store)
+    }
+    pub fn state_dir(&self) -> &Path {
+        self.database_path.parent().unwrap_or(Path::new("."))
+    }
+    pub fn database_path(&self) -> &Path {
+        &self.database_path
     }
     pub(crate) async fn run<T, F, Fut>(&self, f: F) -> Result<T>
     where
@@ -422,6 +431,17 @@ fn event_row(row: &libsql::Row) -> Result<Event> {
 }
 #[async_trait]
 impl EventRepository for LocalStore {
+    async fn task_events(
+        &self,
+        workspace: WorkspaceId,
+        task: TaskId,
+        limit: usize,
+    ) -> Result<Vec<Event>> {
+        self.run(move|c|async move{
+            let mut rows=c.query("SELECT e.id,e.workspace_id,e.operation_id,e.type,e.summary,X'',e.created_at FROM events e JOIN operations op ON op.id=e.operation_id WHERE e.workspace_id=?1 AND op.task_id=?2 ORDER BY e.seq DESC LIMIT ?3",params![workspace.to_string(),task.to_string(),limit.min(1000)as i64]).await.map_err(storage_error)?;
+            let mut events=Vec::new();while let Some(row)=rows.next().await.map_err(storage_error)?{events.push(event_row(&row)?);}Ok(events)
+        }).await
+    }
     async fn raw_event(&self, workspace: WorkspaceId, id: EventId) -> Result<Event> {
         self.run(move|c|async move{
             let mut rows=c.query("SELECT id,workspace_id,operation_id,type,summary,payload,created_at FROM events WHERE workspace_id=?1 AND id=?2",params![workspace.to_string(),id.to_string()]).await.map_err(storage_error)?;
@@ -472,9 +492,143 @@ impl EventRepository for LocalStore {
     }
 }
 #[derive(Serialize, Deserialize)]
-struct SnapshotDto {
+pub(crate) struct SnapshotDto {
     path: String,
     content: Option<Vec<u8>>,
+    #[serde(default)]
+    metadata: Option<FileMetadataDto>,
+    #[serde(default)]
+    restore_precondition: Option<FilePreconditionDto>,
+}
+#[derive(Serialize, Deserialize)]
+enum FilePreconditionDto {
+    Missing,
+    Sha256([u8; 32]),
+}
+#[derive(Serialize, Deserialize)]
+struct FileMetadataDto {
+    #[serde(with = "snapshot_time")]
+    accessed: std::time::SystemTime,
+    #[serde(with = "snapshot_time")]
+    modified: std::time::SystemTime,
+    readonly: bool,
+    unix: Option<UnixFileMetadataDto>,
+    windows: Option<WindowsFileMetadataDto>,
+}
+#[derive(Serialize, Deserialize)]
+struct UnixFileMetadataDto {
+    mode: u32,
+    uid: u32,
+    gid: u32,
+    extended_attributes: Vec<(Vec<u8>, Vec<u8>)>,
+    acl: Option<Vec<u8>>,
+}
+#[derive(Serialize, Deserialize)]
+struct WindowsFileMetadataDto {
+    #[serde(with = "snapshot_time")]
+    created: std::time::SystemTime,
+    attributes: u32,
+    dacl: Vec<u8>,
+    dacl_protected: bool,
+}
+mod snapshot_time {
+    use serde::{Deserialize, Serialize};
+    #[derive(Serialize, Deserialize)]
+    struct Time {
+        before_epoch: bool,
+        seconds: u64,
+        nanos: u32,
+    }
+    pub fn serialize<S: serde::Serializer>(
+        time: &std::time::SystemTime,
+        serializer: S,
+    ) -> std::result::Result<S::Ok, S::Error> {
+        let (before_epoch, duration) = match time.duration_since(std::time::UNIX_EPOCH) {
+            Ok(d) => (false, d),
+            Err(e) => (true, e.duration()),
+        };
+        Time {
+            before_epoch,
+            seconds: duration.as_secs(),
+            nanos: duration.subsec_nanos(),
+        }
+        .serialize(serializer)
+    }
+    pub fn deserialize<'de, D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> std::result::Result<std::time::SystemTime, D::Error> {
+        let time = Time::deserialize(deserializer)?;
+        if time.nanos >= 1_000_000_000 {
+            return Err(serde::de::Error::custom("invalid timestamp nanos"));
+        }
+        let duration = std::time::Duration::new(time.seconds, time.nanos);
+        (if time.before_epoch {
+            std::time::UNIX_EPOCH.checked_sub(duration)
+        } else {
+            std::time::UNIX_EPOCH.checked_add(duration)
+        })
+        .ok_or_else(|| serde::de::Error::custom("timestamp outside platform range"))
+    }
+}
+impl From<FileSnapshot> for SnapshotDto {
+    fn from(snapshot: FileSnapshot) -> Self {
+        Self {
+            path: snapshot.path,
+            content: snapshot.content,
+            restore_precondition: snapshot.restore_precondition.map(|p| match p {
+                runtime_domain::FilePrecondition::Missing => FilePreconditionDto::Missing,
+                runtime_domain::FilePrecondition::Sha256(h) => FilePreconditionDto::Sha256(h),
+            }),
+            metadata: snapshot.metadata.map(|m| FileMetadataDto {
+                accessed: m.accessed,
+                modified: m.modified,
+                readonly: m.readonly,
+                unix: m.unix.map(|u| UnixFileMetadataDto {
+                    mode: u.mode,
+                    uid: u.uid,
+                    gid: u.gid,
+                    extended_attributes: u.extended_attributes,
+                    acl: u.acl,
+                }),
+                windows: m.windows.map(|w| WindowsFileMetadataDto {
+                    created: w.created,
+                    attributes: w.attributes,
+                    dacl: w.dacl,
+                    dacl_protected: w.dacl_protected,
+                }),
+            }),
+        }
+    }
+}
+impl From<SnapshotDto> for FileSnapshot {
+    fn from(snapshot: SnapshotDto) -> Self {
+        Self {
+            path: snapshot.path,
+            content: snapshot.content,
+            restore_precondition: snapshot.restore_precondition.map(|p| match p {
+                FilePreconditionDto::Missing => runtime_domain::FilePrecondition::Missing,
+                FilePreconditionDto::Sha256(h) => runtime_domain::FilePrecondition::Sha256(h),
+            }),
+            metadata: snapshot.metadata.map(|m| runtime_domain::FileMetadata {
+                accessed: m.accessed,
+                modified: m.modified,
+                readonly: m.readonly,
+                unix: m.unix.map(|u| runtime_domain::UnixFileMetadata {
+                    mode: u.mode,
+                    uid: u.uid,
+                    gid: u.gid,
+                    extended_attributes: u.extended_attributes,
+                    acl: u.acl,
+                }),
+                windows: m.windows.map(|w| runtime_domain::WindowsFileMetadata {
+                    created: w.created,
+                    attributes: w.attributes,
+                    dacl: w.dacl,
+                    dacl_protected: w.dacl_protected,
+                }),
+            }),
+        }
+    }
 }
 #[async_trait]
 impl CheckpointRepository for LocalStore {
@@ -485,10 +639,7 @@ impl CheckpointRepository for LocalStore {
             serde_json::to_vec(
                 &snapshots
                     .into_iter()
-                    .map(|s| SnapshotDto {
-                        path: s.path,
-                        content: s.content,
-                    })
+                    .map(SnapshotDto::from)
                     .collect::<Vec<_>>(),
             )
             .map_err(storage_error)
@@ -552,7 +703,7 @@ impl CheckpointRepository for LocalStore {
             while let Some(r) = rows.next().await.map_err(storage_error)? {
                 let id = r.get::<String>(0).map_err(storage_error)?.parse().map_err(storage_error)?;
                 let snapshots: Vec<SnapshotDto> = serde_json::from_slice(&r.get::<Vec<u8>>(4).map_err(storage_error)?).map_err(storage_error)?;
-                checkpoints.push(Checkpoint { id,workspace_id:ws,operation_id:r.get::<String>(2).map_err(storage_error)?.parse().map_err(storage_error)?,files:snapshots.into_iter().map(|s| FileSnapshot {path:s.path,content:s.content}).collect(),committed:false });
+                checkpoints.push(Checkpoint { id,workspace_id:ws,operation_id:r.get::<String>(2).map_err(storage_error)?.parse().map_err(storage_error)?,files:snapshots.into_iter().map(FileSnapshot::from).collect(),committed:false });
             } Ok(checkpoints)
         }).await
     }
@@ -574,12 +725,44 @@ fn checkpoint_row(id: CheckpointId, r: &libsql::Row) -> Result<Checkpoint> {
             .parse()
             .map_err(storage_error)?,
         committed: r.get::<String>(2).map_err(storage_error)? == "committed",
-        files: snapshots
-            .into_iter()
-            .map(|s| FileSnapshot {
-                path: s.path,
-                content: s.content,
-            })
-            .collect(),
+        files: snapshots.into_iter().map(FileSnapshot::from).collect(),
     })
+}
+
+#[cfg(test)]
+mod snapshot_metadata_tests {
+    use super::*;
+    #[test]
+    fn legacy_snapshot_json_decodes_without_metadata() {
+        let dto: SnapshotDto =
+            serde_json::from_str(r#"{"path":"binary","content":[0,255,128]}"#).unwrap();
+        let snapshot = FileSnapshot::from(dto);
+        assert_eq!(snapshot.content, Some(vec![0, 255, 128]));
+        assert!(snapshot.metadata.is_none());
+        assert!(snapshot.restore_precondition.is_none());
+    }
+    #[test]
+    fn metadata_and_guard_roundtrip_through_infrastructure_dto() {
+        let timestamp = std::time::UNIX_EPOCH + std::time::Duration::from_secs(1_600_000_000);
+        let mut snapshot = FileSnapshot::new("binary", Some(vec![0, 255, 128]));
+        snapshot.restore_precondition = Some(runtime_domain::FilePrecondition::Sha256([7; 32]));
+        snapshot.metadata = Some(runtime_domain::FileMetadata {
+            accessed: timestamp,
+            modified: timestamp,
+            readonly: false,
+            unix: Some(runtime_domain::UnixFileMetadata {
+                mode: 0o100751,
+                uid: 123,
+                gid: 456,
+                extended_attributes: vec![(b"user.example".to_vec(), vec![255, 0])],
+                acl: None,
+            }),
+            windows: None,
+        });
+        let bytes = serde_json::to_vec(&SnapshotDto::from(snapshot.clone())).unwrap();
+        let restored = FileSnapshot::from(serde_json::from_slice::<SnapshotDto>(&bytes).unwrap());
+        assert_eq!(restored.content, snapshot.content);
+        assert_eq!(restored.metadata, snapshot.metadata);
+        assert_eq!(restored.restore_precondition, snapshot.restore_precondition);
+    }
 }

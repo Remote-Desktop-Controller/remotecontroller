@@ -213,7 +213,13 @@ async fn binary_checkpoint_and_raw_event_are_restorable() {
     std::fs::write(root.path().join("binary.dat"), &bytes).unwrap();
     let checkpoint = run(&k, "checkpoint.create", json!({"paths":["binary.dat"]})).await;
     assert_eq!(checkpoint["status"], "Succeeded");
-    std::fs::write(root.path().join("binary.dat"), b"changed").unwrap();
+    let mutation = run(
+        &k,
+        "filesystem.write",
+        json!({"path":"binary.dat","content":"changed"}),
+    )
+    .await;
+    assert_eq!(mutation["status"], "Succeeded");
     let rollback = run(
         &k,
         "checkpoint.rollback",
@@ -280,6 +286,51 @@ async fn checkpoint_rollback_restores_existing_and_removes_created_files() {
     assert!(!root.path().join("b").exists());
 }
 #[tokio::test]
+async fn rollback_refuses_external_changes_and_preserves_their_bytes() {
+    let (root, _state, k) = fixture().await;
+    std::fs::write(root.path().join("a"), "original").unwrap();
+    let result = run(
+        &k,
+        "filesystem.write",
+        json!({"path":"a","content":"runtime"}),
+    )
+    .await;
+    assert_eq!(result["status"], "Succeeded");
+    std::fs::write(root.path().join("a"), "external").unwrap();
+    let rollback = run(
+        &k,
+        "checkpoint.rollback",
+        json!({"checkpoint_id":result["result"]["checkpoint_id"]}),
+    )
+    .await;
+    assert_eq!(rollback["status"], "Failed");
+    assert_eq!(std::fs::read(root.path().join("a")).unwrap(), b"external");
+}
+#[tokio::test]
+async fn explicit_snapshot_rolls_back_only_recorded_runtime_changes() {
+    let (root, _state, k) = fixture().await;
+    std::fs::write(root.path().join("a"), "original").unwrap();
+    let snapshot = run(&k, "checkpoint.create", json!({"paths":["a"]})).await;
+    assert_eq!(snapshot["status"], "Succeeded");
+    assert_eq!(
+        run(
+            &k,
+            "filesystem.write",
+            json!({"path":"a","content":"runtime"})
+        )
+        .await["status"],
+        "Succeeded"
+    );
+    let rollback = run(
+        &k,
+        "checkpoint.rollback",
+        json!({"checkpoint_id":snapshot["result"]["checkpoint_id"]}),
+    )
+    .await;
+    assert_eq!(rollback["status"], "Succeeded", "{rollback}");
+    assert_eq!(std::fs::read(root.path().join("a")).unwrap(), b"original");
+}
+#[tokio::test]
 async fn versioned_context_never_reuses_pre_mutation_projection() {
     let (_root, _state, k) = fixture().await;
     let first = k
@@ -337,6 +388,11 @@ async fn restart_restores_prepared_journal_and_marks_interrupted_operation() {
             files: vec![FileSnapshot {
                 path: "a".into(),
                 content: Some(b"before".to_vec()),
+                metadata: None,
+                restore_precondition: Some(FilePrecondition::Sha256({
+                    use sha2::Digest;
+                    sha2::Sha256::digest(b"torn batch").into()
+                })),
             }],
             committed: false,
         })

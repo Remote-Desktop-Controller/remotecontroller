@@ -111,16 +111,17 @@ impl Services {
                     if !seen.insert(normalized) {
                         return Err(PortError::Tool("duplicate batch path".into()));
                     }
-                    let content = match fs.read_sync(&path) {
-                        Ok(bytes) => Some(bytes),
-                        Err(PortError::NotFound) => None,
-                        Err(e) => return Err(e),
-                    };
-                    total += content.as_ref().map_or(0, Vec::len);
+                    let snapshot = fs.snapshot_sync(&path)?;
+                    let mut metadata_snapshot = FileSnapshot::new(snapshot.path.clone(), None);
+                    metadata_snapshot.metadata = snapshot.metadata.clone();
+                    total += snapshot.content.as_ref().map_or(0, Vec::len)
+                        + serde_json::to_vec(&crate::storage::SnapshotDto::from(metadata_snapshot))
+                            .map_err(storage_error)?
+                            .len();
                     if total > fs.limits.max_batch_bytes {
                         return Err(PortError::Policy("checkpoint byte limit".into()));
                     }
-                    files.push(FileSnapshot { path, content });
+                    files.push(snapshot);
                 }
                 Ok(files)
             })
@@ -159,7 +160,7 @@ impl Services {
         if size > self.files.limits.max_batch_bytes {
             return Err(PortError::Policy("batch byte limit".into()));
         }
-        let cp = self
+        let mut cp = self
             .snapshot(edits.iter().map(|e| e.path.clone()).collect(), ctx)
             .await?;
         // Prepare every path and expected content before the first mutation.
@@ -192,25 +193,26 @@ impl Services {
                 ));
             }
         }
+        for (edit, snapshot) in edits.iter().zip(&mut cp.files) {
+            snapshot.restore_precondition = Some(match &edit.content {
+                Some(bytes) => FilePrecondition::Sha256(Sha256::digest(bytes).into()),
+                None => FilePrecondition::Missing,
+            });
+        }
         self.store.save_checkpoint(&cp).await?;
         let token = ctx.cancellation.clone();
         let progress = ctx.progress.clone();
         let changes:Vec<_>=edits.iter().zip(&cp.files).map(|(e,old)|json!({"path":e.path,"before_bytes":old.content.as_ref().map_or(0,Vec::len),"after_bytes":e.content.as_ref().map_or(0,Vec::len)})).collect();
         let total = edits.len();
+        let prepared = cp.files.clone();
         let outcome = self
             .files
             .blocking(move |fs| {
-                for (i, edit) in edits.iter().enumerate() {
+                for (i, (edit, original)) in edits.iter().zip(&prepared).enumerate() {
                     if token.is_cancelled() {
                         return Err(PortError::Cancelled);
                     }
-                    match &edit.content {
-                        Some(bytes) => fs.write_sync(&edit.path, bytes)?,
-                        None => fs.restore_sync(&[FileSnapshot {
-                            path: edit.path.clone(),
-                            content: None,
-                        }])?,
-                    }
+                    fs.apply_snapshot_sync(original, edit.content.as_deref())?;
                     match &edit.content {
                         Some(bytes) if fs.read_sync(&edit.path)? != *bytes => {
                             return Err(PortError::Tool("post-write verification failed".into()));
@@ -260,27 +262,8 @@ impl Services {
                 .await?;
             return Err(error);
         }
-        // Artifact rows + mutation event + journal commit share one DB transaction.
-        let workspace = ctx.workspace_id;
-        let operation = ctx.operation_id;
-        let checkpoint = cp.id;
-        let paths: Vec<_> = cp.files.iter().map(|s| s.path.clone()).collect();
-        let count = paths.len();
-        let now = runtime_protocol::now_ms();
-        let commit_result=self.store.run(move|c|async move{
-            let tx=c.transaction_with_behavior(libsql::TransactionBehavior::Immediate).await.map_err(storage_error)?;
-            for path in &paths{
-                tx.execute("INSERT INTO artifacts VALUES(?1,?2,?3,?4,'file_mutation',NULL,?5)",libsql::params![ArtifactId::new().to_string(),workspace.to_string(),operation.to_string(),path.clone(),now as i64]).await.map_err(storage_error)?;
-            }
-            let event=EventId::new();
-            let summary=format!("{count} files changed; checkpoint={checkpoint}; paths={}",paths.iter().take(20).cloned().collect::<Vec<_>>().join(","));
-            tx.execute("INSERT INTO events(id,workspace_id,operation_id,type,summary,payload,created_at) VALUES(?1,?2,?3,'mutated',?4,?5,?6)",libsql::params![event.to_string(),workspace.to_string(),operation.to_string(),summary,serde_json::to_vec(&paths).map_err(storage_error)?,now as i64]).await.map_err(storage_error)?;
-            tx.execute("INSERT INTO event_nodes VALUES(?1,?2,?3)",libsql::params![event.to_string(),workspace.to_string(),operation.to_string()]).await.map_err(storage_error)?;
-            tx.execute("INSERT INTO event_edges SELECT id,?2,'Mutated' FROM events WHERE operation_id=?1 AND type='queued'",libsql::params![operation.to_string(),event.to_string()]).await.map_err(storage_error)?;
-            tx.execute("UPDATE workspaces SET graph_version=graph_version+1 WHERE id=?1",[workspace.to_string()]).await.map_err(storage_error)?;
-            tx.execute("UPDATE checkpoints SET status='committed',updated_at=?2 WHERE id=?1",libsql::params![checkpoint.to_string(),now as i64]).await.map_err(storage_error)?;
-            tx.commit().await.map_err(storage_error)
-        }).await;
+        let count = cp.files.len();
+        let commit_result = self.commit_checkpoint_mutation(&cp, ctx).await;
         if let Err(error) = commit_result {
             let originals = cp.files.clone();
             if self
@@ -296,6 +279,106 @@ impl Services {
         }
         Ok(
             json!({"checkpoint_id":cp.id.to_string(),"changed":count,"diff":changes.into_iter().take(1000).collect::<Vec<_>>(),"diff_truncated":count>1000}),
+        )
+    }
+
+    async fn commit_checkpoint_mutation(&self, cp: &Checkpoint, ctx: &ToolContext) -> Result<()> {
+        let workspace = ctx.workspace_id;
+        let operation = ctx.operation_id;
+        let checkpoint = cp.id;
+        let paths: Vec<_> = cp.files.iter().map(|s| s.path.clone()).collect();
+        let postconditions: Vec<_> = cp
+            .files
+            .iter()
+            .cloned()
+            .map(|mut s| {
+                s.content = None;
+                s.metadata = None;
+                crate::storage::SnapshotDto::from(s)
+            })
+            .map(|s| serde_json::to_vec(&s).map_err(storage_error))
+            .collect::<Result<_>>()?;
+        let count = paths.len();
+        let now = runtime_protocol::now_ms();
+        self.store.run(move|c|async move{
+            let tx=c.transaction_with_behavior(libsql::TransactionBehavior::Immediate).await.map_err(storage_error)?;
+            for (path,payload) in paths.iter().zip(postconditions){
+                tx.execute("INSERT INTO artifacts VALUES(?1,?2,?3,?4,'file_mutation',?5,?6)",libsql::params![ArtifactId::new().to_string(),workspace.to_string(),operation.to_string(),path.clone(),payload,now as i64]).await.map_err(storage_error)?;
+            }
+            let event=EventId::new();
+            let summary=format!("{count} files changed; checkpoint={checkpoint}; paths={}",paths.iter().take(20).cloned().collect::<Vec<_>>().join(","));
+            tx.execute("INSERT INTO events(id,workspace_id,operation_id,type,summary,payload,created_at) VALUES(?1,?2,?3,'mutated',?4,?5,?6)",libsql::params![event.to_string(),workspace.to_string(),operation.to_string(),summary,serde_json::to_vec(&paths).map_err(storage_error)?,now as i64]).await.map_err(storage_error)?;
+            tx.execute("INSERT INTO event_nodes VALUES(?1,?2,?3)",libsql::params![event.to_string(),workspace.to_string(),operation.to_string()]).await.map_err(storage_error)?;
+            tx.execute("INSERT INTO event_edges SELECT id,?2,'Mutated' FROM events WHERE operation_id=?1 AND type='queued'",libsql::params![operation.to_string(),event.to_string()]).await.map_err(storage_error)?;
+            tx.execute("UPDATE workspaces SET graph_version=graph_version+1 WHERE id=?1",[workspace.to_string()]).await.map_err(storage_error)?;
+            tx.execute("UPDATE checkpoints SET status='committed',updated_at=?2 WHERE id=?1",libsql::params![checkpoint.to_string(),now as i64]).await.map_err(storage_error)?;
+            tx.commit().await.map_err(storage_error)
+        }).await
+    }
+
+    async fn rollback(&self, mut cp: Checkpoint, ctx: &ToolContext) -> Result<Value> {
+        let _guard = self.files.gate.write().await;
+        if self.poisoned.load(Ordering::Acquire) {
+            return Err(PortError::Policy("workspace requires recovery".into()));
+        }
+        // Explicit snapshots have no mutation guard. Only a recorded runtime
+        // mutation can supply the expected state; arbitrary external edits fail closed.
+        for snapshot in &mut cp.files {
+            if snapshot.restore_precondition.is_none() {
+                let workspace = ctx.workspace_id.to_string();
+                let path = snapshot.path.clone();
+                let payload=self.store.run(move|c|async move {
+                    let mut rows=c.query("SELECT payload FROM artifacts WHERE workspace_id=?1 AND path=?2 AND type='file_mutation' ORDER BY created_at DESC,rowid DESC LIMIT 1",libsql::params![workspace,path]).await.map_err(storage_error)?;
+                    match rows.next().await.map_err(storage_error)? {Some(row)=>row.get::<Option<Vec<u8>>>(0).map_err(storage_error),None=>Ok(None)}
+                }).await?;
+                if let Some(payload) = payload {
+                    let recorded: FileSnapshot =
+                        serde_json::from_slice::<crate::storage::SnapshotDto>(&payload)
+                            .map_err(storage_error)?
+                            .into();
+                    snapshot.restore_precondition = recorded.restore_precondition;
+                }
+            }
+        }
+        let targets = cp.files.clone();
+        self.files
+            .blocking(move |fs| fs.preflight_restore_sync(&targets))
+            .await?;
+        let mut inverse = self
+            .snapshot(cp.files.iter().map(|s| s.path.clone()).collect(), ctx)
+            .await?;
+        for (undo, desired) in inverse.files.iter_mut().zip(&cp.files) {
+            undo.restore_precondition = Some(match &desired.content {
+                Some(bytes) => FilePrecondition::Sha256(Sha256::digest(bytes).into()),
+                None => FilePrecondition::Missing,
+            });
+        }
+        self.store.save_checkpoint(&inverse).await?;
+        let targets = cp.files.clone();
+        let outcome = self
+            .files
+            .blocking(move |fs| fs.restore_sync(&targets))
+            .await;
+        let outcome = match outcome {
+            Ok(()) => self.commit_checkpoint_mutation(&inverse, ctx).await,
+            Err(error) => Err(error),
+        };
+        if let Err(error) = outcome {
+            let originals = inverse.files.clone();
+            if self
+                .files
+                .blocking(move |fs| fs.restore_sync(&originals))
+                .await
+                .is_err()
+                || self.store.rollback_recorded(inverse.id).await.is_err()
+            {
+                self.poisoned.store(true, Ordering::Release);
+            }
+            return Err(error);
+        }
+        self.store.rollback_recorded(cp.id).await?;
+        Ok(
+            json!({"checkpoint_id":inverse.id.to_string(),"restored_checkpoint_id":cp.id.to_string(),"changed":cp.files.len()}),
         )
     }
 }
@@ -417,7 +500,7 @@ impl Tool for Builtin {
                 vec!["operation_id"],
             ),
             "context.causal" | "context.compile" => (
-                json!({"operation_id":{"type":"string","format":"uuid"},"budget_bytes":{"type":"integer","minimum":128,"maximum":131072}}),
+                json!({"operation_id":{"type":"string","format":"uuid"},"task_id":{"type":"string","format":"uuid"},"query":{"type":"string"},"budget_bytes":{"type":"integer","minimum":0,"maximum":131072}}),
                 vec![],
             ),
             "context.recent" => (
@@ -572,18 +655,7 @@ impl Tool for Builtin {
                 if cp.workspace_id != ctx.workspace_id {
                     return Err(PortError::NotFound);
                 }
-                let edits = cp
-                    .files
-                    .into_iter()
-                    .map(|f| ByteEdit {
-                        path: f.path,
-                        content: f.content,
-                        expected_sha256: None,
-                    })
-                    .collect::<Vec<_>>();
-                let result = s.apply_bytes(edits, &ctx).await?;
-                s.store.rollback_recorded(cp.id).await?;
-                Ok(result)
+                s.rollback(cp, &ctx).await
             }
             "process.spawn" => {
                 let args = serde_json::from_value(input["args"].clone())
@@ -657,7 +729,20 @@ impl Tool for Builtin {
                     .transpose()
                     .map_err(|e| PortError::Tool(format!("{e}")))?;
                 let budget = input["budget_bytes"].as_u64().unwrap_or(8192) as usize;
-                Ok(json!({"context":s.context.compile(ctx.workspace_id,op,budget).await?}))
+                let task_id = input["task_id"]
+                    .as_str()
+                    .map(str::parse)
+                    .transpose()
+                    .map_err(|e| PortError::Tool(format!("{e}")))?
+                    .or(s.store.operation(ctx.operation_id).await?.task_id);
+                let request = crate::context::ContextRequest {
+                    workspace: ctx.workspace_id,
+                    operation: op,
+                    task_id,
+                    query: input["query"].as_str().unwrap_or("").to_string(),
+                    budget,
+                };
+                Ok(json!({"context":s.context.compile_request(request).await?}))
             }
             "code.inspect" | "code.symbols" => {
                 s.analysis

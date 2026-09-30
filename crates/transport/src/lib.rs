@@ -86,8 +86,7 @@ pub async fn authenticate<S: AsyncRead + AsyncWrite + Unpin>(
     .await
 }
 
-pub trait Stream: AsyncRead + AsyncWrite + Unpin + Send {}
-impl<T: AsyncRead + AsyncWrite + Unpin + Send> Stream for T {}
+pub use runtime_ports::IpcTransportPort as Stream;
 pub type LocalStream = Box<dyn Stream>;
 
 #[cfg(windows)]
@@ -270,6 +269,24 @@ pub fn read_secret(path: &Path) -> io::Result<Vec<u8>> {
         ));
     }
     Ok(secret)
+}
+/// Protect an existing operator-owned local file (backups and audit logs).
+pub fn private_file(path: &Path) -> io::Result<()> {
+    let metadata = std::fs::symlink_metadata(path)?;
+    if !metadata.is_file() || metadata.file_type().is_symlink() {
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "private file must be regular",
+        ));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))?;
+    }
+    #[cfg(windows)]
+    windows::private_acl(path)?;
+    Ok(())
 }
 #[cfg(windows)]
 mod windows;

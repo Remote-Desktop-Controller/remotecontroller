@@ -1,9 +1,9 @@
 # RFC-0001 — remotecontroller: runtime local de execução para agentes
 
-**Status:** arquitetura implementada no v0.1.0; evolução sujeita aos critérios deste RFC.
+**Status:** arquitetura implementada; candidato v0.2 em verificação final.
 **Data:** 2026-09-30.
 **Repositório:** https://github.com/Remote-Desktop-Controller/remotecontroller
-**Plataforma validada:** Windows x86_64.
+**Plataformas:** baseline v0.1 passou no CI Windows/Linux/macOS; gates v0.2 em [readiness](../readiness/progress.md).
 
 ## Problema e objetivo
 
@@ -175,6 +175,23 @@ Esses valores não são SLAs. Logs, escopo e falhas anteriores estão em
 [validation](../validation.md) e [benchmarking](../benchmarking.md).
 
 ## Evolução e limites
+
+A v0.2 implementa preservação de metadados suportados e precondições de rollback,
+aprovação local com pin SHA-256, spool progressivo com quotas, guardian Unix,
+contexto por task/query e rollups, manutenção explícita com backup/audit,
+instalação/atualização local verificadas e bootstrap/registro de host. O gateway
+permanece adapter; as três camadas lógicas não foram reescritas. Crates são unidades
+de compilação, não camadas sequenciais nem microserviços.
+
+Há limites explícitos: writes externos precisam de coordenação; hash antes do
+rename não é CAS do kernel. Metadados/atributos não suportados são recusados;
+snapshots legados alterados sem guard falham fechados. Processos confiáveis têm
+grants explícitos de acesso não confinado; Job/guardian cuidam do ciclo de vida.
+Certificado de editor/notarização dependem de credenciais externas. Checksums
+conferem conteúdo sem criar identidade de editor fictícia.
+
+O backlog a seguir registra o marco v0.1; os itens já implementados devem ser
+avaliados pela matriz v0.2 e seus logs, não por esse registro histórico.
 
 Antes de distribuição ampla: executar CI Linux/macOS, validar lifecycle Unix,
 ampliar preservação de metadados/ACLs, política de captura/retention e assinatura
