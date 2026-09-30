@@ -207,9 +207,8 @@ impl WorkspaceFiles {
                 .map_err(io_error)?;
             #[cfg(unix)]
             self.dir
-                .open_dir(parent)
+                .open(parent)
                 .map_err(io_error)?
-                .into_std_file()
                 .sync_all()
                 .map_err(io_error)?;
             Ok(())
