@@ -188,10 +188,11 @@ impl WorkspaceFiles {
                 "cannot replace workspace root or ignore policy".into(),
             ));
         }
-        let temp = relative
+        let parent = relative
             .parent()
-            .unwrap_or(Path::new(""))
-            .join(format!(".rdc-{}.tmp", uuid::Uuid::new_v4()));
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .unwrap_or(Path::new("."));
+        let temp = parent.join(format!(".rdc-{}.tmp", uuid::Uuid::new_v4()));
         let result = (|| {
             let mut f = self
                 .dir
@@ -206,7 +207,7 @@ impl WorkspaceFiles {
                 .map_err(io_error)?;
             #[cfg(unix)]
             self.dir
-                .open_dir(relative.parent().unwrap_or(Path::new("")))
+                .open_dir(parent)
                 .map_err(io_error)?
                 .into_std_file()
                 .sync_all()

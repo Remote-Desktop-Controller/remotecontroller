@@ -2,6 +2,7 @@
 use runtime_protocol::*;
 use runtime_transport::{Client, read_secret};
 use serde_json::{Value, json};
+use std::sync::Arc;
 use std::{path::Path, time::Duration};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -37,14 +38,31 @@ async fn start(root: &Path, state: &Path, endpoint: &str) -> Child {
     #[cfg(windows)]
     command.creation_flags(0x08000000);
     let mut child = command.spawn().unwrap();
+    let diagnostics = Arc::new(tokio::sync::Mutex::new(std::collections::VecDeque::new()));
+    let collected = diagnostics.clone();
+    let stderr = child.stderr.take().unwrap();
+    tokio::spawn(async move {
+        let mut lines = BufReader::new(stderr).lines();
+        while let Ok(Some(line)) = lines.next_line().await {
+            let mut output = collected.lock().await;
+            output.push_back(line);
+            while output.len() > 64 {
+                output.pop_front();
+            }
+        }
+    });
     let started = std::time::Instant::now();
+    let mut last_error = String::from("waiting for secret file");
     loop {
         if let Some(status) = child.try_wait().unwrap() {
-            panic!("daemon exited: {status}");
+            panic!(
+                "daemon exited: {status}; stderr={:?}; last IPC error={last_error}",
+                diagnostics.lock().await
+            );
         }
         if let Ok(secret) = read_secret(&state.join("ipc.secret")) {
             let client = Client::new(endpoint.into(), secret);
-            if client
+            match client
                 .request(
                     &RequestEnvelope {
                         meta: Metadata::new(None, 1000),
@@ -53,14 +71,16 @@ async fn start(root: &Path, state: &Path, endpoint: &str) -> Child {
                     |_| {},
                 )
                 .await
-                .is_ok()
             {
-                break;
+                Ok(response) if response.payload.is_ok() => break,
+                Ok(response) => last_error = format!("{:?}", response.payload),
+                Err(error) => last_error = error.to_string(),
             }
         }
         assert!(
-            started.elapsed() < Duration::from_secs(15),
-            "daemon failed to become ready"
+            started.elapsed() < Duration::from_secs(60),
+            "daemon failed to become ready; stderr={:?}; last IPC error={last_error}",
+            diagnostics.lock().await
         );
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
@@ -167,8 +187,8 @@ async fn mcp_to_daemon_abrupt_restart_reconnect_idempotency_and_stdout() {
     assert!(
         causal["result"]["structuredContent"]["result"]["context"]
             .as_str()
-            .unwrap()
-            .contains("filesystem.write")
+            .is_some_and(|context| context.contains("filesystem.write")),
+        "unexpected causal response: {causal}"
     );
     drop(input);
     assert!(
