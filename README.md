@@ -1,8 +1,10 @@
-# Local Execution Runtime
+# remotecontroller
 
 Runtime local em Rust para hosts MCP. O gateway stdio é um adapter; o daemon
 executa as ferramentas, aplica políticas e persiste o histórico em libSQL.
 Não existe serviço cloud, porta TCP ou dependência de Node/Python/Docker no uso.
+
+Arquitetura e critérios de evolução: [RFC-0001](docs/rfcs/0001-runtime-local.md).
 
 ## Executar
 
