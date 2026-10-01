@@ -153,3 +153,26 @@ mod tests {
         assert_eq!(std::fs::read(&backups[0]).unwrap(), b"old");
     }
 }
+#[cfg(all(test, unix))]
+mod privacy_red {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+    #[test]
+    fn replacement_and_backup_keep_private_config_owner_only() {
+        let t = tempfile::tempdir().unwrap();
+        std::fs::set_permissions(t.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
+        let p = t.path().join("config.json");
+        std::fs::write(&p, b"old private token").unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o600)).unwrap();
+        replace_with_backup(&p, b"new private token").unwrap();
+        assert_eq!(std::fs::read(&p).unwrap(), b"new private token");
+        let files: Vec<_> = std::fs::read_dir(t.path()).unwrap()
+            .map(|e| e.unwrap().path()).collect();
+        assert_eq!(files.len(), 2);
+        for file in &files {
+            assert_eq!(std::fs::metadata(file).unwrap().permissions().mode() & 0o777, 0o600);
+        }
+        let backup = files.iter().find(|file| **file != p).unwrap();
+        assert_eq!(std::fs::read(backup).unwrap(), b"old private token");
+    }
+}

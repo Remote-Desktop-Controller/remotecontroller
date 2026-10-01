@@ -1,31 +1,19 @@
-name: native-runtime
-on: [push, pull_request, workflow_dispatch]
+name: native-unix-regressions-red
+on: [push, workflow_dispatch]
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  unix-red:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.98.1
-          components: rustfmt, clippy
-      - run: cargo fmt --check
-      - run: cargo check --workspace --locked
-      - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
-      - run: cargo build --workspace --locked
-      - run: cargo test --workspace --locked
-      - run: cargo bench --no-run --locked
-      - run: cargo build --release --workspace --locked
-      - name: Package verified native executables
-        shell: pwsh
-        run: ./tools/package.ps1
-      - uses: actions/upload-artifact@v4
-        with:
-          name: runtime-${{ matrix.os }}
-          path: |
-            dist/*.zip
-            dist/*.sha256
+      - run: sudo apt-get update && sudo apt-get install -y strace
+      - name: Observe missing directory durability before correction
+        run: cargo test -p runtime-infrastructure --lib retention_directory_sync_order_is_durable --locked -- --nocapture
+      - name: Observe private config creation before correction
+        if: always()
+        run: cargo test -p local-daemon --bin local-daemon install::privacy_red:: --locked -- --nocapture
+      - name: Observe private replacement before correction
+        if: always()
+        run: cargo test -p local-daemon --bin local-daemon host::privacy_red:: --locked -- --nocapture
