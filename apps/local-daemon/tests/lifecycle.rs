@@ -66,7 +66,7 @@ fn installed_connect_bootstraps_real_daemon_and_mcp() {
     let mut child = connect
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::null())
+        .stderr(Stdio::inherit())
         .spawn()
         .unwrap();
     let mut input = child.stdin.take().unwrap();

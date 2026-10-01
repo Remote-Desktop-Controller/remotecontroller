@@ -54,6 +54,9 @@ Logs privados ficam em `states/<workspace>/daemon.log`, com rotação de 1 MiB.
 Saída dos processos fica em `process-spool`, com limites configuráveis; respostas
 informam truncamento e captura incompleta. `doctor` mostra política, workspace,
 configuração e métricas. Se falhar, consulte o log da pasta de estado.
+Erros de startup ficam em `bootstrap.log`. No Unix, perfis cujo caminho exceda
+o limite do socket usam um endpoint curto em `/tmp/rdc-<hash-do-estado>/daemon.sock`,
+com diretório privado; banco e segredo permanecem na pasta de estado original.
 
 Com daemon parado, faça backup ou simule retenção:
 

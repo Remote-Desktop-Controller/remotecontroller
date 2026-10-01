@@ -147,6 +147,39 @@ fn default_endpoint(state: &std::path::Path) -> String {
     }
     #[cfg(unix)]
     {
-        state.join("daemon.sock").to_string_lossy().into()
+        unix_endpoint(state)
+    }
+}
+#[cfg(unix)]
+fn unix_endpoint(state: &std::path::Path) -> String {
+    use sha2::{Digest, Sha256};
+    use std::os::unix::ffi::OsStrExt;
+    let normal = state.join("daemon.sock");
+    // macOS sun_path holds 104 bytes. Keep a margin for its terminating NUL;
+    // canonical user/temp profile paths can exceed that limit.
+    if normal.as_os_str().as_bytes().len() < 100 {
+        return normal.to_string_lossy().into();
+    }
+    let hash = format!("{:x}", Sha256::digest(state.as_os_str().as_bytes()));
+    // Listener::bind creates/protects this per-state parent (0700), rejects a
+    // linked parent, and leaves the secret/database in the original state dir.
+    format!("/tmp/rdc-{}/daemon.sock", &hash[..32])
+}
+#[cfg(all(test, unix))]
+mod endpoint_tests {
+    #[test]
+    fn long_profiles_have_short_stable_private_socket_names() {
+        let state = std::path::PathBuf::from(format!(
+            "/var/folders/{}/profile/states/012345678901234567890123",
+            "a".repeat(100)
+        ));
+        let endpoint = super::unix_endpoint(&state);
+        assert!(endpoint.len() < 100);
+        assert_eq!(super::unix_endpoint(&state), endpoint);
+        assert_ne!(super::unix_endpoint(&state.join("other")), endpoint);
+        assert_eq!(
+            super::unix_endpoint(std::path::Path::new("/tmp/state")),
+            "/tmp/state/daemon.sock"
+        );
     }
 }

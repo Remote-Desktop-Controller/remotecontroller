@@ -304,7 +304,9 @@ pub async fn dispatch(args: &Args) -> Result<bool> {
                     add_args(&mut cmd, args);
                     cmd.stdin(Stdio::null())
                         .stdout(Stdio::null())
-                        .stderr(Stdio::null());
+                        .stderr(std::fs::File::create(
+                            args.state_dir.as_ref().unwrap().join("bootstrap.log"),
+                        )?);
                     #[cfg(windows)]
                     {
                         use std::os::windows::process::CommandExt;
@@ -324,7 +326,21 @@ pub async fn dispatch(args: &Args) -> Result<bool> {
                             break;
                         }
                         if child.try_wait()?.is_some() {
-                            anyhow::bail!("daemon exited; inspect daemon.log");
+                            let log = std::fs::read_to_string(
+                                args.state_dir.as_ref().unwrap().join("bootstrap.log"),
+                            )
+                            .unwrap_or_default();
+                            let tail: String = log
+                                .chars()
+                                .rev()
+                                .take(2048)
+                                .collect::<String>()
+                                .chars()
+                                .rev()
+                                .collect();
+                            anyhow::bail!(
+                                "daemon exited; inspect daemon.log/bootstrap.log: {tail}"
+                            );
                         }
                         tokio::time::sleep(Duration::from_millis(100)).await;
                     }
