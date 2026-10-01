@@ -1,5 +1,13 @@
 # SDD ledger — plan: docs/readiness/plan.md
 
+**Candidata v0.2 concluída e publicada em 2026-10-01.** Código integrado à main
+pela [PR #1](https://github.com/Remote-Desktop-Controller/remotecontroller/pull/1).
+[Release v0.2.0](https://github.com/Remote-Desktop-Controller/remotecontroller/releases/tag/v0.2.0)
+com Windows x64 (GNU), Linux x64 e macOS arm64, manifests e SHA-256 verificados.
+[CI final](https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/36880261171)
+passou nos três sistemas no commit `aaf579a`; a árvore integrada em `81b9ddc`
+é idêntica à candidata testada.
+
 Base: 94a2a98, CI tri-OS verde. Memória do projeto consultada: sem entradas relevantes.
 
 Pre-flight:
@@ -15,7 +23,7 @@ Pre-flight:
 
 Ruling: preservar seis libs e dois binaries nesta evolução. Revisar interfaces
 sem uso, integrando contratos reais quando úteis; não reduzir contagem por estética.
-## Estado v0.2 em finalização
+## Registro inicial v0.2 — 2026-09-30
 
 | Bloco | Implementação e evidência local | Gate restante |
 |---|---|---|
@@ -113,7 +121,7 @@ Imports do GNU local contêm apenas DLLs Windows/UCRT:
 ZIP Windows v0.2.0 e manifest foram verificados por SHA-256:
 [pacote](../evidence/package-final-v0.2.json).
 
-O CI tri-OS final e a publicação na main/release aguardam confirmação remota.
+O CI tri-OS final passou e os pacotes da release publicada foram verificados.
 
 Follow-up macOS: o runner encontrou configuração aceita quando aliases distintos
 de workspace/parent (`/var` e `/private/var`) antecediam um link para fora do root.
@@ -123,4 +131,15 @@ Unix portátil com aliases distintos cobrem esse caminho.
 [RED macOS](../evidence/macos-alias-red-v0.2.log). Fmt/Clippy, configuração Windows,
 rebuild release e os sete casos MCP/lifecycle/config passaram após esse ajuste:
 [config-debug](../evidence/alias-config-debug-v0.2.log),
-[release-MCP](../evidence/alias-release-mcp-v0.2.log). Novo CI tri-OS necessário.
+[release-MCP](../evidence/alias-release-mcp-v0.2.log). O novo CI tri-OS passou,
+incluindo os oito casos de configuração Unix e os binários release.
+
+Evidência remota final:
+[resumo CI](../evidence/ci-final-v0.2.json),
+[Windows](../evidence/windows-final-ci-v0.2.log),
+[Linux](../evidence/linux-final-ci-v0.2.log),
+[macOS](../evidence/macos-final-ci-v0.2.log),
+[ZIPs/manifests verificados](../evidence/release-packages-v0.2.json).
+O Windows publicado usa o GNU validado localmente; o pacote MSVC também passou
+os gates do CI. Ambos compartilham o mesmo código candidato. Assinatura pública
+de editor/notarização permanece requisito externo, como previsto na spec.

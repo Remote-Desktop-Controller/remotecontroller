@@ -1,6 +1,6 @@
 # RFC-0001 — remotecontroller: runtime local de execução para agentes
 
-**Status:** arquitetura implementada; candidato v0.2 em verificação final.
+**Status:** arquitetura implementada; candidata v0.2 validada e publicada.
 **Data:** 2026-09-30.
 **Repositório:** https://github.com/Remote-Desktop-Controller/remotecontroller
 **Plataformas:** baseline v0.1 passou no CI Windows/Linux/macOS; gates v0.2 em [readiness](../readiness/progress.md).

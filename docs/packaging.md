@@ -5,8 +5,13 @@ licença e exemplo de configuração MCP. LibSQL/libgit2/tree-sitter são vincul
 no build; Rust/C/CMake são ferramentas do desenvolvedor, não do usuário final.
 
 CI define matrix Windows/Linux/macOS, executa gates e prepara ZIPs/checksums com
-`tools/package.ps1` (PowerShell 7 nos runners). O CI v0.1 passou nos três OS;
-v0.2 requer nova execução. Evidências atuais: `readiness/progress.md`.
+`tools/package.ps1` (PowerShell 7 nos runners). O CI final v0.2 passou nos três OS:
+[run 36880261171](https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/36880261171).
+Evidências atuais: `readiness/progress.md`.
+
+A [release v0.2.0](https://github.com/Remote-Desktop-Controller/remotecontroller/releases/tag/v0.2.0)
+publica Windows x64 GNU validado localmente, Linux x64 e macOS arm64 gerados pelo
+CI. Os três ZIPs e cada executable em seus manifests foram conferidos por SHA-256.
 
 Windows GNU pode depender das DLLs de runtime MinGW conforme link final.
 Inspecionar imports e incluir runtime necessário ou adotar build MSVC na release.

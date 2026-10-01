@@ -1,0 +1,2259 @@
+2026-10-01T14:56:01.9766675Z Current runner version: '2.337.0'
+2026-10-01T14:56:01.9793182Z ##[group]Runner Image Provisioner
+2026-10-01T14:56:01.9793989Z Hosted Compute Agent
+2026-10-01T14:56:01.9794863Z Version: 20260901.588
+2026-10-01T14:56:01.9795411Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-01T14:56:01.9796034Z Build Date: 2026-09-01T19:56:44Z
+2026-10-01T14:56:01.9796777Z Worker ID: {0e0fa6f8-604b-4651-96a9-71572657d472}
+2026-10-01T14:56:01.9797509Z Azure Region: westus3
+2026-10-01T14:56:01.9798038Z ##[endgroup]
+2026-10-01T14:56:01.9799660Z ##[group]Operating System
+2026-10-01T14:56:01.9800214Z Microsoft Windows Server 2025
+2026-10-01T14:56:01.9800800Z 10.0.26100
+2026-10-01T14:56:01.9801237Z Datacenter
+2026-10-01T14:56:01.9801672Z ##[endgroup]
+2026-10-01T14:56:01.9802163Z ##[group]Runner Image
+2026-10-01T14:56:01.9802661Z Image: windows-2025-vs2026
+2026-10-01T14:56:01.9803176Z Version: 20260925.250.1
+2026-10-01T14:56:01.9804576Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20260925.250/images/windows/Windows2025-VS2026-Readme.md
+2026-10-01T14:56:01.9806078Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20260925.250
+2026-10-01T14:56:01.9806936Z ##[endgroup]
+2026-10-01T14:56:01.9808017Z ##[group]GITHUB_TOKEN Permissions
+2026-10-01T14:56:01.9810039Z Contents: read
+2026-10-01T14:56:01.9810548Z Metadata: read
+2026-10-01T14:56:01.9811021Z Packages: read
+2026-10-01T14:56:01.9811479Z ##[endgroup]
+2026-10-01T14:56:01.9813531Z Secret source: Actions
+2026-10-01T14:56:01.9814612Z Cache mode: write
+2026-10-01T14:56:01.9815451Z Prepare workflow directory
+2026-10-01T14:56:02.0178378Z Prepare all required actions
+2026-10-01T14:56:02.0227834Z Getting action download info
+2026-10-01T14:56:02.3659102Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-01T14:56:02.6542039Z Download action repository 'dtolnay/rust-toolchain@master' (SHA:02cb101ec7c40f2c49e1d9714d64511d8e1b74de)
+2026-10-01T14:56:02.9044031Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-01T14:56:03.5215571Z Complete job name: test (windows-latest)
+2026-10-01T14:56:04.3613306Z ##[group]Run actions/checkout@v4
+2026-10-01T14:56:04.3614990Z with:
+2026-10-01T14:56:04.3615867Z   repository: Remote-Desktop-Controller/remotecontroller
+2026-10-01T14:56:04.3622173Z   token: ***
+2026-10-01T14:56:04.3622863Z   ssh-strict: true
+2026-10-01T14:56:04.3623560Z   ssh-user: git
+2026-10-01T14:56:04.3624257Z   persist-credentials: true
+2026-10-01T14:56:04.3625019Z   clean: true
+2026-10-01T14:56:04.3625723Z   sparse-checkout-cone-mode: true
+2026-10-01T14:56:04.3626522Z   fetch-depth: 1
+2026-10-01T14:56:04.3627192Z   fetch-tags: false
+2026-10-01T14:56:04.3627896Z   show-progress: true
+2026-10-01T14:56:04.3628585Z   lfs: false
+2026-10-01T14:56:04.3629216Z   submodules: false
+2026-10-01T14:56:04.3629906Z   set-safe-directory: true
+2026-10-01T14:56:04.3630686Z   allow-unsafe-pr-checkout: false
+2026-10-01T14:56:04.3631862Z ##[endgroup]
+2026-10-01T14:56:04.6727381Z Syncing repository: Remote-Desktop-Controller/remotecontroller
+2026-10-01T14:56:04.6730045Z ##[group]Getting Git version info
+2026-10-01T14:56:04.6731147Z Working directory is 'D:\a\remotecontroller\remotecontroller'
+2026-10-01T14:56:04.9432160Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-01T14:56:08.1637114Z git version 2.55.0.windows.5
+2026-10-01T14:56:08.1687390Z ##[endgroup]
+2026-10-01T14:56:08.1705846Z Temporarily overriding HOME='D:\a\_temp\dc7dc651-a602-428e-a6e6-97964183df5a' before making global git config changes
+2026-10-01T14:56:08.1706640Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-01T14:56:08.1716220Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\remotecontroller\remotecontroller
+2026-10-01T14:56:08.4930689Z Deleting the contents of 'D:\a\remotecontroller\remotecontroller'
+2026-10-01T14:56:08.4938530Z ##[group]Initializing the repository
+2026-10-01T14:56:08.4954806Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\remotecontroller\remotecontroller
+2026-10-01T14:56:09.3308307Z Initialized empty Git repository in D:/a/remotecontroller/remotecontroller/.git/
+2026-10-01T14:56:09.3357735Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/Remote-Desktop-Controller/remotecontroller
+2026-10-01T14:56:09.6750387Z ##[endgroup]
+2026-10-01T14:56:09.6751080Z ##[group]Disabling automatic garbage collection
+2026-10-01T14:56:09.6763163Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-10-01T14:56:09.7089160Z ##[endgroup]
+2026-10-01T14:56:09.7089706Z ##[group]Setting up auth
+2026-10-01T14:56:09.7103272Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-01T14:56:09.7400977Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-01T14:56:28.7125883Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-01T14:56:28.7499144Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-01T14:56:29.9053463Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-01T14:56:29.9364609Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-01T14:56:30.5577971Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-01T14:56:30.5911212Z ##[endgroup]
+2026-10-01T14:56:30.5912037Z ##[group]Fetching the repository
+2026-10-01T14:56:30.5930361Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +1ba25342085012c1dcb233a27d59a11e8805fe28:refs/remotes/pull/1/merge
+2026-10-01T14:56:52.0894153Z From https://github.com/Remote-Desktop-Controller/remotecontroller
+2026-10-01T14:56:52.0897082Z  * [new ref]         1ba25342085012c1dcb233a27d59a11e8805fe28 -> pull/1/merge
+2026-10-01T14:56:52.0939167Z ##[endgroup]
+2026-10-01T14:56:52.0945985Z ##[group]Determining the checkout info
+2026-10-01T14:56:52.0946999Z ##[endgroup]
+2026-10-01T14:56:52.0957816Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-10-01T14:56:53.0600838Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-01T14:56:53.0926361Z ##[group]Checking out the ref
+2026-10-01T14:56:53.0939116Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/remotes/pull/1/merge
+2026-10-01T14:56:56.9302987Z Note: switching to 'refs/remotes/pull/1/merge'.
+2026-10-01T14:56:56.9303402Z
+2026-10-01T14:56:56.9303737Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-01T14:56:56.9304519Z changes and commit them, and you can discard any commits you make in this
+2026-10-01T14:56:56.9305296Z state without impacting any branches by switching back to a branch.
+2026-10-01T14:56:56.9305862Z
+2026-10-01T14:56:56.9306199Z If you want to create a new branch to retain commits you create, you may
+2026-10-01T14:56:56.9306947Z do so (now or later) by using -c with the switch command. Example:
+2026-10-01T14:56:56.9307329Z
+2026-10-01T14:56:56.9307533Z   git switch -c <new-branch-name>
+2026-10-01T14:56:56.9307822Z
+2026-10-01T14:56:56.9307975Z Or undo this operation with:
+2026-10-01T14:56:56.9308243Z
+2026-10-01T14:56:56.9308364Z   git switch -
+2026-10-01T14:56:56.9308571Z
+2026-10-01T14:56:56.9310162Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-01T14:56:56.9310668Z
+2026-10-01T14:56:57.4146042Z HEAD is now at 1ba2534 Merge aaf579a25153c2e14ecb6c2447ac053ab9e3de70 into 94a2a98e22a711df0edb551f4080dd7e61c34540
+2026-10-01T14:56:57.6607604Z ##[endgroup]
+2026-10-01T14:56:58.1688966Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-10-01T14:56:58.4946748Z 1ba25342085012c1dcb233a27d59a11e8805fe28
+2026-10-01T14:56:58.5807562Z ##[group]Run dtolnay/rust-toolchain@master
+2026-10-01T14:56:58.5808163Z with:
+2026-10-01T14:56:58.5808373Z   toolchain: 1.98.1
+2026-10-01T14:56:58.5808600Z   components: rustfmt, clippy
+2026-10-01T14:56:58.5808869Z ##[endgroup]
+2026-10-01T14:56:58.5919494Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+2026-10-01T14:56:58.6126299Z ##[group]Run if [[ -z $toolchain ]]; then
+2026-10-01T14:56:58.6126760Z if [[ -z $toolchain ]]; then
+2026-10-01T14:56:58.6127324Z   # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070
+2026-10-01T14:56:58.6127924Z   echo "'toolchain' is a required input" >&2
+2026-10-01T14:56:58.6128224Z   exit 1
+2026-10-01T14:56:58.6128564Z elif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then
+2026-10-01T14:56:58.6128971Z   if [[ Windows == macOS ]]; then
+2026-10-01T14:56:58.6129537Z     echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT
+2026-10-01T14:56:58.6130025Z   else
+2026-10-01T14:56:58.6130420Z     echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT
+2026-10-01T14:56:58.6130864Z   fi
+2026-10-01T14:56:58.6131296Z elif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then
+2026-10-01T14:56:58.6131894Z   echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT
+2026-10-01T14:56:58.6132353Z elif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then
+2026-10-01T14:56:58.6132873Z   echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT
+2026-10-01T14:56:58.6133344Z else
+2026-10-01T14:56:58.6133598Z   echo "toolchain=$toolchain" >> $GITHUB_OUTPUT
+2026-10-01T14:56:58.6133894Z fi
+2026-10-01T14:56:58.6153583Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:56:58.6153982Z env:
+2026-10-01T14:56:58.6154193Z   toolchain: 1.98.1
+2026-10-01T14:56:58.6154425Z ##[endgroup]
+2026-10-01T14:57:01.7487484Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=3156]
+2026-10-01T14:57:01.7500544Z ##[start-action display=Construct rustup command line;id=__dtolnay_rust-toolchain.flags]
+2026-10-01T14:57:01.7692777Z ##[group]Run echo "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT
+2026-10-01T14:57:01.7693839Z echo "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT
+2026-10-01T14:57:01.7695098Z echo "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT
+2026-10-01T14:57:01.7695956Z echo "downgrade=" >> $GITHUB_OUTPUT
+2026-10-01T14:57:01.7718290Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:01.7718918Z env:
+2026-10-01T14:57:01.7719226Z   targets:
+2026-10-01T14:57:01.7719556Z   components: rustfmt, clippy
+2026-10-01T14:57:01.7719955Z ##[endgroup]
+2026-10-01T14:57:02.0990529Z ##[end-action id=__dtolnay_rust-toolchain.flags;outcome=success;conclusion=success;duration_ms=348]
+2026-10-01T14:57:02.0994542Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+2026-10-01T14:57:02.1178109Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$USERPROFILE\.cargo"} >> $GITHUB_ENV
+2026-10-01T14:57:02.1178991Z echo CARGO_HOME=${CARGO_HOME:-"$USERPROFILE\.cargo"} >> $GITHUB_ENV
+2026-10-01T14:57:02.1198182Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:02.1198866Z ##[endgroup]
+2026-10-01T14:57:02.2042517Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=104]
+2026-10-01T14:57:02.2046416Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+2026-10-01T14:57:02.2063725Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-10-01T14:57:02.2067725Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+2026-10-01T14:57:02.2325320Z ##[group]Run if ! command -v rustup &>/dev/null; then
+2026-10-01T14:57:02.2326073Z if ! command -v rustup &>/dev/null; then
+2026-10-01T14:57:02.2326830Z   curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://win.rustup.rs/x86_64 --output 'D:\a\_temp\rustup-init.exe'
+2026-10-01T14:57:02.2327645Z   'D:\a\_temp\rustup-init.exe' --default-toolchain none --no-modify-path -y
+2026-10-01T14:57:02.2328067Z   echo "$CARGO_HOME\bin" >> $GITHUB_PATH
+2026-10-01T14:57:02.2328338Z fi
+2026-10-01T14:57:02.2342966Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:02.2343366Z env:
+2026-10-01T14:57:02.2343571Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:02.2343833Z ##[endgroup]
+2026-10-01T14:57:02.4196729Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=success;conclusion=success;duration_ms=212]
+2026-10-01T14:57:02.4209947Z ##[start-action display=rustup toolchain install 1.98.1;id=__dtolnay_rust-toolchain.__run_4]
+2026-10-01T14:57:02.4376014Z ##[group]Run rustup toolchain install 1.98.1 --component rustfmt --component clippy --profile minimal --no-self-update --force-non-host
+2026-10-01T14:57:02.4376886Z rustup toolchain install 1.98.1 --component rustfmt --component clippy --profile minimal --no-self-update --force-non-host
+2026-10-01T14:57:02.4391302Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:02.4391709Z env:
+2026-10-01T14:57:02.4391958Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:02.4392245Z   RUSTUP_PERMIT_COPY_RENAME: 1
+2026-10-01T14:57:02.4392488Z ##[endgroup]
+2026-10-01T14:57:09.4321376Z info: syncing channel updates for 1.98.1-x86_64-pc-windows-msvc
+2026-10-01T14:57:13.2906681Z info: latest update on 2026-09-03 for version 1.98.1 (48a229cea 2026-09-01)
+2026-10-01T14:57:13.4475311Z info: downloading 5 components
+2026-10-01T14:57:26.3309484Z
+2026-10-01T14:57:26.4285880Z   1.98.1-x86_64-pc-windows-msvc installed - rustc 1.98.1 (48a229cea 2026-09-01)
+2026-10-01T14:57:26.4286408Z
+2026-10-01T14:57:26.4400838Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=24019]
+2026-10-01T14:57:26.4408345Z ##[start-action display=rustup default 1.98.1;id=__dtolnay_rust-toolchain.__run_5]
+2026-10-01T14:57:26.4543695Z ##[group]Run rustup default 1.98.1 --force-non-host
+2026-10-01T14:57:26.4544056Z rustup default 1.98.1 --force-non-host
+2026-10-01T14:57:26.4557320Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:26.4557709Z env:
+2026-10-01T14:57:26.4557919Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:26.4558178Z ##[endgroup]
+2026-10-01T14:57:26.5610846Z info: using existing install for 1.98.1-x86_64-pc-windows-msvc
+2026-10-01T14:57:26.5938380Z info: default toolchain set to 1.98.1-x86_64-pc-windows-msvc
+2026-10-01T14:57:26.6207653Z
+2026-10-01T14:57:26.6419096Z   1.98.1-x86_64-pc-windows-msvc unchanged - rustc 1.98.1 (48a229cea 2026-09-01)
+2026-10-01T14:57:26.6419799Z
+2026-10-01T14:57:26.6424099Z info: note that the toolchain '1.98.1-x86_64-pc-windows-msvc' is currently in use (overridden by 'D:\a\remotecontroller\remotecontroller\rust-toolchain.toml')
+2026-10-01T14:57:26.6507166Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=209]
+2026-10-01T14:57:26.6509496Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+2026-10-01T14:57:26.6650031Z ##[group]Run DATE=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+2026-10-01T14:57:26.6651112Z DATE=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+2026-10-01T14:57:26.6651690Z HASH=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-hash: //p')
+2026-10-01T14:57:26.6652152Z echo "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT
+2026-10-01T14:57:26.6664783Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:26.6665162Z env:
+2026-10-01T14:57:26.6665370Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:26.6665621Z ##[endgroup]
+2026-10-01T14:57:31.2319296Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=4580]
+2026-10-01T14:57:31.2325823Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+2026-10-01T14:57:31.2510078Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+2026-10-01T14:57:31.2510452Z if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+2026-10-01T14:57:31.2510769Z   echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV
+2026-10-01T14:57:31.2511041Z fi
+2026-10-01T14:57:31.2523980Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:31.2524376Z env:
+2026-10-01T14:57:31.2524592Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:31.2524873Z ##[endgroup]
+2026-10-01T14:57:31.3003347Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=67]
+2026-10-01T14:57:31.3007388Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+2026-10-01T14:57:31.3157496Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+2026-10-01T14:57:31.3157868Z if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+2026-10-01T14:57:31.3158216Z   echo CARGO_TERM_COLOR=always >> $GITHUB_ENV
+2026-10-01T14:57:31.3158858Z fi
+2026-10-01T14:57:31.3172663Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:31.3173047Z env:
+2026-10-01T14:57:31.3173250Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:31.3173519Z   CARGO_INCREMENTAL: 0
+2026-10-01T14:57:31.3173716Z ##[endgroup]
+2026-10-01T14:57:31.3657884Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=64]
+2026-10-01T14:57:31.3660452Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+2026-10-01T14:57:31.3792911Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+2026-10-01T14:57:31.3793551Z # implemented in 1.66, stabilized in 1.68, made default in 1.70
+2026-10-01T14:57:31.3794356Z if [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "D:\a\_temp"/.implicit_cargo_registries_crates_io_protocol ]; then
+2026-10-01T14:57:31.3795689Z   if rustc +1.98.1 --version --verbose | grep -q '^release: 1\.6[89]\.'; then
+2026-10-01T14:57:31.3796174Z     touch "D:\a\_temp"/.implicit_cargo_registries_crates_io_protocol || true
+2026-10-01T14:57:31.3796622Z     echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV
+2026-10-01T14:57:31.3797074Z   elif rustc +1.98.1 --version --verbose | grep -q '^release: 1\.6[67]\.'; then
+2026-10-01T14:57:31.3797539Z     touch "D:\a\_temp"/.implicit_cargo_registries_crates_io_protocol || true
+2026-10-01T14:57:31.3798725Z     echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV
+2026-10-01T14:57:31.3799047Z   fi
+2026-10-01T14:57:31.3799396Z fi
+2026-10-01T14:57:31.3811742Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:31.3812120Z env:
+2026-10-01T14:57:31.3812325Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:31.3812735Z   CARGO_INCREMENTAL: 0
+2026-10-01T14:57:31.3812952Z   CARGO_TERM_COLOR: always
+2026-10-01T14:57:31.3813161Z ##[endgroup]
+2026-10-01T14:57:31.9404100Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=574]
+2026-10-01T14:57:31.9406535Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+2026-10-01T14:57:31.9538941Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+2026-10-01T14:57:31.9539686Z # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+2026-10-01T14:57:31.9540259Z if rustc +1.98.1 --version --verbose | grep -q '^release: 1\.7[01]\.'; then
+2026-10-01T14:57:31.9540695Z   echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV
+2026-10-01T14:57:31.9541000Z fi
+2026-10-01T14:57:31.9554082Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:31.9554475Z env:
+2026-10-01T14:57:31.9554687Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:31.9554947Z   CARGO_INCREMENTAL: 0
+2026-10-01T14:57:31.9555160Z   CARGO_TERM_COLOR: always
+2026-10-01T14:57:31.9555377Z ##[endgroup]
+2026-10-01T14:57:32.0673988Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=126]
+2026-10-01T14:57:32.0679097Z ##[start-action display=rustc +1.98.1 --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+2026-10-01T14:57:32.0811107Z ##[group]Run rustc +1.98.1 --version --verbose
+2026-10-01T14:57:32.0811434Z rustc +1.98.1 --version --verbose
+2026-10-01T14:57:32.0824873Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-01T14:57:32.0825287Z env:
+2026-10-01T14:57:32.0825507Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:32.0825785Z   CARGO_INCREMENTAL: 0
+2026-10-01T14:57:32.0826043Z   CARGO_TERM_COLOR: always
+2026-10-01T14:57:32.0826270Z ##[endgroup]
+2026-10-01T14:57:32.1812789Z rustc 1.98.1 (48a229cea 2026-09-01)
+2026-10-01T14:57:32.1813266Z binary: rustc
+2026-10-01T14:57:32.1813901Z commit-hash: 48a229ceaefd4985c50990b14116b6d856af0985
+2026-10-01T14:57:32.1814235Z commit-date: 2026-09-01
+2026-10-01T14:57:32.1814487Z host: x86_64-pc-windows-msvc
+2026-10-01T14:57:32.1814725Z release: 1.98.1
+2026-10-01T14:57:32.1815566Z LLVM version: 22.1.8
+2026-10-01T14:57:32.1947029Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=126]
+2026-10-01T14:57:32.2125114Z ##[group]Run cargo fmt --check
+2026-10-01T14:57:32.2125469Z cargo fmt --check
+2026-10-01T14:57:32.8291906Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T14:57:32.8292331Z env:
+2026-10-01T14:57:32.8292597Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:32.8292914Z   CARGO_INCREMENTAL: 0
+2026-10-01T14:57:32.8293175Z   CARGO_TERM_COLOR: always
+2026-10-01T14:57:32.8293424Z ##[endgroup]
+2026-10-01T14:57:43.8265346Z ##[group]Run cargo check --workspace --locked
+2026-10-01T14:57:43.8265797Z cargo check --workspace --locked
+2026-10-01T14:57:43.8332201Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T14:57:43.8332544Z env:
+2026-10-01T14:57:43.8332754Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T14:57:43.8333078Z   CARGO_INCREMENTAL: 0
+2026-10-01T14:57:43.8333308Z   CARGO_TERM_COLOR: always
+2026-10-01T14:57:43.8333519Z ##[endgroup]
+2026-10-01T14:57:44.2146186Z     Updating crates.io index
+2026-10-01T14:57:45.4579796Z  Downloading crates ...
+2026-10-01T14:57:45.5629879Z   Downloaded block-buffer v0.10.4
+2026-10-01T14:57:45.6089296Z   Downloaded equivalent v1.0.2
+2026-10-01T14:57:45.6376804Z   Downloaded futures-task v0.3.34
+2026-10-01T14:57:45.7416040Z   Downloaded async-lock v3.4.2
+2026-10-01T14:57:45.8300824Z   Downloaded anstyle-query v1.1.5
+2026-10-01T14:57:45.8618212Z   Downloaded ambient-authority v0.0.2
+2026-10-01T14:57:45.8922965Z   Downloaded anstyle-wincon v3.0.11
+2026-10-01T14:57:45.9171131Z   Downloaded rustc-hash v1.1.0
+2026-10-01T14:57:45.9440347Z   Downloaded rmcp-macros v3.5.0
+2026-10-01T14:57:45.9969184Z   Downloaded same-file v1.0.6
+2026-10-01T14:57:46.0291923Z   Downloaded cfg-if v1.0.5
+2026-10-01T14:57:46.0559279Z   Downloaded anstyle-parse v1.0.0
+2026-10-01T14:57:46.1446122Z   Downloaded scopeguard v1.2.0
+2026-10-01T14:57:46.1714156Z   Downloaded ref-cast v1.0.27
+2026-10-01T14:57:46.2759052Z   Downloaded anstyle v1.0.14
+2026-10-01T14:57:46.3272060Z   Downloaded cexpr v0.6.0
+2026-10-01T14:57:46.3925680Z   Downloaded async-trait v0.1.92
+2026-10-01T14:57:46.5682034Z   Downloaded autocfg v1.5.1
+2026-10-01T14:57:46.6028712Z   Downloaded byteorder v1.5.0
+2026-10-01T14:57:46.6533916Z   Downloaded cap-std v4.0.3
+2026-10-01T14:57:46.7487942Z   Downloaded colorchoice v1.0.5
+2026-10-01T14:57:46.7840512Z   Downloaded fs-set-times v0.20.3
+2026-10-01T14:57:46.8146160Z   Downloaded darling_macro v0.24.1
+2026-10-01T14:57:46.8351657Z   Downloaded futures-io v0.3.34
+2026-10-01T14:57:46.8622044Z   Downloaded clap_lex v1.1.1
+2026-10-01T14:57:46.8898248Z   Downloaded ident_case v1.0.1
+2026-10-01T14:57:46.9155789Z   Downloaded ref-cast-impl v1.0.27
+2026-10-01T14:57:46.9542960Z   Downloaded fs2 v0.4.3
+2026-10-01T14:57:47.0161898Z   Downloaded futures-core v0.3.34
+2026-10-01T14:57:47.0692257Z   Downloaded digest v0.10.7
+2026-10-01T14:57:47.1173978Z   Downloaded event-listener v5.4.2
+2026-10-01T14:57:47.1558499Z   Downloaded futures-executor v0.3.34
+2026-10-01T14:57:47.1981406Z   Downloaded anstream v1.0.0
+2026-10-01T14:57:47.2496475Z   Downloaded cpufeatures v0.2.17
+2026-10-01T14:57:47.2785903Z   Downloaded errno v0.3.14
+2026-10-01T14:57:47.3114253Z   Downloaded once_cell_polyfill v1.70.2
+2026-10-01T14:57:47.3413239Z   Downloaded parking v2.2.1
+2026-10-01T14:57:47.3790768Z   Downloaded event-listener-strategy v0.5.4
+2026-10-01T14:57:47.4040961Z   Downloaded is_terminal_polyfill v1.70.2
+2026-10-01T14:57:47.4311966Z   Downloaded lazycell v1.3.0
+2026-10-01T14:57:47.5354138Z   Downloaded matchers v0.2.0
+2026-10-01T14:57:47.5638686Z   Downloaded futures-macro v0.3.34
+2026-10-01T14:57:47.5936354Z   Downloaded itoa v1.0.18
+2026-10-01T14:57:47.6202595Z   Downloaded maybe-owned v0.3.4
+2026-10-01T14:57:47.6478135Z   Downloaded peeking_take_while v0.1.2
+2026-10-01T14:57:47.7754171Z   Downloaded dyn-clone v1.0.20
+2026-10-01T14:57:47.8047569Z   Downloaded futures-sink v0.3.34
+2026-10-01T14:57:47.8501036Z   Downloaded heck v0.5.0
+2026-10-01T14:57:47.9026657Z   Downloaded home v0.5.12
+2026-10-01T14:57:47.9357957Z   Downloaded either v1.18.0
+2026-10-01T14:57:48.0285994Z   Downloaded generic-array v0.14.7
+2026-10-01T14:57:48.0862637Z   Downloaded nu-ansi-term v0.50.3
+2026-10-01T14:57:48.1741519Z   Downloaded quote v1.0.47
+2026-10-01T14:57:48.7096801Z   Downloaded thread_local v1.1.10
+2026-10-01T14:57:48.7376097Z   Downloaded crossbeam-deque v0.8.8
+2026-10-01T14:57:48.7774940Z   Downloaded find-msvc-tools v0.1.14
+2026-10-01T14:57:48.8253299Z   Downloaded io-lifetimes v2.0.4
+2026-10-01T14:57:48.8745845Z   Downloaded io-lifetimes v3.0.1
+2026-10-01T14:57:48.9315875Z   Downloaded ipnet v2.12.2
+2026-10-01T14:57:49.0355025Z   Downloaded jobserver v0.1.35
+2026-10-01T14:57:49.0902575Z   Downloaded lazy_static v1.5.0
+2026-10-01T14:57:49.2213979Z   Downloaded libloading v0.8.9
+2026-10-01T14:57:49.3019769Z   Downloaded lock_api v0.4.14
+2026-10-01T14:57:49.3313402Z   Downloaded once_cell v1.21.4
+2026-10-01T14:57:49.4132028Z   Downloaded prettyplease v0.2.37
+2026-10-01T14:57:49.5056956Z   Downloaded strsim v0.11.1
+2026-10-01T14:57:49.5346451Z   Downloaded subtle v2.6.1
+2026-10-01T14:57:49.5586539Z   Downloaded windows-link v0.2.1
+2026-10-01T14:57:49.5840596Z   Downloaded cap-primitives v4.0.3
+2026-10-01T14:57:50.0216948Z   Downloaded clang-sys v1.9.1
+2026-10-01T14:57:50.0569758Z   Downloaded clap_derive v4.6.7
+2026-10-01T14:57:50.1036513Z   Downloaded cmake v0.1.58
+2026-10-01T14:57:50.1307980Z   Downloaded crossbeam-epoch v0.9.21
+2026-10-01T14:57:50.1830212Z   Downloaded crypto-common v0.1.7
+2026-10-01T14:57:50.2077768Z   Downloaded futures-channel v0.3.34
+2026-10-01T14:57:50.2564387Z   Downloaded getrandom v0.4.3
+2026-10-01T14:57:50.5138463Z   Downloaded glob v0.3.4
+2026-10-01T14:57:50.5421345Z   Downloaded globset v0.4.20
+2026-10-01T14:57:50.5727400Z   Downloaded io-extras v0.19.0
+2026-10-01T14:57:50.6212737Z   Downloaded libsql-sys v0.9.30
+2026-10-01T14:57:50.6822908Z   Downloaded num-traits v0.2.19
+2026-10-01T14:57:50.7778226Z   Downloaded parking_lot v0.12.5
+2026-10-01T14:57:50.8274430Z   Downloaded parking_lot_core v0.9.12
+2026-10-01T14:57:50.9360091Z   Downloaded pastey v0.2.3
+2026-10-01T14:57:50.9671529Z   Downloaded tokio-macros v2.7.2
+2026-10-01T14:57:51.0152119Z   Downloaded tree-sitter-language v0.1.8
+2026-10-01T14:57:51.0807113Z   Downloaded winapi-util v0.1.11
+2026-10-01T14:57:51.1124329Z   Downloaded anyhow v1.0.104
+2026-10-01T14:57:51.2221713Z   Downloaded bitflags v2.13.2
+2026-10-01T14:57:51.3686066Z   Downloaded bytes v1.12.1
+2026-10-01T14:57:51.4723647Z   Downloaded crossbeam-utils v0.8.23
+2026-10-01T14:57:51.6080982Z   Downloaded darling v0.24.1
+2026-10-01T14:57:52.2117660Z   Downloaded futures v0.3.34
+2026-10-01T14:57:52.3744278Z   Downloaded ignore v0.4.33
+2026-10-01T14:57:52.4446318Z   Downloaded log v0.4.34
+2026-10-01T14:57:52.4885814Z   Downloaded tagptr v0.2.0
+2026-10-01T14:57:52.5095662Z   Downloaded toml_datetime v0.6.11
+2026-10-01T14:57:52.5303370Z   Downloaded utf8parse v0.2.2
+2026-10-01T14:57:52.5579020Z   Downloaded which v4.4.2
+2026-10-01T14:57:52.5860230Z   Downloaded windows-targets v0.52.6
+2026-10-01T14:57:52.6071015Z   Downloaded winx v0.36.4
+2026-10-01T14:57:52.6565788Z   Downloaded aho-corasick v1.1.5
+2026-10-01T14:57:52.8141669Z   Downloaded clap v4.6.7
+2026-10-01T14:57:53.2021326Z   Downloaded crossbeam-channel v0.5.17
+2026-10-01T14:57:53.7793162Z   Downloaded memchr v2.8.3
+2026-10-01T14:57:53.8557147Z   Downloaded base64 v0.23.1
+2026-10-01T14:57:53.9167829Z   Downloaded cc v1.5.1
+2026-10-01T14:57:54.0127837Z   Downloaded darling_core v0.24.1
+2026-10-01T14:57:54.1984538Z   Downloaded minimal-lexical v0.2.1
+2026-10-01T14:57:54.3408805Z   Downloaded mio v1.2.3
+2026-10-01T14:57:54.4830340Z   Downloaded nom v7.1.3
+2026-10-01T14:57:54.5934802Z   Downloaded version_check v0.9.5
+2026-10-01T14:57:54.7871077Z   Downloaded windows-targets v0.53.5
+2026-10-01T14:57:54.8092661Z   Downloaded indexmap v2.14.2
+2026-10-01T14:57:54.9087058Z   Downloaded rmp v0.8.15
+2026-10-01T14:57:55.0523048Z   Downloaded sha2 v0.10.9
+2026-10-01T14:57:55.1965550Z   Downloaded toml_write v0.1.2
+2026-10-01T14:57:55.2281438Z   Downloaded walkdir v2.5.0
+2026-10-01T14:57:55.2675612Z   Downloaded shlex v2.0.1
+2026-10-01T14:57:55.2927965Z   Downloaded slab v0.4.12
+2026-10-01T14:57:55.3282991Z   Downloaded thiserror-impl v1.0.69
+2026-10-01T14:57:55.3776795Z   Downloaded thiserror-impl v2.0.21
+2026-10-01T14:57:55.4306067Z   Downloaded hashbrown v0.17.1
+2026-10-01T14:57:55.5443658Z   Downloaded pin-project-lite v0.2.17
+2026-10-01T14:57:55.8585950Z   Downloaded serde_derive_internals v0.30.0
+2026-10-01T14:57:55.9229359Z   Downloaded shlex v1.3.0
+2026-10-01T14:57:55.9563431Z   Downloaded thiserror v2.0.21
+2026-10-01T14:57:56.6526392Z   Downloaded zmij v1.0.23
+2026-10-01T14:57:56.6851108Z   Downloaded clap_builder v4.6.7
+2026-10-01T14:57:56.9329113Z   Downloaded futures-util v0.3.34
+2026-10-01T14:57:57.4243564Z   Downloaded bindgen v0.66.1
+2026-10-01T14:57:57.6497847Z   Downloaded moka v0.12.16
+2026-10-01T14:57:57.8981657Z   Downloaded chrono v0.4.45
+2026-10-01T14:57:58.0702694Z   Downloaded git2 v0.21.0
+2026-10-01T14:57:58.2702414Z   Downloaded proc-macro2 v1.0.107
+2026-10-01T14:57:58.3714886Z   Downloaded schemars_derive v1.2.2
+2026-10-01T14:57:58.4583658Z   Downloaded tracing-log v0.2.0
+2026-10-01T14:57:58.4916265Z   Downloaded pkg-config v0.3.34
+2026-10-01T14:57:58.5205996Z   Downloaded serde_core v1.0.229
+2026-10-01T14:57:58.6244949Z   Downloaded smallvec v1.16.2
+2026-10-01T14:57:58.6672686Z   Downloaded socket2 v0.6.5
+2026-10-01T14:57:58.6933489Z   Downloaded streaming-iterator v0.1.9
+2026-10-01T14:57:58.7172585Z   Downloaded thiserror v1.0.69
+2026-10-01T14:57:59.1524283Z   Downloaded tracing-attributes v0.1.31
+2026-10-01T14:57:59.2549847Z   Downloaded unicode-ident v1.0.26
+2026-10-01T14:57:59.3327156Z   Downloaded zerocopy-derive v0.7.35
+2026-10-01T14:57:59.5355496Z   Downloaded bstr v1.13.1
+2026-10-01T14:57:59.7205866Z   Downloaded rmp-serde v1.3.1
+2026-10-01T14:57:59.7724138Z   Downloaded serde_derive v1.0.229
+2026-10-01T14:57:59.8811844Z   Downloaded sharded-slab v0.1.7
+2026-10-01T14:57:59.9620639Z   Downloaded tracing-core v0.1.36
+2026-10-01T14:58:00.1191396Z   Downloaded schemars v1.2.2
+2026-10-01T14:58:00.9434515Z   Downloaded serde v1.0.229
+2026-10-01T14:58:01.0415548Z   Downloaded toml_edit v0.22.27
+2026-10-01T14:58:01.1953119Z   Downloaded uuid v1.26.1
+2026-10-01T14:58:01.2718287Z   Downloaded typenum v1.20.1
+2026-10-01T14:58:01.3288351Z   Downloaded regex v1.13.1
+2026-10-01T14:58:01.5142877Z   Downloaded tokio-util v0.7.19
+2026-10-01T14:58:01.8850267Z   Downloaded zerocopy v0.7.35
+2026-10-01T14:58:02.9040225Z   Downloaded portable-atomic v1.15.0
+2026-10-01T14:58:03.1495614Z   Downloaded serde_json v1.0.151
+2026-10-01T14:58:03.5058619Z   Downloaded winnow v0.7.15
+2026-10-01T14:58:03.7851640Z   Downloaded tree-sitter v0.25.10
+2026-10-01T14:58:03.9563986Z   Downloaded tree-sitter-python v0.25.0
+2026-10-01T14:58:04.0136291Z   Downloaded tracing-subscriber v0.3.23
+2026-10-01T14:58:04.1751892Z   Downloaded vcpkg v0.2.15
+2026-10-01T14:58:06.4878121Z   Downloaded syn v3.0.6
+2026-10-01T14:58:06.7653085Z   Downloaded regex-syntax v0.8.11
+2026-10-01T14:58:06.8803001Z   Downloaded syn v2.0.119
+2026-10-01T14:58:07.1348521Z   Downloaded tree-sitter-rust v0.24.2
+2026-10-01T14:58:07.1997123Z   Downloaded rustix v0.38.44
+2026-10-01T14:58:07.9256162Z   Downloaded tracing v0.1.44
+2026-10-01T14:58:08.1440711Z   Downloaded rmcp v3.5.0
+2026-10-01T14:58:08.6708460Z   Downloaded regex-automata v0.4.18
+2026-10-01T14:58:08.8740226Z   Downloaded libc v0.2.189
+2026-10-01T14:58:09.8646893Z   Downloaded libz-sys v1.1.29
+2026-10-01T14:58:10.7217249Z   Downloaded windows_x86_64_msvc v0.52.6
+2026-10-01T14:58:10.7534872Z   Downloaded windows_x86_64_msvc v0.53.1
+2026-10-01T14:58:10.7792593Z   Downloaded tokio v1.53.1
+2026-10-01T14:58:12.5220736Z   Downloaded winapi v0.3.9
+2026-10-01T14:58:13.3364689Z   Downloaded libgit2-sys v0.18.8+1.9.7
+2026-10-01T14:58:15.0593739Z   Downloaded windows-sys v0.59.0
+2026-10-01T14:58:15.7190008Z   Downloaded windows-sys v0.60.2
+2026-10-01T14:58:16.7682012Z   Downloaded windows-sys v0.61.2
+2026-10-01T14:58:17.6728915Z   Downloaded libsql-ffi v0.9.30
+2026-10-01T14:58:19.0758576Z    Compiling proc-macro2 v1.0.107
+2026-10-01T14:58:19.0759184Z    Compiling quote v1.0.47
+2026-10-01T14:58:27.0090515Z    Compiling unicode-ident v1.0.26
+2026-10-01T14:58:27.1352455Z     Checking windows-link v0.2.1
+2026-10-01T14:58:27.1754091Z    Compiling getrandom v0.4.3
+2026-10-01T14:58:27.4134184Z    Compiling cfg-if v1.0.5
+2026-10-01T14:58:27.5817084Z    Compiling jobserver v0.1.35
+2026-10-01T14:58:27.9188003Z    Compiling serde_core v1.0.229
+2026-10-01T14:58:28.1377343Z    Compiling syn v3.0.6
+2026-10-01T14:58:28.1742688Z    Compiling shlex v2.0.1
+2026-10-01T14:58:28.3461169Z    Compiling find-msvc-tools v0.1.14
+2026-10-01T14:58:29.2703077Z     Checking memchr v2.8.3
+2026-10-01T14:58:29.7252197Z    Compiling cc v1.5.1
+2026-10-01T14:58:31.6745768Z     Checking windows-sys v0.61.2
+2026-10-01T14:58:34.6578452Z    Compiling windows_x86_64_msvc v0.52.6
+2026-10-01T14:58:34.8952316Z     Checking pin-project-lite v0.2.17
+2026-10-01T14:58:34.9574231Z    Compiling syn v2.0.119
+2026-10-01T14:58:35.4998020Z    Compiling serde v1.0.229
+2026-10-01T14:58:35.7602768Z    Compiling zmij v1.0.23
+2026-10-01T14:58:36.0845444Z    Compiling serde_derive v1.0.229
+2026-10-01T14:58:40.4525583Z    Compiling parking_lot_core v0.9.12
+2026-10-01T14:58:40.5540635Z     Checking smallvec v1.16.2
+2026-10-01T14:58:40.6650882Z     Checking futures-sink v0.3.34
+2026-10-01T14:58:40.7278982Z     Checking futures-core v0.3.34
+2026-10-01T14:58:40.7521662Z    Compiling futures-macro v0.3.34
+2026-10-01T14:58:40.8150856Z     Checking futures-channel v0.3.34
+2026-10-01T14:58:41.0016856Z     Checking futures-task v0.3.34
+2026-10-01T14:58:41.1051671Z     Checking futures-io v0.3.34
+2026-10-01T14:58:41.1869418Z     Checking scopeguard v1.2.0
+2026-10-01T14:58:41.4495418Z     Checking slab v0.4.12
+2026-10-01T14:58:41.5763948Z     Checking lock_api v0.4.14
+2026-10-01T14:58:41.6044753Z     Checking futures-util v0.3.34
+2026-10-01T14:58:43.7126862Z    Compiling glob v0.3.4
+2026-10-01T14:58:43.9783125Z    Compiling autocfg v1.5.1
+2026-10-01T14:58:44.0886627Z    Compiling clang-sys v1.9.1
+2026-10-01T14:58:44.3666470Z    Compiling windows-targets v0.52.6
+2026-10-01T14:58:44.3980610Z    Compiling num-traits v0.2.19
+2026-10-01T14:58:44.4072531Z     Checking parking_lot v0.12.5
+2026-10-01T14:58:44.6034355Z     Checking bytes v1.12.1
+2026-10-01T14:58:44.6446721Z     Checking once_cell v1.21.4
+2026-10-01T14:58:44.7912091Z    Compiling prettyplease v0.2.37
+2026-10-01T14:58:44.9641260Z    Compiling rustix v0.38.44
+2026-10-01T14:58:45.3024027Z    Compiling thiserror v2.0.21
+2026-10-01T14:58:45.4107513Z    Compiling libc v0.2.189
+2026-10-01T14:58:45.6241379Z    Compiling serde_json v1.0.151
+2026-10-01T14:58:45.8951058Z     Checking tracing-core v0.1.36
+2026-10-01T14:58:45.9162351Z     Checking uuid v1.26.1
+2026-10-01T14:58:46.1946480Z    Compiling windows-sys v0.59.0
+2026-10-01T14:58:46.3156522Z    Compiling errno v0.3.14
+2026-10-01T14:58:46.6715566Z    Compiling thiserror-impl v2.0.21
+2026-10-01T14:58:47.3375688Z     Checking aho-corasick v1.1.5
+2026-10-01T14:58:47.9892298Z    Compiling minimal-lexical v0.2.1
+2026-10-01T14:58:48.1195941Z    Compiling hashbrown v0.17.1
+2026-10-01T14:58:48.2383959Z    Compiling bitflags v2.13.2
+2026-10-01T14:58:48.4265253Z    Compiling equivalent v1.0.2
+2026-10-01T14:58:48.4760818Z    Compiling regex-syntax v0.8.11
+2026-10-01T14:58:48.9245971Z    Compiling tree-sitter-language v0.1.8
+2026-10-01T14:58:50.5688359Z     Checking itoa v1.0.18
+2026-10-01T14:58:51.1984747Z     Checking regex-automata v0.4.18
+2026-10-01T14:58:53.4532934Z    Compiling indexmap v2.14.2
+2026-10-01T14:58:53.9681928Z    Compiling nom v7.1.3
+2026-10-01T14:58:55.6994498Z    Compiling home v0.5.12
+2026-10-01T14:58:55.8231062Z    Compiling libloading v0.8.9
+2026-10-01T14:58:55.9986929Z    Compiling tracing-attributes v0.1.31
+2026-10-01T14:58:57.3563645Z     Checking socket2 v0.6.5
+2026-10-01T14:58:57.4135778Z     Checking mio v1.2.3
+2026-10-01T14:58:57.6031358Z    Compiling tokio-macros v2.7.2
+2026-10-01T14:58:57.7539016Z    Compiling pkg-config v0.3.34
+2026-10-01T14:58:58.3243765Z    Compiling windows_x86_64_msvc v0.53.1
+2026-10-01T14:58:58.4579429Z    Compiling crossbeam-utils v0.8.23
+2026-10-01T14:58:58.5173711Z    Compiling bindgen v0.66.1
+2026-10-01T14:58:58.7170263Z    Compiling either v1.18.0
+2026-10-01T14:58:58.7507576Z    Compiling version_check v0.9.5
+2026-10-01T14:58:59.0326413Z    Compiling generic-array v0.14.7
+2026-10-01T14:58:59.1939722Z    Compiling which v4.4.2
+2026-10-01T14:58:59.5873523Z     Checking tokio v1.53.1
+2026-10-01T14:59:00.3781629Z     Checking tracing v0.1.44
+2026-10-01T14:59:03.1435340Z    Compiling cexpr v0.6.0
+2026-10-01T14:59:03.8863175Z    Compiling regex v1.13.1
+2026-10-01T14:59:04.9345958Z     Checking log v0.4.34
+2026-10-01T14:59:05.0724350Z    Compiling lazycell v1.3.0
+2026-10-01T14:59:05.1468880Z    Compiling rustc-hash v1.1.0
+2026-10-01T14:59:05.2215724Z    Compiling shlex v1.3.0
+2026-10-01T14:59:05.2609362Z    Compiling vcpkg v0.2.15
+2026-10-01T14:59:05.5513784Z    Compiling lazy_static v1.5.0
+2026-10-01T14:59:05.6113879Z    Compiling peeking_take_while v0.1.2
+2026-10-01T14:59:06.0211937Z    Compiling libz-sys v1.1.29
+2026-10-01T14:59:06.5790426Z     Checking tokio-util v0.7.19
+2026-10-01T14:59:07.4608034Z    Compiling async-trait v0.1.92
+2026-10-01T14:59:08.5248260Z    Compiling cmake v0.1.58
+2026-10-01T14:59:09.3764908Z    Compiling io-lifetimes v3.0.1
+2026-10-01T14:59:09.6078112Z    Compiling crossbeam-epoch v0.9.21
+2026-10-01T14:59:09.8147963Z     Checking typenum v1.20.1
+2026-10-01T14:59:10.5564093Z    Compiling io-lifetimes v2.0.4
+2026-10-01T14:59:11.4390649Z     Checking windows-targets v0.53.5
+2026-10-01T14:59:11.8338127Z    Compiling libsql-ffi v0.9.30
+2026-10-01T14:59:13.0094352Z     Checking runtime-domain v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\domain)
+2026-10-01T14:59:13.1567899Z     Checking futures-executor v0.3.34
+2026-10-01T14:59:13.2588113Z    Compiling ident_case v1.0.1
+2026-10-01T14:59:13.3360063Z     Checking anstyle v1.0.14
+2026-10-01T14:59:13.4920738Z    Compiling strsim v0.11.1
+2026-10-01T14:59:13.7848427Z     Checking parking v2.2.1
+2026-10-01T14:59:13.8569141Z     Checking utf8parse v0.2.2
+2026-10-01T14:59:13.9189070Z     Checking once_cell_polyfill v1.70.2
+2026-10-01T14:59:13.9905161Z    Compiling io-extras v0.19.0
+2026-10-01T14:59:14.2996261Z     Checking anstyle-wincon v3.0.11
+2026-10-01T14:59:14.4051863Z     Checking anstyle-parse v1.0.0
+2026-10-01T14:59:14.5258947Z     Checking event-listener v5.4.2
+2026-10-01T14:59:14.7068512Z    Compiling darling_core v0.24.1
+2026-10-01T14:59:17.9181696Z     Checking futures v0.3.34
+2026-10-01T14:59:17.9654989Z     Checking runtime-ports v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\ports)
+2026-10-01T14:59:27.5346019Z     Checking windows-sys v0.60.2
+2026-10-01T14:59:28.9567758Z    Compiling libgit2-sys v0.18.8+1.9.7
+2026-10-01T14:59:29.3106915Z     Checking rmp v0.8.15
+2026-10-01T14:59:29.5851585Z    Compiling zerocopy-derive v0.7.35
+2026-10-01T14:59:30.3530046Z     Checking anstyle-query v1.1.5
+2026-10-01T14:59:30.4407052Z     Checking winapi-util v0.1.11
+2026-10-01T14:59:30.5622801Z    Compiling cap-primitives v4.0.3
+2026-10-01T14:59:30.8230245Z    Compiling thiserror v1.0.69
+2026-10-01T14:59:31.0871715Z     Checking colorchoice v1.0.5
+2026-10-01T14:59:31.1486356Z    Compiling portable-atomic v1.15.0
+2026-10-01T14:59:31.5639624Z     Checking byteorder v1.5.0
+2026-10-01T14:59:32.1880028Z    Compiling crossbeam-deque v0.8.8
+2026-10-01T14:59:32.4017876Z     Checking is_terminal_polyfill v1.70.2
+2026-10-01T14:59:32.4539094Z    Compiling ref-cast v1.0.27
+2026-10-01T14:59:32.7570845Z     Checking anstream v1.0.0
+2026-10-01T14:59:33.5696834Z     Checking zerocopy v0.7.35
+2026-10-01T14:59:34.3639186Z     Checking same-file v1.0.6
+2026-10-01T14:59:34.4452345Z     Checking rmp-serde v1.3.1
+2026-10-01T14:59:36.0173364Z     Checking fs-set-times v0.20.3
+2026-10-01T14:59:36.3458816Z    Compiling darling_macro v0.24.1
+2026-10-01T14:59:36.7099646Z     Checking event-listener-strategy v0.5.4
+2026-10-01T14:59:36.8052342Z     Checking winx v0.36.4
+2026-10-01T14:59:37.1354227Z     Checking block-buffer v0.10.4
+2026-10-01T14:59:37.2268583Z     Checking crypto-common v0.1.7
+2026-10-01T14:59:37.3117733Z    Compiling tree-sitter v0.25.10
+2026-10-01T14:59:37.5463244Z     Checking runtime-protocol v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\protocol)
+2026-10-01T14:59:37.8415155Z    Compiling thiserror-impl v1.0.69
+2026-10-01T14:59:39.0563771Z    Compiling ref-cast-impl v1.0.27
+2026-10-01T14:59:39.4984887Z    Compiling tree-sitter-python v0.25.0
+2026-10-01T14:59:39.7350658Z    Compiling tree-sitter-rust v0.24.2
+2026-10-01T14:59:39.9802700Z    Compiling serde_derive_internals v0.30.0
+2026-10-01T14:59:40.9788933Z     Checking bstr v1.13.1
+2026-10-01T14:59:41.3243763Z     Checking ambient-authority v0.0.2
+2026-10-01T14:59:41.3743763Z     Checking ipnet v2.12.2
+2026-10-01T14:59:41.7837755Z    Compiling cap-std v4.0.3
+2026-10-01T14:59:42.0144852Z     Checking clap_lex v1.1.1
+2026-10-01T14:59:42.1257836Z     Checking maybe-owned v0.3.4
+2026-10-01T14:59:42.2575404Z    Compiling anyhow v1.0.104
+2026-10-01T14:59:42.5386012Z     Checking subtle v2.6.1
+2026-10-01T14:59:42.6536280Z    Compiling winapi v0.3.9
+2026-10-01T14:59:43.0591666Z    Compiling heck v0.5.0
+2026-10-01T14:59:43.2575680Z    Compiling clap_derive v4.6.7
+2026-10-01T14:59:45.1638355Z     Checking runtime-transport v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\transport)
+2026-10-01T14:59:45.8138323Z     Checking clap_builder v4.6.7
+2026-10-01T14:59:47.3687570Z     Checking sharded-slab v0.1.7
+2026-10-01T14:59:47.8123152Z     Checking globset v0.4.20
+2026-10-01T14:59:48.0498095Z    Compiling schemars_derive v1.2.2
+2026-10-01T14:59:53.0180819Z     Checking digest v0.10.7
+2026-10-01T14:59:53.1702199Z     Checking async-lock v3.4.2
+2026-10-01T14:59:53.5805785Z    Compiling darling v0.24.1
+2026-10-01T14:59:53.6350981Z     Checking libsql-sys v0.9.30
+2026-10-01T14:59:53.9431722Z     Checking walkdir v2.5.0
+2026-10-01T14:59:54.6094409Z     Checking crossbeam-channel v0.5.17
+2026-10-01T14:59:54.9376394Z     Checking tracing-log v0.2.0
+2026-10-01T14:59:55.0460793Z     Checking chrono v0.4.45
+2026-10-01T14:59:56.1274303Z     Checking matchers v0.2.0
+2026-10-01T14:59:56.2071792Z     Checking thread_local v1.1.10
+2026-10-01T14:59:56.3329963Z     Checking nu-ansi-term v0.50.3
+2026-10-01T14:59:56.5356811Z     Checking streaming-iterator v0.1.9
+2026-10-01T14:59:56.8018964Z     Checking tagptr v0.2.0
+2026-10-01T14:59:56.9165220Z     Checking dyn-clone v1.0.20
+2026-10-01T14:59:56.9804528Z     Checking cpufeatures v0.2.17
+2026-10-01T14:59:57.0191121Z    Compiling rmcp v3.5.0
+2026-10-01T14:59:57.2504081Z     Checking sha2 v0.10.9
+2026-10-01T14:59:57.5395010Z     Checking schemars v1.2.2
+2026-10-01T14:59:58.1778756Z     Checking moka v0.12.16
+2026-10-01T14:59:59.6265532Z     Checking tracing-subscriber v0.3.23
+2026-10-01T15:00:00.6366061Z     Checking ignore v0.4.33
+2026-10-01T15:00:01.1374997Z     Checking libsql v0.9.30 (D:\a\remotecontroller\remotecontroller\vendor\libsql)
+2026-10-01T15:00:01.7625253Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:00:01.7626174Z    --> vendor\libsql\src\local\statement.rs:342:20
+2026-10-01T15:00:01.7626797Z     |
+2026-10-01T15:00:01.7627364Z 342 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:00:01.7628741Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:00:01.7629508Z     |                    |
+2026-10-01T15:00:01.7630116Z     |                    the lifetime is elided here
+2026-10-01T15:00:01.7631108Z     |
+2026-10-01T15:00:01.7631885Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:00:01.7632938Z     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+2026-10-01T15:00:01.7634631Z help: use `'_` for type paths
+2026-10-01T15:00:01.7635096Z     |
+2026-10-01T15:00:01.7635695Z 342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:00:01.7636444Z     |                                        ++++
+2026-10-01T15:00:01.7636843Z
+2026-10-01T15:00:01.7637387Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:00:01.7638207Z    --> vendor\libsql\src\local\impls.rs:163:16
+2026-10-01T15:00:01.7638764Z     |
+2026-10-01T15:00:01.7639301Z 163 |     fn columns(&self) -> Vec<Column> {
+2026-10-01T15:00:01.7640193Z     |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:00:01.7640944Z     |                |
+2026-10-01T15:00:01.7641564Z     |                the lifetime is elided here
+2026-10-01T15:00:01.7642141Z     |
+2026-10-01T15:00:01.7642996Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:00:01.7643943Z help: use `'_` for type paths
+2026-10-01T15:00:01.7644433Z     |
+2026-10-01T15:00:01.7644987Z 163 |     fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:00:01.7647480Z     |                                    ++++
+2026-10-01T15:00:01.7647835Z
+2026-10-01T15:00:01.7676239Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:00:01.7676835Z   --> vendor\libsql\src\statement.rs:27:16
+2026-10-01T15:00:01.7677181Z    |
+2026-10-01T15:00:01.7677530Z 27 |     fn columns(&self) -> Vec<Column>;
+2026-10-01T15:00:01.7678123Z    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:00:01.7678585Z    |                |
+2026-10-01T15:00:01.7679028Z    |                the lifetime is elided here
+2026-10-01T15:00:01.7679609Z    |
+2026-10-01T15:00:01.7680334Z    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:00:01.7680870Z help: use `'_` for type paths
+2026-10-01T15:00:01.7681150Z    |
+2026-10-01T15:00:01.7681502Z 27 |     fn columns(&self) -> Vec<Column<'_>>;
+2026-10-01T15:00:01.7681948Z    |                                    ++++
+2026-10-01T15:00:01.7682152Z
+2026-10-01T15:00:01.7682449Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:00:01.7682935Z    --> vendor\libsql\src\statement.rs:106:20
+2026-10-01T15:00:01.7683246Z     |
+2026-10-01T15:00:01.7683574Z 106 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:00:01.7684121Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:00:01.7684582Z     |                    |
+2026-10-01T15:00:01.7685384Z     |                    the lifetime is elided here
+2026-10-01T15:00:01.7685753Z     |
+2026-10-01T15:00:01.7686248Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:00:01.7686942Z help: use `'_` for type paths
+2026-10-01T15:00:01.7687218Z     |
+2026-10-01T15:00:01.7687576Z 106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:00:01.7688169Z     |                                        ++++
+2026-10-01T15:00:01.7688392Z
+2026-10-01T15:00:01.8173453Z warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+2026-10-01T15:00:01.8174136Z    Compiling rmcp-macros v3.5.0
+2026-10-01T15:00:03.0894199Z     Checking clap v4.6.7
+2026-10-01T15:00:04.5374346Z     Checking runtime-application v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\application)
+2026-10-01T15:00:04.8035333Z     Checking toml_datetime v0.6.11
+2026-10-01T15:00:04.9240260Z     Checking toml_write v0.1.2
+2026-10-01T15:00:05.0638737Z     Checking base64 v0.23.1
+2026-10-01T15:00:05.3269347Z     Checking winnow v0.7.15
+2026-10-01T15:00:06.7406875Z    Compiling pastey v0.2.3
+2026-10-01T15:00:14.4893165Z     Checking toml_edit v0.22.27
+2026-10-01T15:00:15.5862065Z     Checking fs2 v0.4.3
+2026-10-01T15:00:15.6838162Z     Checking mcp-gateway v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\mcp-gateway)
+2026-10-01T15:00:49.1300673Z     Checking git2 v0.21.0
+2026-10-01T15:00:51.2332564Z     Checking runtime-infrastructure v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\infrastructure)
+2026-10-01T15:00:53.5269141Z     Checking local-daemon v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\local-daemon)
+2026-10-01T15:00:54.1078670Z     Finished `dev` profile [unoptimized] target(s) in 3m 09s
+2026-10-01T15:00:54.2970763Z ##[group]Run cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+2026-10-01T15:00:54.2972136Z cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+2026-10-01T15:00:54.3079541Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T15:00:54.3080115Z env:
+2026-10-01T15:00:54.3080467Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:00:54.3080924Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:00:54.3081291Z   CARGO_TERM_COLOR: always
+2026-10-01T15:00:54.3081653Z ##[endgroup]
+2026-10-01T15:00:55.3907040Z  Downloading crates ...
+2026-10-01T15:00:55.4836376Z   Downloaded cast v0.3.0
+2026-10-01T15:00:55.4939803Z   Downloaded anes v0.1.6
+2026-10-01T15:00:55.5167080Z   Downloaded half v2.7.1
+2026-10-01T15:00:55.5391130Z   Downloaded plotters-backend v0.3.7
+2026-10-01T15:00:55.5499909Z   Downloaded plotters-svg v0.3.7
+2026-10-01T15:00:55.5566765Z   Downloaded rayon v1.12.0
+2026-10-01T15:00:55.6467166Z   Downloaded ciborium v0.2.2
+2026-10-01T15:00:55.6684306Z   Downloaded ciborium-io v0.2.2
+2026-10-01T15:00:55.6742795Z   Downloaded oorandom v11.1.5
+2026-10-01T15:00:55.6801774Z   Downloaded ciborium-ll v0.2.2
+2026-10-01T15:00:55.6876621Z   Downloaded criterion v0.7.0
+2026-10-01T15:00:55.7803119Z   Downloaded criterion-plot v0.6.0
+2026-10-01T15:00:56.4284245Z   Downloaded itertools v0.13.0
+2026-10-01T15:01:01.8068861Z   Downloaded plotters v0.3.7
+2026-10-01T15:01:06.6546056Z   Downloaded rayon-core v1.13.0
+2026-10-01T15:01:08.9863273Z   Downloaded fastrand v2.5.0
+2026-10-01T15:01:10.0186797Z   Downloaded tempfile v3.27.0
+2026-10-01T15:01:11.0414926Z   Downloaded tinytemplate v1.2.1
+2026-10-01T15:01:11.6798644Z   Downloaded zerocopy v0.8.59
+2026-10-01T15:01:12.4689296Z   Downloaded zerocopy-derive v0.8.59
+2026-10-01T15:01:13.3428921Z    Compiling num-traits v0.2.19
+2026-10-01T15:01:13.3440347Z     Checking runtime-domain v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\domain)
+2026-10-01T15:01:13.5341941Z     Checking runtime-ports v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\ports)
+2026-10-01T15:01:13.6709256Z     Checking runtime-protocol v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\protocol)
+2026-10-01T15:01:14.0160267Z     Checking fastrand v2.5.0
+2026-10-01T15:01:14.1630743Z     Checking tempfile v3.27.0
+2026-10-01T15:01:14.2782825Z     Checking rmp v0.8.15
+2026-10-01T15:01:14.3485421Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:01:14.3486676Z    --> vendor\libsql\src\local\statement.rs:342:20
+2026-10-01T15:01:14.3487278Z     |
+2026-10-01T15:01:14.3487841Z 342 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:01:14.3488746Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:01:14.3489572Z     |                    |
+2026-10-01T15:01:14.3490210Z     |                    the lifetime is elided here
+2026-10-01T15:01:14.3490794Z     |
+2026-10-01T15:01:14.3491634Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:01:14.3492710Z     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+2026-10-01T15:01:14.3493422Z help: use `'_` for type paths
+2026-10-01T15:01:14.3493859Z     |
+2026-10-01T15:01:14.3496892Z 342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:01:14.3497876Z     |                                        ++++
+2026-10-01T15:01:14.3498245Z
+2026-10-01T15:01:14.3498681Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:01:14.3499454Z    --> vendor\libsql\src\local\impls.rs:163:16
+2026-10-01T15:01:14.3499959Z     |
+2026-10-01T15:01:14.3500452Z 163 |     fn columns(&self) -> Vec<Column> {
+2026-10-01T15:01:14.3501307Z     |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:01:14.3502074Z     |                |
+2026-10-01T15:01:14.3502722Z     |                the lifetime is elided here
+2026-10-01T15:01:14.3503266Z     |
+2026-10-01T15:01:14.3504112Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:01:14.3504996Z help: use `'_` for type paths
+2026-10-01T15:01:14.3505437Z     |
+2026-10-01T15:01:14.3506355Z 163 |     fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:01:14.3507068Z     |                                    ++++
+2026-10-01T15:01:14.3507410Z
+2026-10-01T15:01:14.3507878Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:01:14.3508649Z   --> vendor\libsql\src\statement.rs:27:16
+2026-10-01T15:01:14.3509156Z    |
+2026-10-01T15:01:14.3509662Z 27 |     fn columns(&self) -> Vec<Column>;
+2026-10-01T15:01:14.3510505Z    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:01:14.3511226Z    |                |
+2026-10-01T15:01:14.3511865Z    |                the lifetime is elided here
+2026-10-01T15:01:14.3512427Z    |
+2026-10-01T15:01:14.3513275Z    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:01:14.3514195Z help: use `'_` for type paths
+2026-10-01T15:01:14.3514666Z    |
+2026-10-01T15:01:14.3515551Z 27 |     fn columns(&self) -> Vec<Column<'_>>;
+2026-10-01T15:01:14.3516228Z    |                                    ++++
+2026-10-01T15:01:14.3516570Z
+2026-10-01T15:01:14.3517018Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:01:14.3517770Z    --> vendor\libsql\src\statement.rs:106:20
+2026-10-01T15:01:14.3518285Z     |
+2026-10-01T15:01:14.3518807Z 106 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:01:14.3519703Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:01:14.3520455Z     |                    |
+2026-10-01T15:01:14.3521078Z     |                    the lifetime is elided here
+2026-10-01T15:01:14.3521634Z     |
+2026-10-01T15:01:14.3522458Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:01:14.3523305Z help: use `'_` for type paths
+2026-10-01T15:01:14.3523746Z     |
+2026-10-01T15:01:14.3524338Z 106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:01:14.3525087Z     |                                        ++++
+2026-10-01T15:01:14.3525447Z
+2026-10-01T15:01:14.3527404Z warning: `libsql` (lib) generated 4 warnings (run `cargo clippy --fix --lib -p libsql -- -D warnings` to apply 4 suggestions)
+2026-10-01T15:01:14.3528866Z     Checking runtime-application v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\application)
+2026-10-01T15:01:14.5276488Z     Checking rmp-serde v1.3.1
+2026-10-01T15:01:14.6554554Z    Compiling zerocopy v0.8.59
+2026-10-01T15:01:14.8779078Z     Checking runtime-transport v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\transport)
+2026-10-01T15:01:15.0564811Z    Compiling zerocopy-derive v0.8.59
+2026-10-01T15:01:15.1211555Z     Checking runtime-infrastructure v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\infrastructure)
+2026-10-01T15:01:17.6424953Z    Compiling rayon-core v1.13.0
+2026-10-01T15:01:17.8030260Z     Checking either v1.18.0
+2026-10-01T15:01:18.0056072Z     Checking ciborium-io v0.2.2
+2026-10-01T15:01:18.0583803Z     Checking plotters-backend v0.3.7
+2026-10-01T15:01:18.2296152Z     Checking plotters-svg v0.3.7
+2026-10-01T15:01:18.6802342Z     Checking itertools v0.13.0
+2026-10-01T15:01:19.9232445Z     Checking cast v0.3.0
+2026-10-01T15:01:20.0449684Z     Checking criterion-plot v0.6.0
+2026-10-01T15:01:20.2572387Z     Checking rayon v1.12.0
+2026-10-01T15:01:20.8488429Z     Checking half v2.7.1
+2026-10-01T15:01:21.1176995Z     Checking ciborium-ll v0.2.2
+2026-10-01T15:01:21.2512648Z     Checking ciborium v0.2.2
+2026-10-01T15:01:21.7040781Z     Checking plotters v0.3.7
+2026-10-01T15:01:22.1028068Z     Checking tinytemplate v1.2.1
+2026-10-01T15:01:22.2809891Z     Checking anes v0.1.6
+2026-10-01T15:01:22.4232199Z     Checking oorandom v11.1.5
+2026-10-01T15:01:22.4885944Z     Checking chrono v0.4.45
+2026-10-01T15:01:22.5494212Z     Checking criterion v0.7.0
+2026-10-01T15:01:23.3250236Z     Checking schemars v1.2.2
+2026-10-01T15:01:23.9738811Z     Checking rmcp v3.5.0
+2026-10-01T15:01:28.3520332Z     Checking local-daemon v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\local-daemon)
+2026-10-01T15:01:31.5010163Z     Checking mcp-gateway v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\mcp-gateway)
+2026-10-01T15:01:31.8091752Z     Finished `dev` profile [unoptimized] target(s) in 36.57s
+2026-10-01T15:01:32.0212929Z ##[group]Run cargo build --workspace --locked
+2026-10-01T15:01:32.0213351Z cargo build --workspace --locked
+2026-10-01T15:01:32.0279934Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T15:01:32.0280292Z env:
+2026-10-01T15:01:32.0280510Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:01:32.0280780Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:01:32.0281002Z   CARGO_TERM_COLOR: always
+2026-10-01T15:01:32.0281222Z ##[endgroup]
+2026-10-01T15:01:32.7168749Z    Compiling memchr v2.8.3
+2026-10-01T15:01:32.7175025Z    Compiling windows-sys v0.61.2
+2026-10-01T15:01:33.4664662Z    Compiling serde_core v1.0.229
+2026-10-01T15:01:35.8294676Z    Compiling pin-project-lite v0.2.17
+2026-10-01T15:01:35.8934811Z    Compiling serde v1.0.229
+2026-10-01T15:01:36.2474761Z    Compiling smallvec v1.16.2
+2026-10-01T15:01:36.4527403Z    Compiling futures-core v0.3.34
+2026-10-01T15:01:36.4838359Z    Compiling futures-sink v0.3.34
+2026-10-01T15:01:36.5532846Z    Compiling futures-channel v0.3.34
+2026-10-01T15:01:36.5731914Z    Compiling slab v0.4.12
+2026-10-01T15:01:36.7139337Z    Compiling futures-task v0.3.34
+2026-10-01T15:01:36.7630663Z    Compiling scopeguard v1.2.0
+2026-10-01T15:01:36.8228304Z    Compiling futures-io v0.3.34
+2026-10-01T15:01:36.8673401Z    Compiling lock_api v0.4.14
+2026-10-01T15:01:36.9656118Z    Compiling futures-util v0.3.34
+2026-10-01T15:01:37.0819928Z    Compiling parking_lot_core v0.9.12
+2026-10-01T15:01:37.3378822Z    Compiling parking_lot v0.12.5
+2026-10-01T15:01:37.7483443Z    Compiling getrandom v0.4.3
+2026-10-01T15:01:37.8543993Z    Compiling bytes v1.12.1
+2026-10-01T15:01:38.5274367Z    Compiling uuid v1.26.1
+2026-10-01T15:01:38.9470494Z    Compiling tracing-core v0.1.36
+2026-10-01T15:01:39.5127511Z    Compiling aho-corasick v1.1.5
+2026-10-01T15:01:39.7719376Z    Compiling thiserror v2.0.21
+2026-10-01T15:01:39.8361466Z    Compiling num-traits v0.2.19
+2026-10-01T15:01:40.5673567Z    Compiling regex-automata v0.4.18
+2026-10-01T15:01:41.5628201Z    Compiling serde_json v1.0.151
+2026-10-01T15:01:42.7297310Z    Compiling socket2 v0.6.5
+2026-10-01T15:01:43.1925429Z    Compiling mio v1.2.3
+2026-10-01T15:01:43.9365741Z    Compiling tokio v1.53.1
+2026-10-01T15:01:45.6893464Z    Compiling tracing v0.1.44
+2026-10-01T15:01:45.9018408Z    Compiling log v0.4.34
+2026-10-01T15:01:46.1016884Z    Compiling windows_x86_64_msvc v0.53.1
+2026-10-01T15:01:46.1408218Z    Compiling crossbeam-utils v0.8.23
+2026-10-01T15:01:46.6199675Z    Compiling typenum v1.20.1
+2026-10-01T15:01:47.3714010Z    Compiling bitflags v2.13.2
+2026-10-01T15:01:47.5441877Z    Compiling generic-array v0.14.7
+2026-10-01T15:01:48.1155872Z    Compiling windows-targets v0.53.5
+2026-10-01T15:01:48.1553871Z    Compiling runtime-domain v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\domain)
+2026-10-01T15:01:48.4228906Z    Compiling tokio-util v0.7.19
+2026-10-01T15:01:49.3754586Z    Compiling futures-executor v0.3.34
+2026-10-01T15:01:49.6030700Z    Compiling windows-sys v0.59.0
+2026-10-01T15:01:50.4347275Z    Compiling utf8parse v0.2.2
+2026-10-01T15:01:50.5041908Z    Compiling parking v2.2.1
+2026-10-01T15:01:50.6180968Z    Compiling anstyle v1.0.14
+2026-10-01T15:01:50.8118308Z    Compiling once_cell_polyfill v1.70.2
+2026-10-01T15:01:50.8794387Z    Compiling anstyle-wincon v3.0.11
+2026-10-01T15:01:51.0602969Z    Compiling event-listener v5.4.2
+2026-10-01T15:01:51.1797893Z    Compiling anstyle-parse v1.0.0
+2026-10-01T15:01:51.2917860Z    Compiling futures v0.3.34
+2026-10-01T15:01:51.3323367Z    Compiling runtime-ports v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\ports)
+2026-10-01T15:01:51.3457033Z    Compiling windows-sys v0.60.2
+2026-10-01T15:01:51.4855590Z    Compiling crossbeam-epoch v0.9.21
+2026-10-01T15:01:51.7985300Z    Compiling io-lifetimes v3.0.1
+2026-10-01T15:01:51.8823732Z    Compiling libc v0.2.189
+2026-10-01T15:01:51.9924204Z    Compiling io-lifetimes v2.0.4
+2026-10-01T15:01:52.0818836Z    Compiling rmp v0.8.15
+2026-10-01T15:01:52.4154764Z    Compiling tree-sitter-language v0.1.8
+2026-10-01T15:01:52.4716880Z    Compiling anstyle-query v1.1.5
+2026-10-01T15:01:52.5212900Z    Compiling winapi-util v0.1.11
+2026-10-01T15:01:52.5873969Z    Compiling is_terminal_polyfill v1.70.2
+2026-10-01T15:01:52.6438505Z    Compiling byteorder v1.5.0
+2026-10-01T15:01:52.7307080Z    Compiling colorchoice v1.0.5
+2026-10-01T15:01:52.8089807Z    Compiling zerocopy v0.7.35
+2026-10-01T15:01:52.8144416Z    Compiling anstream v1.0.0
+2026-10-01T15:01:53.1558372Z    Compiling same-file v1.0.6
+2026-10-01T15:01:53.2635309Z    Compiling io-extras v0.19.0
+2026-10-01T15:01:53.4332159Z    Compiling rmp-serde v1.3.1
+2026-10-01T15:01:53.5416482Z    Compiling fs-set-times v0.20.3
+2026-10-01T15:01:53.6645940Z    Compiling libz-sys v1.1.29
+2026-10-01T15:01:53.7260917Z    Compiling libsql-ffi v0.9.30
+2026-10-01T15:01:53.8637016Z    Compiling event-listener-strategy v0.5.4
+2026-10-01T15:01:53.9418063Z    Compiling winx v0.36.4
+2026-10-01T15:01:53.9708092Z    Compiling block-buffer v0.10.4
+2026-10-01T15:01:54.0745908Z    Compiling crypto-common v0.1.7
+2026-10-01T15:01:54.1568703Z    Compiling runtime-protocol v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\protocol)
+2026-10-01T15:01:54.4621957Z    Compiling indexmap v2.14.2
+2026-10-01T15:01:54.5287101Z    Compiling bstr v1.13.1
+2026-10-01T15:01:54.9994131Z    Compiling ipnet v2.12.2
+2026-10-01T15:01:55.1836276Z    Compiling maybe-owned v0.3.4
+2026-10-01T15:01:55.3390101Z    Compiling subtle v2.6.1
+2026-10-01T15:01:55.4705012Z    Compiling ambient-authority v0.0.2
+2026-10-01T15:01:55.4935301Z    Compiling clap_lex v1.1.1
+2026-10-01T15:01:55.5231070Z    Compiling cap-primitives v4.0.3
+2026-10-01T15:01:55.7014431Z    Compiling clap_builder v4.6.7
+2026-10-01T15:01:56.1591890Z    Compiling runtime-transport v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\transport)
+2026-10-01T15:01:56.4185056Z    Compiling ref-cast v1.0.27
+2026-10-01T15:01:56.4779369Z    Compiling globset v0.4.20
+2026-10-01T15:01:57.2067927Z    Compiling thiserror v1.0.69
+2026-10-01T15:01:57.2791541Z    Compiling digest v0.10.7
+2026-10-01T15:01:57.4407161Z    Compiling async-lock v3.4.2
+2026-10-01T15:01:57.9852315Z    Compiling libsql-sys v0.9.30
+2026-10-01T15:01:58.4061714Z    Compiling libgit2-sys v0.18.8+1.9.7
+2026-10-01T15:01:58.6886766Z    Compiling walkdir v2.5.0
+2026-10-01T15:01:59.0005710Z    Compiling portable-atomic v1.15.0
+2026-10-01T15:01:59.3594621Z    Compiling crossbeam-deque v0.8.8
+2026-10-01T15:01:59.4539770Z    Compiling crossbeam-channel v0.5.17
+2026-10-01T15:01:59.5484044Z    Compiling tracing-log v0.2.0
+2026-10-01T15:01:59.7356426Z    Compiling regex v1.13.1
+2026-10-01T15:01:59.9694427Z    Compiling matchers v0.2.0
+2026-10-01T15:02:00.0752441Z    Compiling chrono v0.4.45
+2026-10-01T15:02:00.2141819Z    Compiling sharded-slab v0.1.7
+2026-10-01T15:02:00.7285041Z    Compiling nu-ansi-term v0.50.3
+2026-10-01T15:02:01.0448369Z    Compiling thread_local v1.1.10
+2026-10-01T15:02:01.2482650Z    Compiling dyn-clone v1.0.20
+2026-10-01T15:02:01.3156257Z    Compiling cpufeatures v0.2.17
+2026-10-01T15:02:01.3495662Z    Compiling streaming-iterator v0.1.9
+2026-10-01T15:02:01.3694167Z    Compiling tagptr v0.2.0
+2026-10-01T15:02:01.4835816Z    Compiling moka v0.12.16
+2026-10-01T15:02:01.6497555Z    Compiling tree-sitter v0.25.10
+2026-10-01T15:02:02.3199175Z    Compiling sha2 v0.10.9
+2026-10-01T15:02:02.8195316Z    Compiling schemars v1.2.2
+2026-10-01T15:02:04.3917895Z    Compiling tracing-subscriber v0.3.23
+2026-10-01T15:02:04.4336161Z    Compiling ignore v0.4.33
+2026-10-01T15:02:06.0375124Z    Compiling git2 v0.21.0
+2026-10-01T15:02:06.5656130Z    Compiling libsql v0.9.30 (D:\a\remotecontroller\remotecontroller\vendor\libsql)
+2026-10-01T15:02:07.2746855Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:02:07.2748015Z    --> vendor\libsql\src\local\statement.rs:342:20
+2026-10-01T15:02:07.2748696Z     |
+2026-10-01T15:02:07.2749379Z 342 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:02:07.2751654Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:02:07.2752636Z     |                    |
+2026-10-01T15:02:07.2753325Z     |                    the lifetime is elided here
+2026-10-01T15:02:07.2753874Z     |
+2026-10-01T15:02:07.2754742Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:02:07.2755855Z     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+2026-10-01T15:02:07.2756563Z help: use `'_` for type paths
+2026-10-01T15:02:07.2757091Z     |
+2026-10-01T15:02:07.2757723Z 342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:02:07.2758556Z     |                                        ++++
+2026-10-01T15:02:07.2758934Z
+2026-10-01T15:02:07.2759454Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:02:07.2761556Z    --> vendor\libsql\src\local\impls.rs:163:16
+2026-10-01T15:02:07.2762141Z     |
+2026-10-01T15:02:07.2762688Z 163 |     fn columns(&self) -> Vec<Column> {
+2026-10-01T15:02:07.2763582Z     |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:02:07.2764713Z     |                |
+2026-10-01T15:02:07.2765411Z     |                the lifetime is elided here
+2026-10-01T15:02:07.2766046Z     |
+2026-10-01T15:02:07.2766985Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:02:07.2767952Z help: use `'_` for type paths
+2026-10-01T15:02:07.2768369Z     |
+2026-10-01T15:02:07.2768760Z 163 |     fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:02:07.2769235Z     |                                    ++++
+2026-10-01T15:02:07.2769482Z
+2026-10-01T15:02:07.2798997Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:02:07.2800542Z   --> vendor\libsql\src\statement.rs:27:16
+2026-10-01T15:02:07.2801220Z    |
+2026-10-01T15:02:07.2802211Z 27 |     fn columns(&self) -> Vec<Column>;
+2026-10-01T15:02:07.2803148Z    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:02:07.2803950Z    |                |
+2026-10-01T15:02:07.2804616Z    |                the lifetime is elided here
+2026-10-01T15:02:07.2805188Z    |
+2026-10-01T15:02:07.2806021Z    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:02:07.2806940Z help: use `'_` for type paths
+2026-10-01T15:02:07.2807451Z    |
+2026-10-01T15:02:07.2808059Z 27 |     fn columns(&self) -> Vec<Column<'_>>;
+2026-10-01T15:02:07.2808777Z    |                                    ++++
+2026-10-01T15:02:07.2809109Z
+2026-10-01T15:02:07.2809604Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:02:07.2810408Z    --> vendor\libsql\src\statement.rs:106:20
+2026-10-01T15:02:07.2810904Z     |
+2026-10-01T15:02:07.2811434Z 106 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:02:07.2812353Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:02:07.2813135Z     |                    |
+2026-10-01T15:02:07.2813773Z     |                    the lifetime is elided here
+2026-10-01T15:02:07.2814349Z     |
+2026-10-01T15:02:07.2815144Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:02:07.2816076Z help: use `'_` for type paths
+2026-10-01T15:02:07.2816534Z     |
+2026-10-01T15:02:07.2817129Z 106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:02:07.2817868Z     |                                        ++++
+2026-10-01T15:02:07.2818228Z
+2026-10-01T15:02:07.6933986Z warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+2026-10-01T15:02:07.6935001Z    Compiling clap v4.6.7
+2026-10-01T15:02:07.7573947Z    Compiling tree-sitter-python v0.25.0
+2026-10-01T15:02:07.8175182Z    Compiling tree-sitter-rust v0.24.2
+2026-10-01T15:02:07.8723524Z    Compiling winapi v0.3.9
+2026-10-01T15:02:09.1310269Z    Compiling cap-std v4.0.3
+2026-10-01T15:02:09.3611060Z    Compiling anyhow v1.0.104
+2026-10-01T15:02:09.7112739Z    Compiling runtime-application v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\application)
+2026-10-01T15:02:10.1006890Z    Compiling toml_datetime v0.6.11
+2026-10-01T15:02:10.1485589Z    Compiling toml_write v0.1.2
+2026-10-01T15:02:10.3063614Z    Compiling winnow v0.7.15
+2026-10-01T15:02:10.3191120Z    Compiling base64 v0.23.1
+2026-10-01T15:02:10.8386417Z    Compiling rmcp v3.5.0
+2026-10-01T15:02:12.8195307Z    Compiling toml_edit v0.22.27
+2026-10-01T15:02:15.8563124Z    Compiling runtime-infrastructure v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\infrastructure)
+2026-10-01T15:02:23.8360332Z    Compiling fs2 v0.4.3
+2026-10-01T15:02:23.9873300Z    Compiling mcp-gateway v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\mcp-gateway)
+2026-10-01T15:02:27.2207674Z    Compiling local-daemon v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\local-daemon)
+2026-10-01T15:02:31.8695745Z     Finished `dev` profile [unoptimized] target(s) in 59.52s
+2026-10-01T15:02:32.0091467Z ##[group]Run cargo test --workspace --locked
+2026-10-01T15:02:32.0091942Z cargo test --workspace --locked
+2026-10-01T15:02:32.0162106Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T15:02:32.0162461Z env:
+2026-10-01T15:02:32.0162684Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:02:32.0162951Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:02:32.0163166Z   CARGO_TERM_COLOR: always
+2026-10-01T15:02:32.0163385Z ##[endgroup]
+2026-10-01T15:02:32.6534867Z    Compiling num-traits v0.2.19
+2026-10-01T15:02:32.6618540Z    Compiling fastrand v2.5.0
+2026-10-01T15:02:32.8780624Z    Compiling tempfile v3.27.0
+2026-10-01T15:02:33.2792464Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:02:33.2793543Z    --> vendor\libsql\src\local\statement.rs:342:20
+2026-10-01T15:02:33.2794199Z     |
+2026-10-01T15:02:33.2794890Z 342 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:02:33.2795905Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:02:33.2796699Z     |                    |
+2026-10-01T15:02:33.2797404Z     |                    the lifetime is elided here
+2026-10-01T15:02:33.2797994Z     |
+2026-10-01T15:02:33.2798879Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:02:33.2802203Z     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+2026-10-01T15:02:33.2803250Z help: use `'_` for type paths
+2026-10-01T15:02:33.2803745Z     |
+2026-10-01T15:02:33.2804363Z 342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:02:33.2805159Z     |                                        ++++
+2026-10-01T15:02:33.2805563Z
+2026-10-01T15:02:33.2805990Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:02:33.2806835Z    --> vendor\libsql\src\local\impls.rs:163:16
+2026-10-01T15:02:33.2807349Z     |
+2026-10-01T15:02:33.2807861Z 163 |     fn columns(&self) -> Vec<Column> {
+2026-10-01T15:02:33.2808743Z     |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:02:33.2809458Z     |                |
+2026-10-01T15:02:33.2810042Z     |                the lifetime is elided here
+2026-10-01T15:02:33.2810564Z     |
+2026-10-01T15:02:33.2811351Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:02:33.2812295Z help: use `'_` for type paths
+2026-10-01T15:02:33.2812775Z     |
+2026-10-01T15:02:33.2813367Z 163 |     fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:02:33.2814128Z     |                                    ++++
+2026-10-01T15:02:33.2814475Z
+2026-10-01T15:02:33.2814954Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:02:33.2815798Z   --> vendor\libsql\src\statement.rs:27:16
+2026-10-01T15:02:33.2816303Z    |
+2026-10-01T15:02:33.2816806Z 27 |     fn columns(&self) -> Vec<Column>;
+2026-10-01T15:02:33.2817667Z    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:02:33.2818381Z    |                |
+2026-10-01T15:02:33.2822087Z    |                the lifetime is elided here
+2026-10-01T15:02:33.2822906Z    |
+2026-10-01T15:02:33.2823742Z    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:02:33.2824674Z help: use `'_` for type paths
+2026-10-01T15:02:33.2825143Z    |
+2026-10-01T15:02:33.2825717Z 27 |     fn columns(&self) -> Vec<Column<'_>>;
+2026-10-01T15:02:33.2826441Z    |                                    ++++
+2026-10-01T15:02:33.2826811Z
+2026-10-01T15:02:33.2827289Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:02:33.2828109Z    --> vendor\libsql\src\statement.rs:106:20
+2026-10-01T15:02:33.2828651Z     |
+2026-10-01T15:02:33.2829231Z 106 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:02:33.2830244Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:02:33.2831032Z     |                    |
+2026-10-01T15:02:33.2831676Z     |                    the lifetime is elided here
+2026-10-01T15:02:33.2832263Z     |
+2026-10-01T15:02:33.2833077Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:02:33.2833964Z help: use `'_` for type paths
+2026-10-01T15:02:33.2834407Z     |
+2026-10-01T15:02:33.2835015Z 106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:02:33.2835746Z     |                                        ++++
+2026-10-01T15:02:33.2836091Z
+2026-10-01T15:02:33.2836756Z warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+2026-10-01T15:02:33.2837720Z    Compiling zerocopy v0.8.59
+2026-10-01T15:02:33.4228876Z    Compiling rmp v0.8.15
+2026-10-01T15:02:33.7762583Z    Compiling rmp-serde v1.3.1
+2026-10-01T15:02:34.2024186Z    Compiling runtime-transport v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\transport)
+2026-10-01T15:02:34.4599673Z    Compiling runtime-infrastructure v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\infrastructure)
+2026-10-01T15:02:37.2265805Z    Compiling either v1.18.0
+2026-10-01T15:02:37.4211142Z    Compiling half v2.7.1
+2026-10-01T15:02:37.7229971Z    Compiling ciborium-io v0.2.2
+2026-10-01T15:02:37.7783863Z    Compiling plotters-backend v0.3.7
+2026-10-01T15:02:38.0294402Z    Compiling plotters-svg v0.3.7
+2026-10-01T15:02:38.1909718Z    Compiling ciborium-ll v0.2.2
+2026-10-01T15:02:38.3561430Z    Compiling rayon-core v1.13.0
+2026-10-01T15:02:39.0647895Z    Compiling itertools v0.13.0
+2026-10-01T15:02:40.5384574Z    Compiling cast v0.3.0
+2026-10-01T15:02:40.6824703Z    Compiling criterion-plot v0.6.0
+2026-10-01T15:02:41.0987277Z    Compiling rayon v1.12.0
+2026-10-01T15:02:43.2648578Z    Compiling ciborium v0.2.2
+2026-10-01T15:02:43.8552315Z    Compiling plotters v0.3.7
+2026-10-01T15:02:44.9915100Z    Compiling tinytemplate v1.2.1
+2026-10-01T15:02:45.4029004Z    Compiling anes v0.1.6
+2026-10-01T15:02:45.5927106Z    Compiling oorandom v11.1.5
+2026-10-01T15:02:45.6900133Z    Compiling criterion v0.7.0
+2026-10-01T15:02:45.7202539Z    Compiling chrono v0.4.45
+2026-10-01T15:02:46.9374853Z    Compiling schemars v1.2.2
+2026-10-01T15:02:48.4100478Z    Compiling rmcp v3.5.0
+2026-10-01T15:03:01.3610093Z    Compiling mcp-gateway v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\mcp-gateway)
+2026-10-01T15:03:04.1306263Z    Compiling local-daemon v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\local-daemon)
+2026-10-01T15:03:15.6974776Z    Compiling runtime-application v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\application)
+2026-10-01T15:03:16.1241979Z    Compiling runtime-ports v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\ports)
+2026-10-01T15:03:16.3074558Z    Compiling runtime-protocol v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\protocol)
+2026-10-01T15:03:16.4227554Z    Compiling runtime-domain v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\domain)
+2026-10-01T15:03:17.7720362Z     Finished `test` profile [unoptimized] target(s) in 45.45s
+2026-10-01T15:03:17.7925867Z      Running unittests src\main.rs (target\debug\deps\local_daemon-0b131ce60629e7c9.exe)
+2026-10-01T15:03:17.8049005Z
+2026-10-01T15:03:17.8049415Z running 4 tests
+2026-10-01T15:03:18.8413360Z test install::tests::rejects_hash_before_copy ... ok
+2026-10-01T15:03:20.6674223Z test host::tests::preserves_and_backups_configuration ... ok
+2026-10-01T15:03:20.7912127Z test install::tests::failed_update_preserves_verified_active_release ... ok
+2026-10-01T15:03:20.8427229Z test install::tests::install_verified_uninstall_preserves_state ... ok
+2026-10-01T15:03:20.8427836Z
+2026-10-01T15:03:20.8428349Z test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.04s
+2026-10-01T15:03:20.8428983Z
+2026-10-01T15:03:20.8452957Z      Running tests\config_security.rs (target\debug\deps\config_security-7e03f2c2dd41363c.exe)
+2026-10-01T15:03:20.8556673Z
+2026-10-01T15:03:20.8557218Z running 3 tests
+2026-10-01T15:03:20.9250263Z test refuses_missing_workspace_config_before_writing ... ok
+2026-10-01T15:03:20.9250844Z test refuses_existing_workspace_policy_config ... ok
+2026-10-01T15:03:20.9499444Z test default_config_is_initialized_in_private_state ... ok
+2026-10-01T15:03:20.9499752Z
+2026-10-01T15:03:20.9500032Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+2026-10-01T15:03:20.9500524Z
+2026-10-01T15:03:20.9521097Z      Running tests\fullstack.rs (target\debug\deps\fullstack-de2ff740d6aa8545.exe)
+2026-10-01T15:03:20.9640539Z
+2026-10-01T15:03:20.9641058Z running 5 tests
+2026-10-01T15:03:20.9642682Z test native_process_leaf_fixture ... ignored, native process fixture; invoked by crash test
+2026-10-01T15:03:20.9643696Z test native_process_tree_fixture ... ignored, native process tree fixture; invoked by crash test
+2026-10-01T15:03:22.6539601Z test abrupt_daemon_crash_kills_native_tree_and_preserves_synced_output ... ok
+2026-10-01T15:03:22.8592408Z test mcp_to_daemon_abrupt_restart_reconnect_idempotency_and_stdout ... ok
+2026-10-01T15:03:28.3235092Z test abrupt_crash_during_batch_restores_journal_before_reconnect ... ok
+2026-10-01T15:03:28.3235468Z
+2026-10-01T15:03:28.3235719Z test result: ok. 3 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 7.36s
+2026-10-01T15:03:28.3236055Z
+2026-10-01T15:03:28.3260487Z      Running tests\lifecycle.rs (target\debug\deps\lifecycle-fb8b271bb9368796.exe)
+2026-10-01T15:03:28.3362316Z
+2026-10-01T15:03:28.3362762Z running 1 test
+2026-10-01T15:03:29.4569837Z 2026-10-01T15:03:29.456661Z  INFO mcp_gateway: MCP gateway connected
+2026-10-01T15:03:29.4593358Z 2026-10-01T15:03:29.458742Z  INFO serve_inner: rmcp::service: Service initialized as server peer_info=Some(InitializeRequestParams { meta: None, protocol_version: ProtocolVersion("2024-11-05"), capabilities: ClientCapabilities { experimental: None, extensions: None, roots: None, sampling: None, elicitation: None }, client_info: Implementation { name: "native-installer-test", title: None, version: "1", description: None, icons: None, website_url: None } })
+2026-10-01T15:03:29.4599714Z 2026-10-01T15:03:29.459347Z  INFO serve_inner: rmcp::service: received notification notification=InitializedNotification(NotificationNoParam { method: InitializedNotificationMethod, extensions: Extensions })
+2026-10-01T15:03:29.4606488Z 2026-10-01T15:03:29.459966Z  INFO serve_inner: rmcp::handler::server: client initialized
+2026-10-01T15:03:29.4671191Z 2026-10-01T15:03:29.466780Z  INFO serve_inner: rmcp::service: input stream terminated
+2026-10-01T15:03:29.4676022Z 2026-10-01T15:03:29.466862Z  INFO serve_inner: rmcp::service: serve finished quit_reason=Closed
+2026-10-01T15:03:31.3355365Z Uninstall scheduled after this executable exits; result: \\?\C:\Users\runneradmin\AppData\Local\Temp\.tmpUVFpLJ\profile\uninstall-status.json
+2026-10-01T15:03:31.5454376Z test installed_connect_bootstraps_real_daemon_and_mcp ... ok
+2026-10-01T15:03:31.5454730Z
+2026-10-01T15:03:31.5455002Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.21s
+2026-10-01T15:03:31.5455325Z
+2026-10-01T15:03:31.5474674Z      Running unittests src\main.rs (target\debug\deps\mcp_gateway-cae0ade4aa11fe4a.exe)
+2026-10-01T15:03:31.5575407Z
+2026-10-01T15:03:31.5575946Z running 0 tests
+2026-10-01T15:03:31.5576217Z
+2026-10-01T15:03:31.5576613Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:03:31.5577166Z
+2026-10-01T15:03:31.5595104Z      Running unittests src\lib.rs (target\debug\deps\runtime_application-b951550e7c91a473.exe)
+2026-10-01T15:03:31.5694646Z
+2026-10-01T15:03:31.5696681Z running 0 tests
+2026-10-01T15:03:31.5696953Z
+2026-10-01T15:03:31.5697372Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:03:31.5697949Z
+2026-10-01T15:03:31.5714255Z      Running unittests src\lib.rs (target\debug\deps\runtime_domain-1289687270cec1b9.exe)
+2026-10-01T15:03:31.5810833Z
+2026-10-01T15:03:31.5811435Z running 2 tests
+2026-10-01T15:03:31.5816204Z test tests::policy_never_grants_unlisted_capability ... ok
+2026-10-01T15:03:31.5816868Z test tests::terminal_operations_cannot_restart ... ok
+2026-10-01T15:03:31.5817191Z
+2026-10-01T15:03:31.5817445Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:03:31.5817777Z
+2026-10-01T15:03:31.5834743Z      Running unittests src\lib.rs (target\debug\deps\runtime_infrastructure-8221df9ece3e2c1f.exe)
+2026-10-01T15:03:31.5951566Z
+2026-10-01T15:03:31.5952031Z running 13 tests
+2026-10-01T15:03:31.6486096Z test files::integrity_tests::guarded_deletion_restores_binary_and_timestamp ... ok
+2026-10-01T15:03:31.6793015Z test files::integrity_tests::named_stream_is_rejected_without_losing_either_stream ... ok
+2026-10-01T15:03:31.6852956Z test files::integrity_tests::hidden_attribute_and_native_dacl_survive_atomic_replacement ... ok
+2026-10-01T15:03:31.7028942Z test files::integrity_tests::legacy_unprotected_dacl_survives_without_added_parent_aces ... ok
+2026-10-01T15:03:31.7272601Z test files::integrity_tests::preparation_rejects_external_binary_writer ... ok
+2026-10-01T15:03:31.7803343Z test files::integrity_tests::guarded_binary_rollback_preserves_content_and_metadata ... ok
+2026-10-01T15:03:31.8418632Z test files::integrity_tests::rollback_rejects_external_writer_without_mutating_other_files ... ok
+2026-10-01T15:03:31.8424515Z test storage::snapshot_metadata_tests::legacy_snapshot_json_decodes_without_metadata ... ok
+2026-10-01T15:03:31.8429645Z test storage::snapshot_metadata_tests::metadata_and_guard_roundtrip_through_infrastructure_dto ... ok
+2026-10-01T15:03:31.9351840Z test processes::process_spool::tests::crash_between_data_sync_and_metadata_commit_preserves_bytes ... ok
+2026-10-01T15:03:32.1581432Z test processes::process_spool::tests::capture_is_durable_before_process_exit_and_quota_is_explicit ... ok
+2026-10-01T15:03:32.4305286Z test tools::tests::poisoned_workspace_is_checked_under_mutation_lock ... ok
+2026-10-01T15:03:33.3615558Z test maintenance::tests::retention_backs_up_terminal_spool_and_preserves_running_spool ... ok
+2026-10-01T15:03:33.3616459Z
+2026-10-01T15:03:33.3616732Z test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.77s
+2026-10-01T15:03:33.3617049Z
+2026-10-01T15:03:33.3648659Z      Running tests\context_maintenance.rs (target\debug\deps\context_maintenance-0a75e30d0d64c5b7.exe)
+2026-10-01T15:03:33.3767687Z
+2026-10-01T15:03:33.3768243Z running 7 tests
+2026-10-01T15:03:33.9187620Z test backup_preserves_spools_and_never_overwrites_destination ... ok
+2026-10-01T15:03:34.3835924Z test backup_reopens_and_retention_preserves_prepared_and_workspace ... ok
+2026-10-01T15:03:34.3836802Z test process_rollups_use_real_metrics_and_raw_references ... ok
+2026-10-01T15:03:34.3848339Z test unicode_budget_never_splits_codepoint ... ok
+2026-10-01T15:03:34.8235790Z test query_options_change_selection_and_cache ... ok
+2026-10-01T15:03:35.3189081Z test only_old_rolled_back_terminal_checkpoints_are_retained_out ... ok
+2026-10-01T15:03:35.3482862Z test selected_task_precedes_unrelated_failure ... ok
+2026-10-01T15:03:35.3483153Z
+2026-10-01T15:03:35.3483426Z test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.97s
+2026-10-01T15:03:35.3483754Z
+2026-10-01T15:03:35.3509429Z      Running tests\files.rs (target\debug\deps\files-05f0b8e327bbd536.exe)
+2026-10-01T15:03:35.3622620Z
+2026-10-01T15:03:35.3623110Z running 6 tests
+2026-10-01T15:03:35.3737779Z test legacy_rollback_does_not_overwrite_external_binary_edit ... ok
+2026-10-01T15:03:35.4041176Z test oversized_ignore_policy_is_denied ... ok
+2026-10-01T15:03:35.4115712Z test atomic_write_preserves_readonly_and_timestamps ... ok
+2026-10-01T15:03:35.4224209Z test directory_link_escape_rejected ... ok
+2026-10-01T15:03:35.4345336Z test atomic_write_preserves_modified_time_root_and_nested ... ok
+2026-10-01T15:03:35.4803715Z test traversal_ignore_and_atomic_write ... ok
+2026-10-01T15:03:35.4804070Z
+2026-10-01T15:03:35.4804349Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+2026-10-01T15:03:35.4804683Z
+2026-10-01T15:03:35.4827743Z      Running tests\ipc.rs (target\debug\deps\ipc-684371491d4acf3c.exe)
+2026-10-01T15:03:35.4945684Z
+2026-10-01T15:03:35.4947006Z running 1 test
+2026-10-01T15:03:36.7418471Z test local_ipc_round_trip_progress_version_and_reconnect ... ok
+2026-10-01T15:03:36.7418864Z
+2026-10-01T15:03:36.7419182Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.25s
+2026-10-01T15:03:36.7419576Z
+2026-10-01T15:03:36.7447843Z      Running tests\kernel.rs (target\debug\deps\kernel-8b3d607e0de4d560.exe)
+2026-10-01T15:03:36.7572309Z
+2026-10-01T15:03:36.7573603Z running 13 tests
+2026-10-01T15:03:37.7905210Z test case_variant_cannot_modify_ignore_policy ... ok
+2026-10-01T15:03:37.8215342Z test cancellation_does_not_hide_cleanup_failure ... ok
+2026-10-01T15:03:37.8632984Z test cancellation_after_commit_preserves_successful_result ... ok
+2026-10-01T15:03:39.0284787Z test duplicate_mutation_executes_once_and_conflicting_payload_is_rejected ... ok
+2026-10-01T15:03:39.8009059Z test binary_checkpoint_and_raw_event_are_restorable ... ok
+2026-10-01T15:03:40.0247125Z test checkpoint_rollback_restores_existing_and_removes_created_files ... ok
+2026-10-01T15:03:40.1875951Z test policy_and_payload_validation_fail_closed ... ok
+2026-10-01T15:03:40.4360442Z test partial_batch_failure_restores_earlier_files ... ok
+2026-10-01T15:03:40.8246151Z test explicit_snapshot_rolls_back_only_recorded_runtime_changes ... ok
+2026-10-01T15:03:41.3542080Z test restart_restores_prepared_journal_and_marks_interrupted_operation ... ok
+2026-10-01T15:03:41.9543670Z test rollback_refuses_external_changes_and_preserves_their_bytes ... ok
+2026-10-01T15:03:41.9955239Z test versioned_context_never_reuses_pre_mutation_projection ... ok
+2026-10-01T15:03:42.6158904Z test rust_ast_query_and_git_read_tools_are_real ... ok
+2026-10-01T15:03:42.6159702Z
+2026-10-01T15:03:42.6160619Z test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.86s
+2026-10-01T15:03:42.6160960Z
+2026-10-01T15:03:42.6212699Z      Running tests\processes.rs (target\debug\deps\processes-d5e29b24cc5608e6.exe)
+2026-10-01T15:03:42.6411954Z
+2026-10-01T15:03:42.6412706Z running 9 tests
+2026-10-01T15:03:42.6702716Z test executable_fingerprint_has_a_measured_runtime_cost ... ok
+2026-10-01T15:03:42.6712287Z test legacy_rule_deserialization_does_not_silently_approve_unconfined_execution ... ok
+2026-10-01T15:03:43.3281849Z test executable_changed_after_local_approval_is_denied ... ok
+2026-10-01T15:03:44.3577272Z test deadline_times_out_child_and_unlisted_arguments_are_denied ... ok
+2026-10-01T15:03:44.3578955Z test sleeper ... ignored, process fixture, intentionally sleeps until killed
+2026-10-01T15:03:44.3579844Z test tree_parent ... ignored, process tree fixture
+2026-10-01T15:03:44.4161283Z test cancellation_terminates_descendant_tree ... ok
+2026-10-01T15:03:44.4875567Z test operation_cancellation_kills_child_and_records_cancelled ... ok
+2026-10-01T15:03:44.9119190Z test scheduler_applies_backpressure_to_live_operations ... ok
+2026-10-01T15:03:44.9119522Z
+2026-10-01T15:03:44.9119778Z test result: ok. 7 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 2.27s
+2026-10-01T15:03:44.9120098Z
+2026-10-01T15:03:44.9151673Z      Running tests\storage.rs (target\debug\deps\storage-4b686a5e5842c960.exe)
+2026-10-01T15:03:44.9281590Z
+2026-10-01T15:03:44.9282148Z running 2 tests
+2026-10-01T15:03:45.7435668Z test operation_claim_is_durable_and_unique ... ok
+2026-10-01T15:04:33.1944189Z test causal_query_repeated_large_selection_is_ordered_bounded_and_scoped ... ok
+2026-10-01T15:04:33.1944602Z
+2026-10-01T15:04:33.1944887Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 48.27s
+2026-10-01T15:04:33.1945261Z
+2026-10-01T15:04:33.1966961Z      Running tests\stress.rs (target\debug\deps\stress-f8b77081243a18d5.exe)
+2026-10-01T15:04:33.2085860Z
+2026-10-01T15:04:33.2086455Z running 1 test
+2026-10-01T15:05:33.2099219Z test ten_thousand_files_thousand_edits_cancel_rollback_restart has been running for over 60 seconds
+2026-10-01T15:05:58.3965687Z test ten_thousand_files_thousand_edits_cancel_rollback_restart ... ok
+2026-10-01T15:05:58.3966080Z
+2026-10-01T15:05:58.3966376Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 85.19s
+2026-10-01T15:05:58.3966718Z
+2026-10-01T15:05:58.4008073Z      Running unittests src\lib.rs (target\debug\deps\runtime_ports-c83074cd5d1aed0d.exe)
+2026-10-01T15:05:58.4109926Z
+2026-10-01T15:05:58.4110379Z running 0 tests
+2026-10-01T15:05:58.4110612Z
+2026-10-01T15:05:58.4110943Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:58.4111343Z
+2026-10-01T15:05:58.4128007Z      Running unittests src\lib.rs (target\debug\deps\runtime_protocol-147eaa924cebd156.exe)
+2026-10-01T15:05:58.4224569Z
+2026-10-01T15:05:58.4225129Z running 0 tests
+2026-10-01T15:05:58.4227851Z
+2026-10-01T15:05:58.4229385Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:58.4230051Z
+2026-10-01T15:05:58.4245955Z      Running unittests src\lib.rs (target\debug\deps\runtime_transport-0ef9dfc5a58fce17.exe)
+2026-10-01T15:05:58.4343314Z
+2026-10-01T15:05:58.4343823Z running 0 tests
+2026-10-01T15:05:58.4344077Z
+2026-10-01T15:05:58.4344433Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:58.4344835Z
+2026-10-01T15:05:58.4361263Z      Running tests\authentication.rs (target\debug\deps\authentication-a5b313692b9d48c3.exe)
+2026-10-01T15:05:58.4460523Z
+2026-10-01T15:05:58.4460896Z running 1 test
+2026-10-01T15:05:58.4473549Z test wrong_secret_and_wrong_version_are_rejected ... ok
+2026-10-01T15:05:58.4474185Z
+2026-10-01T15:05:58.4474643Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:58.4475015Z
+2026-10-01T15:05:58.4494173Z      Running tests\framing.rs (target\debug\deps\framing-cc5f532904dfb82c.exe)
+2026-10-01T15:05:58.4593478Z
+2026-10-01T15:05:58.4594205Z running 2 tests
+2026-10-01T15:05:58.4606631Z test excessive_frame_rejected_before_allocation ... ok
+2026-10-01T15:05:58.4607352Z test framed_message_round_trip ... ok
+2026-10-01T15:05:58.4607709Z
+2026-10-01T15:05:58.4608129Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:58.4608693Z
+2026-10-01T15:05:58.4626938Z    Doc-tests runtime_application
+2026-10-01T15:05:58.5408516Z
+2026-10-01T15:05:58.5409069Z running 0 tests
+2026-10-01T15:05:58.5409392Z
+2026-10-01T15:05:58.5409841Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:58.5410404Z
+2026-10-01T15:05:58.5534957Z    Doc-tests runtime_domain
+2026-10-01T15:05:58.6081063Z
+2026-10-01T15:05:58.6081696Z running 0 tests
+2026-10-01T15:05:58.6081983Z
+2026-10-01T15:05:58.6082363Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:58.6082798Z
+2026-10-01T15:05:58.6523650Z    Doc-tests runtime_infrastructure
+2026-10-01T15:05:59.0043975Z
+2026-10-01T15:05:59.0044558Z running 0 tests
+2026-10-01T15:05:59.0044848Z
+2026-10-01T15:05:59.0045283Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:59.0045808Z
+2026-10-01T15:05:59.0165910Z    Doc-tests runtime_ports
+2026-10-01T15:05:59.0812543Z
+2026-10-01T15:05:59.0813105Z running 0 tests
+2026-10-01T15:05:59.0813432Z
+2026-10-01T15:05:59.0813857Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:59.0814396Z
+2026-10-01T15:05:59.1072904Z    Doc-tests runtime_protocol
+2026-10-01T15:05:59.1916549Z
+2026-10-01T15:05:59.1917124Z running 0 tests
+2026-10-01T15:05:59.1917404Z
+2026-10-01T15:05:59.1917866Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:59.1918393Z
+2026-10-01T15:05:59.2319478Z    Doc-tests runtime_transport
+2026-10-01T15:05:59.2998227Z
+2026-10-01T15:05:59.2998782Z running 0 tests
+2026-10-01T15:05:59.2999068Z
+2026-10-01T15:05:59.2999460Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-01T15:05:59.3000017Z
+2026-10-01T15:05:59.4432988Z ##[group]Run ./tools/test-libsql-patch.ps1
+2026-10-01T15:05:59.4433480Z ./tools/test-libsql-patch.ps1
+2026-10-01T15:05:59.4515290Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T15:05:59.4515690Z env:
+2026-10-01T15:05:59.4515971Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:05:59.4516286Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:05:59.4516550Z   CARGO_TERM_COLOR: always
+2026-10-01T15:05:59.4516830Z ##[endgroup]
+2026-10-01T15:05:59.9121145Z     Updating crates.io index
+2026-10-01T15:06:00.6881843Z      Locking 258 packages to latest compatible versions
+2026-10-01T15:06:00.6925160Z       Adding base64 v0.21.7 (available: v0.23.1)
+2026-10-01T15:06:00.6926485Z       Adding bincode v1.3.3 (available: v3.0.0)
+2026-10-01T15:06:00.7061347Z       Adding generic-array v0.14.7 (available: v0.14.9)
+2026-10-01T15:06:00.7102050Z       Adding http v0.2.12 (available: v1.5.0)
+2026-10-01T15:06:00.7146218Z       Adding hyper v0.14.32 (available: v1.11.1)
+2026-10-01T15:06:00.7154355Z       Adding hyper-rustls v0.25.0 (available: v0.27.10)
+2026-10-01T15:06:00.7323134Z       Adding rand v0.8.8 (available: v0.10.3)
+2026-10-01T15:06:00.7813858Z       Adding thiserror v1.0.69 (available: v2.0.21)
+2026-10-01T15:06:00.7890796Z       Adding tonic v0.11.0 (available: v0.14.6)
+2026-10-01T15:06:00.7893341Z       Adding tonic-web v0.11.0 (available: v0.14.6)
+2026-10-01T15:06:00.7895840Z       Adding tower v0.4.13 (available: v0.5.3)
+2026-10-01T15:06:00.7900065Z       Adding tower-http v0.4.4 (available: v0.7.1)
+2026-10-01T15:06:00.8771805Z       Adding worker v0.6.7 (available: v0.8.7)
+2026-10-01T15:06:00.8805387Z       Adding zerocopy v0.7.35 (available: v0.8.59)
+2026-10-01T15:06:00.8998605Z  Downloading crates ...
+2026-10-01T15:06:00.9380389Z   Downloaded lazy_static v1.5.1
+2026-10-01T15:06:00.9888776Z   Downloaded rand_chacha v0.3.1
+2026-10-01T15:06:01.0202014Z   Downloaded rand v0.8.8
+2026-10-01T15:06:01.1393999Z   Downloaded getrandom v0.2.17
+2026-10-01T15:06:01.2176796Z   Downloaded ppv-lite86 v0.2.21
+2026-10-01T15:06:01.2480648Z   Downloaded rand_core v0.6.4
+2026-10-01T15:06:01.2719997Z   Downloaded tokio-stream v0.1.19
+2026-10-01T15:06:01.4323406Z   Downloaded tokio-test v0.4.6
+2026-10-01T15:06:01.6791263Z    Compiling syn v3.0.6
+2026-10-01T15:06:01.6799034Z    Compiling windows-sys v0.61.2
+2026-10-01T15:06:04.4144767Z    Compiling serde_core v1.0.229
+2026-10-01T15:06:04.7161994Z    Compiling serde v1.0.229
+2026-10-01T15:06:04.9887650Z    Compiling lazy_static v1.5.1
+2026-10-01T15:06:06.0301554Z    Compiling cc v1.5.1
+2026-10-01T15:06:07.6842695Z    Compiling zerocopy v0.8.59
+2026-10-01T15:06:07.8829160Z    Compiling bindgen v0.66.1
+2026-10-01T15:06:08.0670944Z    Compiling bytes v1.12.1
+2026-10-01T15:06:08.7244454Z    Compiling cmake v0.1.58
+2026-10-01T15:06:09.1260085Z    Compiling futures-sink v0.3.34
+2026-10-01T15:06:09.2098123Z    Compiling futures-channel v0.3.34
+2026-10-01T15:06:13.2105477Z    Compiling tokio-macros v2.7.2
+2026-10-01T15:06:13.8973699Z    Compiling futures-macro v0.3.34
+2026-10-01T15:06:14.0103166Z    Compiling libsql-ffi v0.9.30
+2026-10-01T15:06:14.6952108Z    Compiling socket2 v0.6.5
+2026-10-01T15:06:14.8175751Z    Compiling mio v1.2.3
+2026-10-01T15:06:15.1456680Z    Compiling getrandom v0.2.17
+2026-10-01T15:06:15.2784738Z    Compiling futures-util v0.3.34
+2026-10-01T15:06:15.5582856Z    Compiling rand_core v0.6.4
+2026-10-01T15:06:15.7627149Z    Compiling tokio v1.53.1
+2026-10-01T15:06:19.6385727Z    Compiling ppv-lite86 v0.2.21
+2026-10-01T15:06:19.9789971Z    Compiling rand_chacha v0.3.1
+2026-10-01T15:06:20.4212113Z    Compiling tokio-stream v0.1.19
+2026-10-01T15:06:21.0887935Z    Compiling futures-executor v0.3.34
+2026-10-01T15:06:21.3245837Z    Compiling sharded-slab v0.1.7
+2026-10-01T15:06:21.8684501Z    Compiling nu-ansi-term v0.50.3
+2026-10-01T15:06:22.1923270Z    Compiling tempfile v3.27.0
+2026-10-01T15:06:22.5794404Z    Compiling tracing-subscriber v0.3.23
+2026-10-01T15:06:22.6004509Z    Compiling futures v0.3.34
+2026-10-01T15:06:22.6562670Z    Compiling libsql-sys v0.9.30
+2026-10-01T15:06:23.0657911Z    Compiling tokio-test v0.4.6
+2026-10-01T15:06:23.3823203Z    Compiling rand v0.8.8
+2026-10-01T15:06:24.1464016Z    Compiling async-trait v0.1.92
+2026-10-01T15:06:24.9261763Z    Compiling libsql v0.9.30 (D:\a\remotecontroller\remotecontroller\.bootstrap\libsql-regression)
+2026-10-01T15:06:25.6515407Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:06:25.6516645Z    --> ..\..\vendor\libsql\src\local\statement.rs:342:20
+2026-10-01T15:06:25.6517312Z     |
+2026-10-01T15:06:25.6517908Z 342 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:06:25.6518960Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:06:25.6521265Z     |                    |
+2026-10-01T15:06:25.6521935Z     |                    the lifetime is elided here
+2026-10-01T15:06:25.6522461Z     |
+2026-10-01T15:06:25.6523257Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:06:25.6524359Z     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+2026-10-01T15:06:25.6525079Z help: use `'_` for type paths
+2026-10-01T15:06:25.6525536Z     |
+2026-10-01T15:06:25.6526143Z 342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:06:25.6526880Z     |                                        ++++
+2026-10-01T15:06:25.6527275Z
+2026-10-01T15:06:25.6527807Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:06:25.6529286Z    --> ..\..\vendor\libsql\src\local\impls.rs:163:16
+2026-10-01T15:06:25.6529924Z     |
+2026-10-01T15:06:25.6530532Z 163 |     fn columns(&self) -> Vec<Column> {
+2026-10-01T15:06:25.6531544Z     |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:06:25.6532391Z     |                |
+2026-10-01T15:06:25.6533081Z     |                the lifetime is elided here
+2026-10-01T15:06:25.6533705Z     |
+2026-10-01T15:06:25.6534634Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:06:25.6535867Z help: use `'_` for type paths
+2026-10-01T15:06:25.6536382Z     |
+2026-10-01T15:06:25.6537017Z 163 |     fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:06:25.6537833Z     |                                    ++++
+2026-10-01T15:06:25.6538233Z
+2026-10-01T15:06:25.6560158Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:06:25.6560810Z   --> ..\..\vendor\libsql\src\statement.rs:27:16
+2026-10-01T15:06:25.6561166Z    |
+2026-10-01T15:06:25.6561503Z 27 |     fn columns(&self) -> Vec<Column>;
+2026-10-01T15:06:25.6562040Z    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:06:25.6562471Z    |                |
+2026-10-01T15:06:25.6562889Z    |                the lifetime is elided here
+2026-10-01T15:06:25.6563428Z    |
+2026-10-01T15:06:25.6564190Z    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:06:25.6565073Z help: use `'_` for type paths
+2026-10-01T15:06:25.6565551Z    |
+2026-10-01T15:06:25.6565959Z 27 |     fn columns(&self) -> Vec<Column<'_>>;
+2026-10-01T15:06:25.6566381Z    |                                    ++++
+2026-10-01T15:06:25.6566581Z
+2026-10-01T15:06:25.6566914Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:06:25.6567596Z    --> ..\..\vendor\libsql\src\statement.rs:106:20
+2026-10-01T15:06:25.6567915Z     |
+2026-10-01T15:06:25.6568230Z 106 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:06:25.6568759Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:06:25.6569213Z     |                    |
+2026-10-01T15:06:25.6569977Z     |                    the lifetime is elided here
+2026-10-01T15:06:25.6570306Z     |
+2026-10-01T15:06:25.6570817Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:06:25.6571333Z help: use `'_` for type paths
+2026-10-01T15:06:25.6571603Z     |
+2026-10-01T15:06:25.6571947Z 106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:06:25.6572434Z     |                                        ++++
+2026-10-01T15:06:25.6572657Z
+2026-10-01T15:06:26.0652238Z warning: `libsql` (lib test) generated 4 warnings (run `cargo fix --lib -p libsql --tests` to apply 4 suggestions)
+2026-10-01T15:06:26.0653030Z     Finished `test` profile [unoptimized] target(s) in 26.16s
+2026-10-01T15:06:26.1137655Z      Running unittests ..\..\vendor\libsql\src\lib.rs (target\debug\deps\libsql-8ccebf7c923688c7.exe)
+2026-10-01T15:06:26.1242612Z
+2026-10-01T15:06:26.1243053Z running 1 test
+2026-10-01T15:06:26.1251274Z test local::connection::tests::disconnect_is_idempotent_and_clears_closed_handle ... ok
+2026-10-01T15:06:26.1251711Z
+2026-10-01T15:06:26.1251964Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+2026-10-01T15:06:26.1252291Z
+2026-10-01T15:06:26.1848550Z ##[group]Run cargo bench --no-run --locked
+2026-10-01T15:06:26.1849340Z cargo bench --no-run --locked
+2026-10-01T15:06:26.1949971Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T15:06:26.1950687Z env:
+2026-10-01T15:06:26.1951062Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:06:26.1951599Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:06:26.1952046Z   CARGO_TERM_COLOR: always
+2026-10-01T15:06:26.1952525Z ##[endgroup]
+2026-10-01T15:06:27.0102102Z    Compiling proc-macro2 v1.0.107
+2026-10-01T15:06:27.0102768Z    Compiling quote v1.0.47
+2026-10-01T15:06:27.2362780Z    Compiling unicode-ident v1.0.26
+2026-10-01T15:06:27.3697141Z    Compiling windows-link v0.2.1
+2026-10-01T15:06:27.4112873Z    Compiling serde_core v1.0.229
+2026-10-01T15:06:28.3886648Z    Compiling syn v3.0.6
+2026-10-01T15:06:30.2607071Z    Compiling memchr v2.8.3
+2026-10-01T15:06:31.3335993Z    Compiling cfg-if v1.0.5
+2026-10-01T15:06:31.3723291Z    Compiling windows-sys v0.61.2
+2026-10-01T15:06:33.5993161Z    Compiling getrandom v0.4.3
+2026-10-01T15:06:33.9965497Z    Compiling syn v2.0.119
+2026-10-01T15:06:34.7595858Z    Compiling jobserver v0.1.35
+2026-10-01T15:06:35.0477573Z    Compiling serde v1.0.229
+2026-10-01T15:06:35.2900108Z    Compiling shlex v2.0.1
+2026-10-01T15:06:35.4374493Z    Compiling find-msvc-tools v0.1.14
+2026-10-01T15:06:36.3241253Z    Compiling zmij v1.0.23
+2026-10-01T15:06:36.5322529Z    Compiling cc v1.5.1
+2026-10-01T15:06:38.4712304Z    Compiling serde_derive v1.0.229
+2026-10-01T15:06:39.1344696Z    Compiling pin-project-lite v0.2.17
+2026-10-01T15:06:39.1981618Z    Compiling windows_x86_64_msvc v0.52.6
+2026-10-01T15:06:39.5975113Z    Compiling smallvec v1.16.2
+2026-10-01T15:06:39.8250115Z    Compiling parking_lot_core v0.9.12
+2026-10-01T15:06:40.2073874Z    Compiling scopeguard v1.2.0
+2026-10-01T15:06:40.9514794Z    Compiling futures-core v0.3.34
+2026-10-01T15:06:41.0550257Z    Compiling futures-sink v0.3.34
+2026-10-01T15:06:41.1350405Z    Compiling serde_json v1.0.151
+2026-10-01T15:06:41.3167956Z    Compiling futures-channel v0.3.34
+2026-10-01T15:06:41.5443635Z    Compiling lock_api v0.4.14
+2026-10-01T15:06:42.4196356Z    Compiling futures-macro v0.3.34
+2026-10-01T15:06:42.5360652Z    Compiling futures-io v0.3.34
+2026-10-01T15:06:42.6759678Z    Compiling futures-task v0.3.34
+2026-10-01T15:06:42.8089178Z    Compiling itoa v1.0.18
+2026-10-01T15:06:43.0015537Z    Compiling slab v0.4.12
+2026-10-01T15:06:43.1898218Z    Compiling thiserror v2.0.21
+2026-10-01T15:06:43.2368941Z    Compiling futures-util v0.3.34
+2026-10-01T15:06:45.8787008Z    Compiling bytes v1.12.1
+2026-10-01T15:06:46.4326429Z    Compiling parking_lot v0.12.5
+2026-10-01T15:06:46.7086526Z    Compiling uuid v1.26.1
+2026-10-01T15:06:47.2106669Z    Compiling thiserror-impl v2.0.21
+2026-10-01T15:06:47.2355444Z    Compiling autocfg v1.5.1
+2026-10-01T15:06:47.7210544Z    Compiling num-traits v0.2.19
+2026-10-01T15:06:47.8747386Z    Compiling once_cell v1.21.4
+2026-10-01T15:06:48.2035874Z    Compiling socket2 v0.6.5
+2026-10-01T15:06:48.7045533Z    Compiling mio v1.2.3
+2026-10-01T15:06:48.8866536Z    Compiling tokio-macros v2.7.2
+2026-10-01T15:06:49.5607905Z    Compiling tokio v1.53.1
+2026-10-01T15:06:52.5259275Z    Compiling glob v0.3.4
+2026-10-01T15:06:52.8706714Z    Compiling crossbeam-utils v0.8.23
+2026-10-01T15:06:53.1212569Z    Compiling clang-sys v1.9.1
+2026-10-01T15:06:53.4089490Z    Compiling windows-targets v0.52.6
+2026-10-01T15:06:53.4480377Z    Compiling tracing-core v0.1.36
+2026-10-01T15:06:54.2653630Z    Compiling aho-corasick v1.1.5
+2026-10-01T15:06:58.2558108Z    Compiling libc v0.2.189
+2026-10-01T15:06:58.6014781Z    Compiling rustix v0.38.44
+2026-10-01T15:06:58.9181302Z    Compiling regex-syntax v0.8.11
+2026-10-01T15:07:00.2424912Z    Compiling prettyplease v0.2.37
+2026-10-01T15:07:00.5815939Z    Compiling tokio-util v0.7.19
+2026-10-01T15:07:02.5833561Z    Compiling regex-automata v0.4.18
+2026-10-01T15:07:04.8526104Z    Compiling windows-sys v0.59.0
+2026-10-01T15:07:06.6048757Z    Compiling errno v0.3.14
+2026-10-01T15:07:06.7406170Z    Compiling tracing-attributes v0.1.31
+2026-10-01T15:07:08.0665381Z    Compiling async-trait v0.1.92
+2026-10-01T15:07:11.7640804Z    Compiling equivalent v1.0.2
+2026-10-01T15:07:11.8163618Z    Compiling minimal-lexical v0.2.1
+2026-10-01T15:07:12.0439054Z    Compiling crossbeam-epoch v0.9.21
+2026-10-01T15:07:12.2552224Z    Compiling bitflags v2.13.2
+2026-10-01T15:07:12.4636998Z    Compiling hashbrown v0.17.1
+2026-10-01T15:07:13.2209609Z    Compiling tree-sitter-language v0.1.8
+2026-10-01T15:07:13.4258776Z    Compiling indexmap v2.14.2
+2026-10-01T15:07:14.2949687Z    Compiling nom v7.1.3
+2026-10-01T15:07:16.1174863Z    Compiling tracing v0.1.44
+2026-10-01T15:07:17.6808277Z    Compiling home v0.5.12
+2026-10-01T15:07:17.7996083Z    Compiling runtime-domain v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\domain)
+2026-10-01T15:07:18.2371655Z    Compiling libloading v0.8.9
+2026-10-01T15:07:18.5949695Z    Compiling bindgen v0.66.1
+2026-10-01T15:07:18.8115785Z    Compiling either v1.18.0
+2026-10-01T15:07:18.8684150Z    Compiling windows_x86_64_msvc v0.53.1
+2026-10-01T15:07:19.0528049Z    Compiling pkg-config v0.3.34
+2026-10-01T15:07:19.1990391Z    Compiling version_check v0.9.5
+2026-10-01T15:07:19.4662770Z    Compiling generic-array v0.14.7
+2026-10-01T15:07:19.6477217Z    Compiling which v4.4.2
+2026-10-01T15:07:20.8567442Z    Compiling regex v1.13.1
+2026-10-01T15:07:21.2708263Z    Compiling cexpr v0.6.0
+2026-10-01T15:07:23.2807683Z    Compiling vcpkg v0.2.15
+2026-10-01T15:07:24.0202957Z    Compiling log v0.4.34
+2026-10-01T15:07:24.1786111Z    Compiling rustc-hash v1.1.0
+2026-10-01T15:07:24.2451006Z    Compiling lazycell v1.3.0
+2026-10-01T15:07:24.3241082Z    Compiling lazy_static v1.5.0
+2026-10-01T15:07:24.3827155Z    Compiling crossbeam-deque v0.8.8
+2026-10-01T15:07:24.4495826Z    Compiling shlex v1.3.0
+2026-10-01T15:07:24.6399161Z    Compiling peeking_take_while v0.1.2
+2026-10-01T15:07:24.8274805Z    Compiling libz-sys v1.1.29
+2026-10-01T15:07:25.2711543Z    Compiling runtime-ports v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\ports)
+2026-10-01T15:07:25.4413852Z    Compiling cmake v0.1.58
+2026-10-01T15:07:25.8416507Z    Compiling io-lifetimes v2.0.4
+2026-10-01T15:07:26.0739656Z    Compiling typenum v1.20.1
+2026-10-01T15:07:26.9305801Z    Compiling utf8parse v0.2.2
+2026-10-01T15:07:27.6526123Z    Compiling anstyle v1.0.14
+2026-10-01T15:07:27.8749719Z    Compiling io-lifetimes v3.0.1
+2026-10-01T15:07:28.1081460Z    Compiling once_cell_polyfill v1.70.2
+2026-10-01T15:07:28.1774811Z    Compiling anstyle-wincon v3.0.11
+2026-10-01T15:07:28.5199103Z    Compiling anstyle-parse v1.0.0
+2026-10-01T15:07:29.3436898Z    Compiling windows-targets v0.53.5
+2026-10-01T15:07:30.7917932Z    Compiling libsql-ffi v0.9.30
+2026-10-01T15:07:31.8365588Z    Compiling rmp v0.8.15
+2026-10-01T15:07:32.2761236Z    Compiling futures-executor v0.3.34
+2026-10-01T15:07:32.6322645Z    Compiling anstyle-query v1.1.5
+2026-10-01T15:07:32.7699098Z    Compiling winapi-util v0.1.11
+2026-10-01T15:07:33.0396432Z    Compiling zerocopy v0.8.59
+2026-10-01T15:07:33.3771771Z    Compiling colorchoice v1.0.5
+2026-10-01T15:07:33.4541340Z    Compiling is_terminal_polyfill v1.70.2
+2026-10-01T15:07:33.5161573Z    Compiling io-extras v0.19.0
+2026-10-01T15:07:33.7850089Z    Compiling parking v2.2.1
+2026-10-01T15:07:33.9340926Z    Compiling event-listener v5.4.2
+2026-10-01T15:07:34.3012762Z    Compiling anstream v1.0.0
+2026-10-01T15:07:34.8711358Z    Compiling same-file v1.0.6
+2026-10-01T15:07:35.0190976Z    Compiling futures v0.3.34
+2026-10-01T15:07:35.0846567Z    Compiling rmp-serde v1.3.1
+2026-10-01T15:07:35.6123139Z    Compiling windows-sys v0.60.2
+2026-10-01T15:07:38.2550591Z    Compiling libgit2-sys v0.18.8+1.9.7
+2026-10-01T15:07:39.3815506Z    Compiling runtime-protocol v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\protocol)
+2026-10-01T15:07:40.2558683Z    Compiling zerocopy-derive v0.8.59
+2026-10-01T15:07:44.6264145Z    Compiling zerocopy-derive v0.7.35
+2026-10-01T15:07:46.4154890Z    Compiling strsim v0.11.1
+2026-10-01T15:07:47.1773883Z    Compiling thiserror v1.0.69
+2026-10-01T15:07:47.4467834Z    Compiling cap-primitives v4.0.3
+2026-10-01T15:07:47.7097225Z    Compiling subtle v2.6.1
+2026-10-01T15:07:47.9206421Z    Compiling clap_lex v1.1.1
+2026-10-01T15:07:48.2562831Z    Compiling portable-atomic v1.15.0
+2026-10-01T15:07:48.8004295Z    Compiling heck v0.5.0
+2026-10-01T15:07:49.0380994Z    Compiling byteorder v1.5.0
+2026-10-01T15:07:49.3028999Z    Compiling zerocopy v0.7.35
+2026-10-01T15:07:49.9993423Z    Compiling clap_derive v4.6.7
+2026-10-01T15:07:52.8525306Z    Compiling clap_builder v4.6.7
+2026-10-01T15:08:07.8946677Z    Compiling fs-set-times v0.20.3
+2026-10-01T15:08:08.0546376Z    Compiling walkdir v2.5.0
+2026-10-01T15:08:08.6595179Z    Compiling event-listener-strategy v0.5.4
+2026-10-01T15:08:08.7653138Z    Compiling winx v0.36.4
+2026-10-01T15:08:09.3871977Z    Compiling crypto-common v0.1.7
+2026-10-01T15:08:09.5013836Z    Compiling block-buffer v0.10.4
+2026-10-01T15:08:09.6189195Z    Compiling tree-sitter v0.25.10
+2026-10-01T15:08:10.9275493Z    Compiling thiserror-impl v1.0.69
+2026-10-01T15:08:12.1813994Z    Compiling tree-sitter-python v0.25.0
+2026-10-01T15:08:12.4774215Z    Compiling tree-sitter-rust v0.24.2
+2026-10-01T15:08:12.7176732Z    Compiling bstr v1.13.1
+2026-10-01T15:08:13.4440014Z    Compiling ident_case v1.0.1
+2026-10-01T15:08:13.5365355Z    Compiling fastrand v2.5.0
+2026-10-01T15:08:13.7887534Z    Compiling rayon-core v1.13.0
+2026-10-01T15:08:13.9514848Z    Compiling ipnet v2.12.2
+2026-10-01T15:08:14.9021428Z    Compiling maybe-owned v0.3.4
+2026-10-01T15:08:15.1025777Z    Compiling ambient-authority v0.0.2
+2026-10-01T15:08:15.7367486Z    Compiling cap-std v4.0.3
+2026-10-01T15:08:16.1134401Z    Compiling darling_core v0.24.1
+2026-10-01T15:08:20.6499682Z    Compiling tempfile v3.27.0
+2026-10-01T15:08:21.4001841Z    Compiling globset v0.4.20
+2026-10-01T15:08:30.7173130Z    Compiling digest v0.10.7
+2026-10-01T15:08:30.9804677Z    Compiling async-lock v3.4.2
+2026-10-01T15:08:31.6895522Z    Compiling half v2.7.1
+2026-10-01T15:08:32.0527599Z    Compiling libsql-sys v0.9.30
+2026-10-01T15:08:32.6012376Z    Compiling clap v4.6.7
+2026-10-01T15:08:33.2832838Z    Compiling runtime-transport v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\transport)
+2026-10-01T15:08:33.7025243Z    Compiling crossbeam-channel v0.5.17
+2026-10-01T15:08:34.3864928Z    Compiling cpufeatures v0.2.17
+2026-10-01T15:08:34.4347604Z    Compiling ciborium-io v0.2.2
+2026-10-01T15:08:34.4976561Z    Compiling plotters-backend v0.3.7
+2026-10-01T15:08:35.6520255Z    Compiling ref-cast v1.0.27
+2026-10-01T15:08:35.9015877Z    Compiling tagptr v0.2.0
+2026-10-01T15:08:36.0501111Z    Compiling streaming-iterator v0.1.9
+2026-10-01T15:08:37.7256877Z    Compiling moka v0.12.16
+2026-10-01T15:08:40.3542909Z    Compiling plotters-svg v0.3.7
+2026-10-01T15:08:40.6712492Z    Compiling ciborium-ll v0.2.2
+2026-10-01T15:08:40.8890695Z    Compiling sha2 v0.10.9
+2026-10-01T15:08:41.9635674Z    Compiling libsql v0.9.30 (D:\a\remotecontroller\remotecontroller\vendor\libsql)
+2026-10-01T15:08:42.7399966Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:08:42.7401635Z    --> vendor\libsql\src\local\statement.rs:342:20
+2026-10-01T15:08:42.7402829Z     |
+2026-10-01T15:08:42.7403552Z 342 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:08:42.7406370Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:08:42.7407304Z     |                    |
+2026-10-01T15:08:42.7408000Z     |                    the lifetime is elided here
+2026-10-01T15:08:42.7408915Z     |
+2026-10-01T15:08:42.7409786Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:08:42.7411004Z     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+2026-10-01T15:08:42.7411765Z help: use `'_` for type paths
+2026-10-01T15:08:42.7412815Z     |
+2026-10-01T15:08:42.7414141Z 342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:08:42.7415225Z     |                                        ++++
+2026-10-01T15:08:42.7415707Z
+2026-10-01T15:08:42.7416401Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:08:42.7417538Z    --> vendor\libsql\src\local\impls.rs:163:16
+2026-10-01T15:08:42.7418336Z     |
+2026-10-01T15:08:42.7419073Z 163 |     fn columns(&self) -> Vec<Column> {
+2026-10-01T15:08:42.7420298Z     |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:08:42.7421437Z     |                |
+2026-10-01T15:08:42.7422331Z     |                the lifetime is elided here
+2026-10-01T15:08:42.7423530Z     |
+2026-10-01T15:08:42.7424723Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:08:42.7425791Z help: use `'_` for type paths
+2026-10-01T15:08:42.7426418Z     |
+2026-10-01T15:08:42.7427176Z 163 |     fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:08:42.7428190Z     |                                    ++++
+2026-10-01T15:08:42.7428987Z
+2026-10-01T15:08:42.7455428Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:08:42.7456403Z   --> vendor\libsql\src\statement.rs:27:16
+2026-10-01T15:08:42.7456969Z    |
+2026-10-01T15:08:42.7457613Z 27 |     fn columns(&self) -> Vec<Column>;
+2026-10-01T15:08:42.7458608Z    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:08:42.7459432Z    |                |
+2026-10-01T15:08:42.7460141Z    |                the lifetime is elided here
+2026-10-01T15:08:42.7460817Z    |
+2026-10-01T15:08:42.7461778Z    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:08:42.7462826Z help: use `'_` for type paths
+2026-10-01T15:08:42.7463355Z    |
+2026-10-01T15:08:42.7464480Z 27 |     fn columns(&self) -> Vec<Column<'_>>;
+2026-10-01T15:08:42.7465333Z    |                                    ++++
+2026-10-01T15:08:42.7465677Z
+2026-10-01T15:08:42.7466245Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:08:42.7467118Z    --> vendor\libsql\src\statement.rs:106:20
+2026-10-01T15:08:42.7467708Z     |
+2026-10-01T15:08:42.7468336Z 106 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:08:42.7469363Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:08:42.7470272Z     |                    |
+2026-10-01T15:08:42.7471003Z     |                    the lifetime is elided here
+2026-10-01T15:08:42.7471608Z     |
+2026-10-01T15:08:42.7472423Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:08:42.7473724Z help: use `'_` for type paths
+2026-10-01T15:08:42.7474217Z     |
+2026-10-01T15:08:42.7474846Z 106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:08:42.7475603Z     |                                        ++++
+2026-10-01T15:08:42.7475987Z
+2026-10-01T15:08:43.9144944Z warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+2026-10-01T15:08:44.0387188Z    Compiling ignore v0.4.33
+2026-10-01T15:08:50.6784048Z    Compiling darling_macro v0.24.1
+2026-10-01T15:08:51.0236827Z    Compiling itertools v0.13.0
+2026-10-01T15:08:52.8780926Z    Compiling runtime-application v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\application)
+2026-10-01T15:08:53.5727249Z    Compiling ref-cast-impl v1.0.27
+2026-10-01T15:08:54.1420880Z    Compiling serde_derive_internals v0.30.0
+2026-10-01T15:08:55.1301589Z    Compiling anyhow v1.0.104
+2026-10-01T15:08:55.5330813Z    Compiling cast v0.3.0
+2026-10-01T15:08:55.6903917Z    Compiling winapi v0.3.9
+2026-10-01T15:08:56.1538129Z    Compiling criterion-plot v0.6.0
+2026-10-01T15:08:56.9930697Z    Compiling sharded-slab v0.1.7
+2026-10-01T15:08:57.7902205Z    Compiling schemars_derive v1.2.2
+2026-10-01T15:08:59.5545487Z    Compiling darling v0.24.1
+2026-10-01T15:08:59.6091268Z    Compiling rayon v1.12.0
+2026-10-01T15:09:02.4165061Z    Compiling ciborium v0.2.2
+2026-10-01T15:09:03.2030014Z    Compiling plotters v0.3.7
+2026-10-01T15:09:04.6524634Z    Compiling tracing-log v0.2.0
+2026-10-01T15:09:04.9215702Z    Compiling matchers v0.2.0
+2026-10-01T15:09:05.0406109Z    Compiling chrono v0.4.45
+2026-10-01T15:09:07.3960232Z    Compiling tinytemplate v1.2.1
+2026-10-01T15:09:08.5025059Z    Compiling nu-ansi-term v0.50.3
+2026-10-01T15:09:09.0123459Z    Compiling thread_local v1.1.10
+2026-10-01T15:09:09.2698375Z    Compiling rmcp v3.5.0
+2026-10-01T15:09:09.5136884Z    Compiling anes v0.1.6
+2026-10-01T15:09:09.7439648Z    Compiling oorandom v11.1.5
+2026-10-01T15:09:09.8280631Z    Compiling dyn-clone v1.0.20
+2026-10-01T15:09:09.9312332Z    Compiling schemars v1.2.2
+2026-10-01T15:09:14.2596545Z    Compiling criterion v0.7.0
+2026-10-01T15:09:35.0544099Z    Compiling tracing-subscriber v0.3.23
+2026-10-01T15:09:39.8730725Z    Compiling rmcp-macros v3.5.0
+2026-10-01T15:09:42.8004922Z    Compiling base64 v0.23.1
+2026-10-01T15:09:43.3349574Z    Compiling pastey v0.2.3
+2026-10-01T15:09:43.8519370Z    Compiling toml_write v0.1.2
+2026-10-01T15:09:44.0711529Z    Compiling toml_datetime v0.6.11
+2026-10-01T15:09:44.3561029Z    Compiling winnow v0.7.15
+2026-10-01T15:09:46.6422256Z    Compiling toml_edit v0.22.27
+2026-10-01T15:10:19.4890366Z    Compiling git2 v0.21.0
+2026-10-01T15:10:25.3371824Z    Compiling runtime-infrastructure v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\infrastructure)
+2026-10-01T15:10:25.7163584Z    Compiling fs2 v0.4.3
+2026-10-01T15:12:12.3556201Z    Compiling local-daemon v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\local-daemon)
+2026-10-01T15:12:37.2386112Z    Compiling mcp-gateway v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\mcp-gateway)
+2026-10-01T15:13:23.9922325Z     Finished `bench` profile [optimized] target(s) in 6m 57s
+2026-10-01T15:13:24.0192259Z   Executable benches src\main.rs (target\release\deps\local_daemon-22d37f9e9437f0aa.exe)
+2026-10-01T15:13:24.0193703Z   Executable benches src\main.rs (target\release\deps\mcp_gateway-39eaed07e6324c1f.exe)
+2026-10-01T15:13:24.0194771Z   Executable benches src\lib.rs (target\release\deps\runtime_application-ea02041613d7d46f.exe)
+2026-10-01T15:13:24.0195710Z   Executable benches src\lib.rs (target\release\deps\runtime_domain-72d3e47e1179d034.exe)
+2026-10-01T15:13:24.0197924Z   Executable benches src\lib.rs (target\release\deps\runtime_infrastructure-dd7e856c5be848a1.exe)
+2026-10-01T15:13:24.0198877Z   Executable benches\runtime.rs (target\release\deps\runtime-4995365e571eee5c.exe)
+2026-10-01T15:13:24.0200331Z   Executable benches src\lib.rs (target\release\deps\runtime_ports-fcc8b4b4ea49c53c.exe)
+2026-10-01T15:13:24.0201410Z   Executable benches src\lib.rs (target\release\deps\runtime_protocol-0ac16d90ab5bec50.exe)
+2026-10-01T15:13:24.0202908Z   Executable benches src\lib.rs (target\release\deps\runtime_transport-a0ecca5d1e247f56.exe)
+2026-10-01T15:13:24.1464152Z ##[group]Run cargo bench --workspace --bench runtime --locked
+2026-10-01T15:13:24.1465054Z cargo bench --workspace --bench runtime --locked
+2026-10-01T15:13:24.1570099Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T15:13:24.1570500Z env:
+2026-10-01T15:13:24.1570765Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:13:24.1571086Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:13:24.1571370Z   CARGO_TERM_COLOR: always
+2026-10-01T15:13:24.1571643Z ##[endgroup]
+2026-10-01T15:13:25.1440753Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:13:25.1441689Z    --> vendor\libsql\src\local\statement.rs:342:20
+2026-10-01T15:13:25.1442550Z     |
+2026-10-01T15:13:25.1443151Z 342 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:13:25.1444253Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:13:25.1444927Z     |                    |
+2026-10-01T15:13:25.1445363Z     |                    the lifetime is elided here
+2026-10-01T15:13:25.1445739Z     |
+2026-10-01T15:13:25.1446287Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:13:25.1447016Z     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+2026-10-01T15:13:25.1447494Z help: use `'_` for type paths
+2026-10-01T15:13:25.1447831Z     |
+2026-10-01T15:13:25.1448235Z 342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:13:25.1448732Z     |                                        ++++
+2026-10-01T15:13:25.1449030Z
+2026-10-01T15:13:25.1449326Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:13:25.1449872Z    --> vendor\libsql\src\local\impls.rs:163:16
+2026-10-01T15:13:25.1450274Z     |
+2026-10-01T15:13:25.1450634Z 163 |     fn columns(&self) -> Vec<Column> {
+2026-10-01T15:13:25.1451219Z     |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:13:25.1451711Z     |                |
+2026-10-01T15:13:25.1452146Z     |                the lifetime is elided here
+2026-10-01T15:13:25.1452522Z     |
+2026-10-01T15:13:25.1453268Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:13:25.1453849Z help: use `'_` for type paths
+2026-10-01T15:13:25.1454179Z     |
+2026-10-01T15:13:25.1454922Z 163 |     fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:13:25.1455391Z     |                                    ++++
+2026-10-01T15:13:25.1455774Z
+2026-10-01T15:13:25.1456142Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:13:25.1456655Z   --> vendor\libsql\src\statement.rs:27:16
+2026-10-01T15:13:25.1457008Z    |
+2026-10-01T15:13:25.1457405Z 27 |     fn columns(&self) -> Vec<Column>;
+2026-10-01T15:13:25.1458393Z    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:13:25.1458900Z    |                |
+2026-10-01T15:13:25.1459375Z    |                the lifetime is elided here
+2026-10-01T15:13:25.1459754Z    |
+2026-10-01T15:13:25.1462693Z    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:13:25.1463649Z help: use `'_` for type paths
+2026-10-01T15:13:25.1464060Z    |
+2026-10-01T15:13:25.1464450Z 27 |     fn columns(&self) -> Vec<Column<'_>>;
+2026-10-01T15:13:25.1464918Z    |                                    ++++
+2026-10-01T15:13:25.1465163Z
+2026-10-01T15:13:25.1465443Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:13:25.1465994Z    --> vendor\libsql\src\statement.rs:106:20
+2026-10-01T15:13:25.1466346Z     |
+2026-10-01T15:13:25.1466704Z 106 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:13:25.1467288Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:13:25.1467795Z     |                    |
+2026-10-01T15:13:25.1468231Z     |                    the lifetime is elided here
+2026-10-01T15:13:25.1468602Z     |
+2026-10-01T15:13:25.1469136Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:13:25.1469703Z help: use `'_` for type paths
+2026-10-01T15:13:25.1470050Z     |
+2026-10-01T15:13:25.1470468Z 106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:13:25.1470968Z     |                                        ++++
+2026-10-01T15:13:25.1471193Z
+2026-10-01T15:13:25.1471626Z warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+2026-10-01T15:13:25.1472280Z     Finished `bench` profile [optimized] target(s) in 0.66s
+2026-10-01T15:13:25.1621970Z      Running benches\runtime.rs (target\release\deps\runtime-4995365e571eee5c.exe)
+2026-10-01T15:13:25.1759815Z Gnuplot not found, using plotters backend
+2026-10-01T15:13:42.8560479Z Benchmarking cache_hit
+2026-10-01T15:13:42.8560934Z Benchmarking cache_hit: Warming up for 1.0000 s
+2026-10-01T15:13:44.0448217Z Benchmarking cache_hit: Collecting 10 samples in estimated 2.0000 s (7.1M iterations)
+2026-10-01T15:13:46.0457038Z Benchmarking cache_hit: Analyzing
+2026-10-01T15:13:46.0882387Z cache_hit               time:   [280.53 ns 284.00 ns 286.44 ns]
+2026-10-01T15:13:47.7577195Z Benchmarking cache_miss
+2026-10-01T15:13:47.7577705Z Benchmarking cache_miss: Warming up for 1.0000 s
+2026-10-01T15:13:47.7577941Z
+2026-10-01T15:13:49.3669064Z Benchmarking cache_miss: Collecting 10 samples in estimated 2.0000 s (10M iterations)
+2026-10-01T15:13:51.3444674Z Benchmarking cache_miss: Analyzing
+2026-10-01T15:13:51.3804554Z cache_miss              time:   [188.17 ns 189.80 ns 191.45 ns]
+2026-10-01T15:13:51.3806049Z Found 1 outliers among 10 measurements (10.00%)
+2026-10-01T15:13:51.3806602Z   1 (10.00%) high mild
+2026-10-01T15:13:53.0485517Z Benchmarking event_insert
+2026-10-01T15:13:53.0486072Z Benchmarking event_insert: Warming up for 1.0000 s
+2026-10-01T15:13:53.0486469Z
+2026-10-01T15:13:54.7965734Z
+2026-10-01T15:13:54.7966886Z Warning: Unable to complete 10 samples in 2.0s. You may wish to increase target time to 2.5s.
+2026-10-01T15:13:54.7968002Z Benchmarking event_insert: Collecting 10 samples in estimated 2.4971 s (10 iterations)
+2026-10-01T15:13:57.4330087Z Benchmarking event_insert: Analyzing
+2026-10-01T15:13:57.4621278Z event_insert            time:   [239.27 ms 263.62 ms 287.74 ms]
+2026-10-01T15:13:58.8654162Z Benchmarking causal_query
+2026-10-01T15:13:58.8680221Z Benchmarking causal_query: Warming up for 1.0000 s
+2026-10-01T15:13:58.8680751Z
+2026-10-01T15:13:59.9021104Z Benchmarking causal_query: Collecting 10 samples in estimated 2.0081 s (990 iterations)
+2026-10-01T15:14:01.7725616Z Benchmarking causal_query: Analyzing
+2026-10-01T15:14:01.8114612Z causal_query            time:   [1.7756 ms 1.9071 ms 2.0420 ms]
+2026-10-01T15:14:01.8116398Z Found 2 outliers among 10 measurements (20.00%)
+2026-10-01T15:14:01.8116899Z   2 (20.00%) high mild
+2026-10-01T15:14:03.6024977Z Benchmarking file_scan_1000
+2026-10-01T15:14:03.6025401Z Benchmarking file_scan_1000: Warming up for 1.0000 s
+2026-10-01T15:14:03.6025694Z
+2026-10-01T15:14:05.4752528Z
+2026-10-01T15:14:05.4753569Z Warning: Unable to complete 10 samples in 2.0s. You may wish to increase target time to 3.3s or enable flat sampling.
+2026-10-01T15:14:05.4755002Z Benchmarking file_scan_1000: Collecting 10 samples in estimated 3.3225 s (55 iterations)
+2026-10-01T15:14:08.8109119Z Benchmarking file_scan_1000: Analyzing
+2026-10-01T15:14:08.8483753Z file_scan_1000          time:   [60.061 ms 60.789 ms 61.330 ms]
+2026-10-01T15:14:10.5475318Z Benchmarking batch_read_100
+2026-10-01T15:14:10.5476207Z Benchmarking batch_read_100: Warming up for 1.0000 s
+2026-10-01T15:14:10.5476653Z
+2026-10-01T15:14:11.8364524Z Benchmarking batch_read_100: Collecting 10 samples in estimated 2.2225 s (440 iterations)
+2026-10-01T15:14:14.0287867Z Benchmarking batch_read_100: Analyzing
+2026-10-01T15:14:14.0629229Z batch_read_100          time:   [4.8918 ms 4.9869 ms 5.0748 ms]
+2026-10-01T15:14:15.7632820Z
+2026-10-01T15:14:15.7652001Z Benchmarking context_compilation_128
+2026-10-01T15:14:15.7652434Z Benchmarking context_compilation_128: Warming up for 1.0000 s
+2026-10-01T15:14:17.1524410Z Benchmarking context_compilation_128: Collecting 10 samples in estimated 2.0000 s (189k iterations)
+2026-10-01T15:14:18.2310085Z Benchmarking context_compilation_128: Analyzing
+2026-10-01T15:14:18.2657548Z context_compilation_128 time:   [5.6724 µs 5.7118 µs 5.7600 µs]
+2026-10-01T15:14:18.2658210Z Found 2 outliers among 10 measurements (20.00%)
+2026-10-01T15:14:18.2658659Z   1 (10.00%) high mild
+2026-10-01T15:14:18.2658964Z   1 (10.00%) high severe
+2026-10-01T15:14:20.1342464Z
+2026-10-01T15:14:20.6287590Z Benchmarking ipc_round_trip_with_handshake
+2026-10-01T15:14:20.6288467Z Benchmarking ipc_round_trip_with_handshake: Warming up for 1.0000 s
+2026-10-01T15:14:21.8556277Z Benchmarking ipc_round_trip_with_handshake: Collecting 10 samples in estimated 2.0103 s (6710 iterations)
+2026-10-01T15:14:23.8299319Z Benchmarking ipc_round_trip_with_handshake: Analyzing
+2026-10-01T15:14:23.8636935Z ipc_round_trip_with_handshake
+2026-10-01T15:14:23.8638443Z                         time:   [289.29 µs 291.92 µs 295.53 µs]
+2026-10-01T15:14:23.8639099Z Found 2 outliers among 10 measurements (20.00%)
+2026-10-01T15:14:23.8639543Z   2 (20.00%) high severe
+2026-10-01T15:14:25.9063529Z
+2026-10-01T15:14:26.3732028Z ##[group]Run cargo test --workspace --test storage --release --locked
+2026-10-01T15:14:26.3732652Z cargo test --workspace --test storage --release --locked
+2026-10-01T15:14:26.3801038Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T15:14:26.3801636Z env:
+2026-10-01T15:14:26.3801905Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:14:26.3802228Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:14:26.3802482Z   CARGO_TERM_COLOR: always
+2026-10-01T15:14:26.3802722Z ##[endgroup]
+2026-10-01T15:14:27.0077315Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:14:27.0078381Z    --> vendor\libsql\src\local\statement.rs:342:20
+2026-10-01T15:14:27.0078985Z     |
+2026-10-01T15:14:27.0079624Z 342 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:14:27.0080695Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:14:27.0081576Z     |                    |
+2026-10-01T15:14:27.0082278Z     |                    the lifetime is elided here
+2026-10-01T15:14:27.0082908Z     |
+2026-10-01T15:14:27.0084171Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:14:27.0085352Z     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+2026-10-01T15:14:27.0086189Z help: use `'_` for type paths
+2026-10-01T15:14:27.0086696Z     |
+2026-10-01T15:14:27.0087304Z 342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:14:27.0088110Z     |                                        ++++
+2026-10-01T15:14:27.0088487Z
+2026-10-01T15:14:27.0088972Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:14:27.0089776Z    --> vendor\libsql\src\local\impls.rs:163:16
+2026-10-01T15:14:27.0090326Z     |
+2026-10-01T15:14:27.0090888Z 163 |     fn columns(&self) -> Vec<Column> {
+2026-10-01T15:14:27.0091813Z     |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:14:27.0092610Z     |                |
+2026-10-01T15:14:27.0093290Z     |                the lifetime is elided here
+2026-10-01T15:14:27.0093920Z     |
+2026-10-01T15:14:27.0094802Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:14:27.0095759Z help: use `'_` for type paths
+2026-10-01T15:14:27.0096288Z     |
+2026-10-01T15:14:27.0096947Z 163 |     fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:14:27.0097747Z     |                                    ++++
+2026-10-01T15:14:27.0098154Z
+2026-10-01T15:14:27.0098674Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:14:27.0099472Z   --> vendor\libsql\src\statement.rs:27:16
+2026-10-01T15:14:27.0100006Z    |
+2026-10-01T15:14:27.0100559Z 27 |     fn columns(&self) -> Vec<Column>;
+2026-10-01T15:14:27.0102098Z    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:14:27.0103172Z    |                |
+2026-10-01T15:14:27.0103892Z    |                the lifetime is elided here
+2026-10-01T15:14:27.0104533Z    |
+2026-10-01T15:14:27.0109321Z    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:14:27.0110741Z help: use `'_` for type paths
+2026-10-01T15:14:27.0111304Z    |
+2026-10-01T15:14:27.0111975Z 27 |     fn columns(&self) -> Vec<Column<'_>>;
+2026-10-01T15:14:27.0112786Z    |                                    ++++
+2026-10-01T15:14:27.0113515Z
+2026-10-01T15:14:27.0114012Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:14:27.0114979Z    --> vendor\libsql\src\statement.rs:106:20
+2026-10-01T15:14:27.0115575Z     |
+2026-10-01T15:14:27.0116248Z 106 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:14:27.0117297Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:14:27.0118137Z     |                    |
+2026-10-01T15:14:27.0118865Z     |                    the lifetime is elided here
+2026-10-01T15:14:27.0119958Z     |
+2026-10-01T15:14:27.0120861Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:14:27.0122193Z help: use `'_` for type paths
+2026-10-01T15:14:27.0122805Z     |
+2026-10-01T15:14:27.0123511Z 106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:14:27.0124448Z     |                                        ++++
+2026-10-01T15:14:27.0124837Z
+2026-10-01T15:14:27.0126350Z warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+2026-10-01T15:14:27.0127928Z    Compiling runtime-infrastructure v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\infrastructure)
+2026-10-01T15:14:40.8927130Z     Finished `release` profile [optimized] target(s) in 14.20s
+2026-10-01T15:14:40.9096470Z      Running tests\storage.rs (target\release\deps\storage-206b7d3b716369bd.exe)
+2026-10-01T15:14:40.9209792Z
+2026-10-01T15:14:40.9210277Z running 2 tests
+2026-10-01T15:14:42.5768477Z test operation_claim_is_durable_and_unique ... ok
+2026-10-01T15:15:40.9337276Z test causal_query_repeated_large_selection_is_ordered_bounded_and_scoped has been running for over 60 seconds
+2026-10-01T15:16:00.4605417Z test causal_query_repeated_large_selection_is_ordered_bounded_and_scoped ... ok
+2026-10-01T15:16:00.4605912Z
+2026-10-01T15:16:00.4606177Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 79.54s
+2026-10-01T15:16:00.4606550Z
+2026-10-01T15:16:00.5862863Z ##[group]Run cargo build --release --workspace --locked
+2026-10-01T15:16:00.5863410Z cargo build --release --workspace --locked
+2026-10-01T15:16:00.5934842Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T15:16:00.5935261Z env:
+2026-10-01T15:16:00.5935536Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:16:00.5935861Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:16:00.5936143Z   CARGO_TERM_COLOR: always
+2026-10-01T15:16:00.5936405Z ##[endgroup]
+2026-10-01T15:16:01.2160841Z    Compiling num-traits v0.2.19
+2026-10-01T15:16:01.2322256Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:16:01.2323278Z    --> vendor\libsql\src\local\statement.rs:342:20
+2026-10-01T15:16:01.2323885Z     |
+2026-10-01T15:16:01.2324490Z 342 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:16:01.2325593Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:16:01.2326682Z     |                    |
+2026-10-01T15:16:01.2327317Z     |                    the lifetime is elided here
+2026-10-01T15:16:01.2327858Z     |
+2026-10-01T15:16:01.2328703Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:16:01.2329737Z     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+2026-10-01T15:16:01.2330842Z help: use `'_` for type paths
+2026-10-01T15:16:01.2331305Z     |
+2026-10-01T15:16:01.2331867Z 342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:16:01.2332659Z     |                                        ++++
+2026-10-01T15:16:01.2333059Z
+2026-10-01T15:16:01.2333554Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:16:01.2334339Z    --> vendor\libsql\src\local\impls.rs:163:16
+2026-10-01T15:16:01.2334843Z     |
+2026-10-01T15:16:01.2335333Z 163 |     fn columns(&self) -> Vec<Column> {
+2026-10-01T15:16:01.2336192Z     |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:16:01.2336934Z     |                |
+2026-10-01T15:16:01.2337551Z     |                the lifetime is elided here
+2026-10-01T15:16:01.2338092Z     |
+2026-10-01T15:16:01.2338908Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:16:01.2339820Z help: use `'_` for type paths
+2026-10-01T15:16:01.2340284Z     |
+2026-10-01T15:16:01.2340868Z 163 |     fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:16:01.2341518Z     |                                    ++++
+2026-10-01T15:16:01.2341844Z
+2026-10-01T15:16:01.2342277Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:16:01.2343057Z   --> vendor\libsql\src\statement.rs:27:16
+2026-10-01T15:16:01.2343531Z    |
+2026-10-01T15:16:01.2344042Z 27 |     fn columns(&self) -> Vec<Column>;
+2026-10-01T15:16:01.2344899Z    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:16:01.2345611Z    |                |
+2026-10-01T15:16:01.2346621Z    |                the lifetime is elided here
+2026-10-01T15:16:01.2347143Z    |
+2026-10-01T15:16:01.2350660Z    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:16:01.2351887Z help: use `'_` for type paths
+2026-10-01T15:16:01.2352390Z    |
+2026-10-01T15:16:01.2353007Z 27 |     fn columns(&self) -> Vec<Column<'_>>;
+2026-10-01T15:16:01.2353804Z    |                                    ++++
+2026-10-01T15:16:01.2354185Z
+2026-10-01T15:16:01.2354685Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:16:01.2355593Z    --> vendor\libsql\src\statement.rs:106:20
+2026-10-01T15:16:01.2356152Z     |
+2026-10-01T15:16:01.2356717Z 106 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:16:01.2357678Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:16:01.2358549Z     |                    |
+2026-10-01T15:16:01.2359154Z     |                    the lifetime is elided here
+2026-10-01T15:16:01.2359696Z     |
+2026-10-01T15:16:01.2360472Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:16:01.2361286Z help: use `'_` for type paths
+2026-10-01T15:16:01.2361745Z     |
+2026-10-01T15:16:01.2362298Z 106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:16:01.2363336Z     |                                        ++++
+2026-10-01T15:16:01.2363683Z
+2026-10-01T15:16:01.2364351Z warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+2026-10-01T15:16:02.2957575Z    Compiling rmp v0.8.15
+2026-10-01T15:16:02.4006139Z    Compiling chrono v0.4.45
+2026-10-01T15:16:02.7038317Z    Compiling rmp-serde v1.3.1
+2026-10-01T15:16:03.2138630Z    Compiling runtime-transport v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\transport)
+2026-10-01T15:16:03.6032805Z    Compiling schemars v1.2.2
+2026-10-01T15:16:04.8436859Z    Compiling rmcp v3.5.0
+2026-10-01T15:16:07.7878271Z    Compiling runtime-infrastructure v0.2.0 (D:\a\remotecontroller\remotecontroller\crates\infrastructure)
+2026-10-01T15:16:34.2383546Z    Compiling mcp-gateway v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\mcp-gateway)
+2026-10-01T15:16:45.2451944Z    Compiling local-daemon v0.2.0 (D:\a\remotecontroller\remotecontroller\apps\local-daemon)
+2026-10-01T15:18:12.9106126Z     Finished `release` profile [optimized] target(s) in 2m 11s
+2026-10-01T15:18:13.0587146Z ##[group]Run $env:RUNTIME_TEST_BIN_DIR = (Join-Path $pwd 'target/release')
+2026-10-01T15:18:13.0587882Z $env:RUNTIME_TEST_BIN_DIR = (Join-Path $pwd 'target/release')
+2026-10-01T15:18:13.0588468Z cargo test --workspace --test fullstack --test lifecycle --test config_security --locked
+2026-10-01T15:18:13.0588975Z exit $LASTEXITCODE
+2026-10-01T15:18:13.0663736Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T15:18:13.0664133Z env:
+2026-10-01T15:18:13.0664395Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:18:13.0664710Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:18:13.0664978Z   CARGO_TERM_COLOR: always
+2026-10-01T15:18:13.0665248Z ##[endgroup]
+2026-10-01T15:18:13.7927190Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:18:13.7928290Z    --> vendor\libsql\src\local\statement.rs:342:20
+2026-10-01T15:18:13.7929030Z     |
+2026-10-01T15:18:13.7930421Z 342 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:18:13.7931435Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:18:13.7932232Z     |                    |
+2026-10-01T15:18:13.7932752Z     |                    the lifetime is elided here
+2026-10-01T15:18:13.7933206Z     |
+2026-10-01T15:18:13.7934052Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:18:13.7934770Z     = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+2026-10-01T15:18:13.7935267Z help: use `'_` for type paths
+2026-10-01T15:18:13.7935597Z     |
+2026-10-01T15:18:13.7935999Z 342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:18:13.7936544Z     |                                        ++++
+2026-10-01T15:18:13.7936919Z
+2026-10-01T15:18:13.7937360Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:18:13.7938266Z    --> vendor\libsql\src\local\impls.rs:163:16
+2026-10-01T15:18:13.7938770Z     |
+2026-10-01T15:18:13.7939153Z 163 |     fn columns(&self) -> Vec<Column> {
+2026-10-01T15:18:13.7939786Z     |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:18:13.7940304Z     |                |
+2026-10-01T15:18:13.7941072Z     |                the lifetime is elided here
+2026-10-01T15:18:13.7941478Z     |
+2026-10-01T15:18:13.7942019Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:18:13.7942636Z help: use `'_` for type paths
+2026-10-01T15:18:13.7942969Z     |
+2026-10-01T15:18:13.7943364Z 163 |     fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:18:13.7943863Z     |                                    ++++
+2026-10-01T15:18:13.7944198Z
+2026-10-01T15:18:13.7944657Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:18:13.7945451Z   --> vendor\libsql\src\statement.rs:27:16
+2026-10-01T15:18:13.7946025Z    |
+2026-10-01T15:18:13.7946595Z 27 |     fn columns(&self) -> Vec<Column>;
+2026-10-01T15:18:13.7947513Z    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:18:13.7948348Z    |                |
+2026-10-01T15:18:13.7951588Z    |                the lifetime is elided here
+2026-10-01T15:18:13.7952465Z    |
+2026-10-01T15:18:13.7953321Z    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:18:13.7954282Z help: use `'_` for type paths
+2026-10-01T15:18:13.7954805Z    |
+2026-10-01T15:18:13.7955364Z 27 |     fn columns(&self) -> Vec<Column<'_>>;
+2026-10-01T15:18:13.7956121Z    |                                    ++++
+2026-10-01T15:18:13.7956505Z
+2026-10-01T15:18:13.7956999Z warning: hiding a lifetime that's elided elsewhere is confusing
+2026-10-01T15:18:13.7958180Z    --> vendor\libsql\src\statement.rs:106:20
+2026-10-01T15:18:13.7958782Z     |
+2026-10-01T15:18:13.7959362Z 106 |     pub fn columns(&self) -> Vec<Column> {
+2026-10-01T15:18:13.7960342Z     |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+2026-10-01T15:18:13.7961191Z     |                    |
+2026-10-01T15:18:13.7961849Z     |                    the lifetime is elided here
+2026-10-01T15:18:13.7962469Z     |
+2026-10-01T15:18:13.7963323Z     = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+2026-10-01T15:18:13.7964261Z help: use `'_` for type paths
+2026-10-01T15:18:13.7964623Z     |
+2026-10-01T15:18:13.7965031Z 106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+2026-10-01T15:18:13.7965680Z     |                                        ++++
+2026-10-01T15:18:13.7966033Z
+2026-10-01T15:18:13.7966662Z warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+2026-10-01T15:18:13.7967711Z     Finished `test` profile [unoptimized] target(s) in 0.31s
+2026-10-01T15:18:13.8145254Z      Running tests\config_security.rs (target\debug\deps\config_security-7e03f2c2dd41363c.exe)
+2026-10-01T15:18:13.8207262Z
+2026-10-01T15:18:13.8208146Z running 3 tests
+2026-10-01T15:18:13.8544719Z test refuses_missing_workspace_config_before_writing ... ok
+2026-10-01T15:18:13.8545636Z test refuses_existing_workspace_policy_config ... ok
+2026-10-01T15:18:13.8567189Z test default_config_is_initialized_in_private_state ... ok
+2026-10-01T15:18:13.8567654Z
+2026-10-01T15:18:13.8567937Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+2026-10-01T15:18:13.8568575Z
+2026-10-01T15:18:13.8586112Z      Running tests\fullstack.rs (target\debug\deps\fullstack-de2ff740d6aa8545.exe)
+2026-10-01T15:18:13.8652320Z
+2026-10-01T15:18:13.8652711Z running 5 tests
+2026-10-01T15:18:13.8655253Z test native_process_leaf_fixture ... ignored, native process fixture; invoked by crash test
+2026-10-01T15:18:13.8656297Z test native_process_tree_fixture ... ignored, native process tree fixture; invoked by crash test
+2026-10-01T15:18:17.1696729Z test mcp_to_daemon_abrupt_restart_reconnect_idempotency_and_stdout ... ok
+2026-10-01T15:18:17.2616272Z test abrupt_daemon_crash_kills_native_tree_and_preserves_synced_output ... ok
+2026-10-01T15:18:25.4926629Z test abrupt_crash_during_batch_restores_journal_before_reconnect ... ok
+2026-10-01T15:18:25.4927030Z
+2026-10-01T15:18:25.4927311Z test result: ok. 3 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 11.63s
+2026-10-01T15:18:25.4927717Z
+2026-10-01T15:18:25.4951275Z      Running tests\lifecycle.rs (target\debug\deps\lifecycle-fb8b271bb9368796.exe)
+2026-10-01T15:18:25.5008712Z
+2026-10-01T15:18:25.5009117Z running 1 test
+2026-10-01T15:18:26.8572694Z 2026-10-01T15:18:26.856982Z  INFO mcp_gateway: MCP gateway connected
+2026-10-01T15:18:26.8588391Z 2026-10-01T15:18:26.857872Z  INFO serve_inner: rmcp::service: Service initialized as server peer_info=Some(InitializeRequestParams { meta: None, protocol_version: ProtocolVersion("2024-11-05"), capabilities: ClientCapabilities { experimental: None, extensions: None, roots: None, sampling: None, elicitation: None }, client_info: Implementation { name: "native-installer-test", title: None, version: "1", description: None, icons: None, website_url: None } })
+2026-10-01T15:18:26.8594654Z 2026-10-01T15:18:26.858169Z  INFO serve_inner: rmcp::service: received notification notification=InitializedNotification(NotificationNoParam { method: InitializedNotificationMethod, extensions: Extensions })
+2026-10-01T15:18:26.8596958Z 2026-10-01T15:18:26.858341Z  INFO serve_inner: rmcp::handler::server: client initialized
+2026-10-01T15:18:26.8610545Z 2026-10-01T15:18:26.860922Z  INFO serve_inner: rmcp::service: input stream terminated
+2026-10-01T15:18:26.8614581Z 2026-10-01T15:18:26.860966Z  INFO serve_inner: rmcp::service: serve finished quit_reason=Closed
+2026-10-01T15:18:28.4343860Z Uninstall scheduled after this executable exits; result: \\?\C:\Users\runneradmin\AppData\Local\Temp\.tmphjwBf8\profile\uninstall-status.json
+2026-10-01T15:18:28.5984444Z test installed_connect_bootstraps_real_daemon_and_mcp ... ok
+2026-10-01T15:18:28.5984902Z
+2026-10-01T15:18:28.5985315Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.10s
+2026-10-01T15:18:28.5985841Z
+2026-10-01T15:18:28.6506528Z ##[group]Run ./tools/package.ps1
+2026-10-01T15:18:28.6506955Z ./tools/package.ps1
+2026-10-01T15:18:28.6573990Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-01T15:18:28.6574390Z env:
+2026-10-01T15:18:28.6574674Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:18:28.6574994Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:18:28.6575255Z   CARGO_TERM_COLOR: always
+2026-10-01T15:18:28.6575528Z ##[endgroup]
+2026-10-01T15:18:30.9344870Z D:\a\remotecontroller\remotecontroller\tools\..\dist\local-runtime-windows-x64-0.2.0.zip
+2026-10-01T15:18:31.0185064Z ##[group]Run actions/upload-artifact@v4
+2026-10-01T15:18:31.0185501Z with:
+2026-10-01T15:18:31.0185771Z   name: runtime-windows-latest
+2026-10-01T15:18:31.0186148Z   path: dist/*.zip
+dist/*.sha256
+
+2026-10-01T15:18:31.0186447Z   if-no-files-found: warn
+2026-10-01T15:18:31.0186717Z   compression-level: 6
+2026-10-01T15:18:31.0186983Z   overwrite: false
+2026-10-01T15:18:31.0187251Z   include-hidden-files: false
+2026-10-01T15:18:31.0187520Z env:
+2026-10-01T15:18:31.0187764Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-01T15:18:31.0188064Z   CARGO_INCREMENTAL: 0
+2026-10-01T15:18:31.0188330Z   CARGO_TERM_COLOR: always
+2026-10-01T15:18:31.0188589Z ##[endgroup]
+2026-10-01T15:18:31.2259625Z (node:8764) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-01T15:18:31.2260354Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-01T15:18:31.2333504Z With the provided path, there will be 2 files uploaded
+2026-10-01T15:18:31.2338908Z Artifact name is valid!
+2026-10-01T15:18:31.2340502Z Root directory input is valid!
+2026-10-01T15:18:31.5942827Z Beginning upload of artifact content to blob storage
+2026-10-01T15:18:31.8320881Z (node:8764) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-01T15:18:32.7556499Z Uploaded bytes 6205456
+2026-10-01T15:18:32.8216771Z Finished uploading artifact content to blob storage!
+2026-10-01T15:18:32.8217808Z SHA256 digest of uploaded artifact zip is 5f35384c9fccfc152ced8d06c92f3115d49fa21763093ba57e32aa1fafe0e2f5
+2026-10-01T15:18:32.8232094Z Finalizing artifact upload
+2026-10-01T15:18:33.0845772Z Artifact runtime-windows-latest.zip successfully finalized. Artifact ID 11171504645
+2026-10-01T15:18:33.0846744Z Artifact runtime-windows-latest has been successfully uploaded! Final size is 6205456 bytes. Artifact ID is 11171504645
+2026-10-01T15:18:33.0861745Z Artifact download URL: https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/36880261171/artifacts/11171504645
+2026-10-01T15:18:33.1246365Z Post job cleanup.
+2026-10-01T15:18:33.3063364Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-01T15:18:33.3351529Z git version 2.55.0.windows.5
+2026-10-01T15:18:33.3418524Z Temporarily overriding HOME='D:\a\_temp\e4572a18-e423-4050-be07-53fbc64382c4' before making global git config changes
+2026-10-01T15:18:33.3419767Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-01T15:18:33.3429562Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\remotecontroller\remotecontroller
+2026-10-01T15:18:33.3742717Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-01T15:18:33.4060347Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-01T15:18:33.9902691Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-01T15:18:34.0169001Z http.https://github.com/.extraheader
+2026-10-01T15:18:34.0228096Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-10-01T15:18:34.0566544Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-01T15:18:34.6251044Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-01T15:18:34.6550185Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-01T15:18:35.2307825Z Cleaning up orphan processes
+2026-10-01T15:18:35.2596926Z Terminate orphan process: pid (7156) (vctip)
+2026-10-01T15:18:35.2706987Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

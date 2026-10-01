@@ -1,0 +1,32 @@
+[
+  {
+    "archive": "local-runtime-linux-x64-0.2.0.zip",
+    "bytes": 6513036,
+    "sha256": "4802490c766dfbbbcfc4556df9fa5c8d376426d7d23f6b05cf5e7b93250ce5ed",
+    "manifestVerified": true,
+    "headers": {
+      "local-daemon": "7F-45-4C-46",
+      "mcp-gateway": "7F-45-4C-46"
+    }
+  },
+  {
+    "archive": "local-runtime-macos-arm64-0.2.0.zip",
+    "bytes": 5885362,
+    "sha256": "b64d5a16551450fe4b7304b2102ac8d684ca52a25ba3724434071aa7956c6e6c",
+    "manifestVerified": true,
+    "headers": {
+      "local-daemon": "CF-FA-ED-FE",
+      "mcp-gateway": "CF-FA-ED-FE"
+    }
+  },
+  {
+    "archive": "local-runtime-windows-x64-0.2.0.zip",
+    "bytes": 7082350,
+    "sha256": "66a2f57a1cd0112a55c8af2ca5b60db4c9b6091f6569b586d27881f4924c4f84",
+    "manifestVerified": true,
+    "headers": {
+      "mcp-gateway.exe": "4D-5A-90-00",
+      "local-daemon.exe": "4D-5A-90-00"
+    }
+  }
+]
