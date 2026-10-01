@@ -926,8 +926,6 @@ dependencies = [
 [[package]]
 name = "libsql"
 version = "0.9.30"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30fe980ac5693ed1f3db490559fb578885e913a018df64af8a1a46e1959a78df"
 dependencies = [
  "async-trait",
  "bitflags",
@@ -990,7 +988,7 @@ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 
 [[package]]
 name = "local-daemon"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1001,11 +999,13 @@ dependencies = [
  "runtime-ports",
  "runtime-protocol",
  "runtime-transport",
+ "serde",
  "serde_json",
  "sha2",
  "tempfile",
  "tokio",
  "tokio-util",
+ "toml_edit",
  "tracing",
  "tracing-subscriber",
  "uuid",
@@ -1043,7 +1043,7 @@ checksum = "4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4"
 
 [[package]]
 name = "mcp-gateway"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1403,7 +1403,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-application"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "futures-util",
@@ -1417,7 +1417,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-domain"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "thiserror 2.0.21",
  "uuid",
@@ -1425,7 +1425,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-infrastructure"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "cap-std",
@@ -1458,18 +1458,19 @@ dependencies = [
 
 [[package]]
 name = "runtime-ports"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "runtime-domain",
  "serde_json",
  "thiserror 2.0.21",
+ "tokio",
  "tokio-util",
 ]
 
 [[package]]
 name = "runtime-protocol"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -1479,11 +1480,12 @@ dependencies = [
 
 [[package]]
 name = "runtime-transport"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bytes",
  "futures-util",
  "rmp-serde",
+ "runtime-ports",
  "runtime-protocol",
  "serde",
  "subtle",
@@ -1863,6 +1865,30 @@ dependencies = [
  "pin-project-lite",
  "tokio",
 ]
+
+[[package]]
+name = "toml_datetime"
+version = "0.6.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22cddaf88f4fbc13c51aebbf5f8eceb5c7c5a9da2ac40a13519eb5b0a0e8f11c"
+
+[[package]]
+name = "toml_edit"
+version = "0.22.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41fe8c660ae4257887cf66394862d21dbca4a6ddd26f04a3560410406a2f819a"
+dependencies = [
+ "indexmap",
+ "toml_datetime",
+ "toml_write",
+ "winnow",
+]
+
+[[package]]
+name = "toml_write"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
 
 [[package]]
 name = "tracing"
@@ -2341,6 +2367,15 @@ name = "windows_x86_64_msvc"
 version = "0.53.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6bbff5f0aada427a1e5a6da5f1f98158182f26556f345ac9e04d36d0ebed650"
+
+[[package]]
+name = "winnow"
+version = "0.7.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df79d97927682d2fd8adb29682d1140b343be4ac0f08fd68b7765d9c059d3945"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "winx"

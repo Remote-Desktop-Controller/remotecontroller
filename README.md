@@ -8,6 +8,11 @@ Arquitetura e critérios de evolução: [RFC-0001](docs/rfcs/0001-runtime-local.
 
 ## Executar
 
+Para usar o pacote nativo sem compilação, veja [instalar e conectar](docs/install.md).
+`local-daemon connect` inicia o daemon e o gateway; `register-host` configura o
+host MCP preservando suas configurações. Segurança e finalização v0.2:
+[matriz de evidências](docs/readiness/progress.md).
+
 Compilação de desenvolvimento requer Rust **1.98.1** e toolchain C/C++ (libSQL,
 libgit2 e tree-sitter são compilados e incorporados aos binários).
 
@@ -37,6 +42,9 @@ programas confiáveis: o gerenciador de processos não é uma sandbox do OS.
 antes de conceder essa capability. Argumentos, ambiente e cwd não são strings de shell.
 
 Configuração mínima opcional:
+
+O arquivo de `--config` deve ficar fora do workspace, inclusive quando o caminho
+usa links. O padrão é `runtime.json` na pasta privada de estado.
 
 ```json
 {"scheduler":{"queue":128,"file_reads":16,"file_writes":2,"processes":4,"cpu":2},"operation_timeout_ms":60000,"cache_capacity":256,"cache_ttl_seconds":10800}
@@ -73,11 +81,15 @@ cargo check --workspace
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo build --workspace
 cargo test --workspace
+pwsh -File tools/test-libsql-patch.ps1
 cargo bench --no-run
-cargo bench -p runtime-infrastructure --bench runtime
+cargo bench --workspace --bench runtime
 ```
 
 O build anterior ao teste fornece os dois binários para o teste fullstack.
+No Linux, instale `strace` para executar a regressão de durabilidade.
+O libSQL 0.9.30 inclui um patch local de ownership de conexão; fonte, licença,
+regressão e critério de remoção estão em [vendor/libsql/PATCH.md](vendor/libsql/PATCH.md).
 Stress padrão usa somente tempdirs: 10.000 arquivos, 1.000 edições,
 cancelamento, novo lote, rollback, restart e validação de todos os conteúdos.
 O teste `sleeper` ignorado é um fixture de processo filho, invocado pelos testes

@@ -16,8 +16,8 @@ pub async fn serve(
     let slots = Arc::new(Semaphore::new(kernel.config.ipc_connections));
     let mut clients = JoinSet::new();
     loop {
-        let permit = tokio::select! {_ = stop.cancelled()=>break,p=slots.clone().acquire_owned()=>p.map_err(|_|runtime_transport::IpcError::Unexpected)?};
-        let stream = tokio::select! {_ = stop.cancelled()=>break,r=listener.accept()=>r?};
+        let permit = tokio::select! {_ = stop.cancelled()=>break,_=kernel.shutdown.cancelled()=>break,p=slots.clone().acquire_owned()=>p.map_err(|_|runtime_transport::IpcError::Unexpected)?};
+        let stream = tokio::select! {_ = stop.cancelled()=>break,_=kernel.shutdown.cancelled()=>break,r=listener.accept()=>r?};
         let kernel = kernel.clone();
         let secret = secret.clone();
         clients.spawn(async move {
@@ -59,6 +59,7 @@ async fn connection(
         .await;
     }
     let (tx, mut rx) = mpsc::channel(kernel.config.progress_capacity);
+    let shutdown = matches!(request.payload, Request::Shutdown);
     let progress = Arc::new(ChannelProgress {
         sender: tx,
         meta: request.meta.clone(),
@@ -67,7 +68,7 @@ async fn connection(
     tokio::pin!(response);
     loop {
         tokio::select! {biased;
-            r=&mut response=>{tokio::time::timeout(Duration::from_secs(5),send(&mut stream,&Frame::Response(r))).await.map_err(|_|runtime_transport::IpcError::Deadline)??;return Ok(());},
+            r=&mut response=>{let successful=r.payload.is_ok();tokio::time::timeout(Duration::from_secs(5),send(&mut stream,&Frame::Response(r))).await.map_err(|_|runtime_transport::IpcError::Deadline)??;if shutdown&&successful{kernel.shutdown.cancel();}return Ok(());},
             Some(e)=rx.recv()=>{tokio::time::timeout(Duration::from_secs(1),send(&mut stream,&Frame::Event(e))).await.map_err(|_|runtime_transport::IpcError::Deadline)??;}
         }
     }

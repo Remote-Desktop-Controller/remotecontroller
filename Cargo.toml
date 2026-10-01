@@ -1,9 +1,13 @@
 [workspace]
 members = ["crates/domain", "crates/ports", "crates/application", "crates/protocol", "crates/transport", "crates/infrastructure", "apps/local-daemon", "apps/mcp-gateway"]
 resolver = "2"
+exclude = ["vendor/libsql"]
+
+[patch.crates-io]
+libsql = { path = "vendor/libsql" }
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT"
@@ -44,3 +48,6 @@ incremental = false
 [profile.test]
 debug = 0
 incremental = false
+
+[profile.dev.package.sha2]
+opt-level = 3

@@ -121,6 +121,9 @@ impl<S: Storage + 'static> Executor<S> {
     pub fn catalogue(&self) -> Vec<ToolMetadata> {
         self.registry.metadata()
     }
+    pub fn capabilities(&self) -> Vec<Capability> {
+        self.policy.capabilities().collect()
+    }
     pub async fn recover(&self, workspace: WorkspaceId) -> Result<usize> {
         let interrupted: Vec<_> = self
             .store
@@ -167,11 +170,7 @@ impl<S: Storage + 'static> Executor<S> {
             Err(error) => return Err(error),
         }
         let tool = self.registry.get(&op.tool)?;
-        for capability in tool.metadata().capabilities {
-            self.policy
-                .authorize(capability)
-                .map_err(|e| PortError::Policy(e.to_string()))?;
-        }
+        PermissionPort::authorize(&self.policy, &tool.metadata().capabilities)?;
         let permit = self
             .queue
             .clone()

@@ -1,0 +1,801 @@
+unix-red	Set up job	﻿2026-10-01T14:01:39.1068334Z Current runner version: '2.337.0'
+unix-red	Set up job	2026-10-01T14:01:39.1105712Z ##[group]Runner Image Provisioner
+unix-red	Set up job	2026-10-01T14:01:39.1107525Z Hosted Compute Agent
+unix-red	Set up job	2026-10-01T14:01:39.1108585Z Version: 20260901.588
+unix-red	Set up job	2026-10-01T14:01:39.1109630Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+unix-red	Set up job	2026-10-01T14:01:39.1110883Z Build Date: 2026-09-01T19:56:44Z
+unix-red	Set up job	2026-10-01T14:01:39.1112036Z Worker ID: {66ca67ce-8446-4c53-adbe-6e3a1e4a4d9e}
+unix-red	Set up job	2026-10-01T14:01:39.1113293Z Azure Region: eastus
+unix-red	Set up job	2026-10-01T14:01:39.1114628Z ##[endgroup]
+unix-red	Set up job	2026-10-01T14:01:39.1117086Z ##[group]Operating System
+unix-red	Set up job	2026-10-01T14:01:39.1118203Z Ubuntu
+unix-red	Set up job	2026-10-01T14:01:39.1119087Z 24.04.5
+unix-red	Set up job	2026-10-01T14:01:39.1120016Z LTS
+unix-red	Set up job	2026-10-01T14:01:39.1120885Z ##[endgroup]
+unix-red	Set up job	2026-10-01T14:01:39.1121761Z ##[group]Runner Image
+unix-red	Set up job	2026-10-01T14:01:39.1122884Z Image: ubuntu-24.04
+unix-red	Set up job	2026-10-01T14:01:39.1124144Z Version: 20260927.320.1
+unix-red	Set up job	2026-10-01T14:01:39.1126708Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+unix-red	Set up job	2026-10-01T14:01:39.1129791Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+unix-red	Set up job	2026-10-01T14:01:39.1131465Z ##[endgroup]
+unix-red	Set up job	2026-10-01T14:01:39.1133568Z ##[group]GITHUB_TOKEN Permissions
+unix-red	Set up job	2026-10-01T14:01:39.1137204Z Contents: read
+unix-red	Set up job	2026-10-01T14:01:39.1138223Z Metadata: read
+unix-red	Set up job	2026-10-01T14:01:39.1139145Z Packages: read
+unix-red	Set up job	2026-10-01T14:01:39.1140079Z ##[endgroup]
+unix-red	Set up job	2026-10-01T14:01:39.1143443Z Secret source: Actions
+unix-red	Set up job	2026-10-01T14:01:39.1145421Z Cache mode: write
+unix-red	Set up job	2026-10-01T14:01:39.1146970Z Prepare workflow directory
+unix-red	Set up job	2026-10-01T14:01:39.1644398Z Prepare all required actions
+unix-red	Set up job	2026-10-01T14:01:39.1700121Z Getting action download info
+unix-red	Set up job	2026-10-01T14:01:39.3771230Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+unix-red	Set up job	2026-10-01T14:01:39.4867304Z Download action repository 'dtolnay/rust-toolchain@master' (SHA:02cb101ec7c40f2c49e1d9714d64511d8e1b74de)
+unix-red	Set up job	2026-10-01T14:01:39.7248117Z Complete job name: unix-red
+unix-red	Run actions/checkout@v4	﻿2026-10-01T14:01:39.8047423Z ##[group]Run actions/checkout@v4
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8048352Z with:
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8048911Z   repository: Remote-Desktop-Controller/remotecontroller
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8053007Z   token: ***
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8053438Z   ssh-strict: true
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8054144Z   ssh-user: git
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8054602Z   persist-credentials: true
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8055093Z   clean: true
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8055540Z   sparse-checkout-cone-mode: true
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8056059Z   fetch-depth: 1
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8056483Z   fetch-tags: false
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8056927Z   show-progress: true
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8057368Z   lfs: false
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8057780Z   submodules: false
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8058227Z   set-safe-directory: true
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8058731Z   allow-unsafe-pr-checkout: false
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.8059502Z ##[endgroup]
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9071061Z Syncing repository: Remote-Desktop-Controller/remotecontroller
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9074213Z ##[group]Getting Git version info
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9075576Z Working directory is '/home/runner/work/remotecontroller/remotecontroller'
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9077449Z [command]/usr/bin/git version
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9122141Z git version 2.55.0
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9144927Z ##[endgroup]
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9159887Z Temporarily overriding HOME='/home/runner/work/_temp/3cd64a07-1ab7-48a0-b92c-5da1416b24cb' before making global git config changes
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9162175Z Adding repository directory to the temporary git global config as a safe directory
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9164833Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/remotecontroller/remotecontroller
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9225090Z Deleting the contents of '/home/runner/work/remotecontroller/remotecontroller'
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9227822Z ##[group]Initializing the repository
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9233389Z [command]/usr/bin/git init /home/runner/work/remotecontroller/remotecontroller
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9336168Z hint: Using 'master' as the name for the initial branch. This default branch name
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9338501Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9340200Z hint: to use in all of your new repositories, which will suppress this warning,
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9341569Z hint: call:
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9342238Z hint:
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9343160Z hint: 	git config --global init.defaultBranch <name>
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9344680Z hint:
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9345788Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9347605Z hint: 'development'. The just-created branch can be renamed via this command:
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9348972Z hint:
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9349796Z hint: 	git branch -m <name>
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9350672Z hint:
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9351753Z hint: Disable this message with "git config set advice.defaultBranchName false"
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9353655Z Initialized empty Git repository in /home/runner/work/remotecontroller/remotecontroller/.git/
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9357761Z [command]/usr/bin/git remote add origin https://github.com/Remote-Desktop-Controller/remotecontroller
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9410746Z ##[endgroup]
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9411996Z ##[group]Disabling automatic garbage collection
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9414251Z [command]/usr/bin/git config --local gc.auto 0
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9447711Z ##[endgroup]
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9448936Z ##[group]Setting up auth
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9454601Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9493902Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9859751Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:39.9903049Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.0151864Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.0189199Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.0421302Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.0465120Z ##[endgroup]
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.0466670Z ##[group]Fetching the repository
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.0547945Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +1037d55f98b89a40d7a9e7e9c4837cca4fd82b49:refs/remotes/origin/codex/unix-regressions-red
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3609193Z From https://github.com/Remote-Desktop-Controller/remotecontroller
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3611202Z  * [new ref]         1037d55f98b89a40d7a9e7e9c4837cca4fd82b49 -> origin/codex/unix-regressions-red
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3615564Z ##[endgroup]
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3617052Z ##[group]Determining the checkout info
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3618764Z ##[endgroup]
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3623143Z [command]/usr/bin/git sparse-checkout disable
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3679836Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3717650Z ##[group]Checking out the ref
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3723910Z [command]/usr/bin/git checkout --progress --force -B codex/unix-regressions-red refs/remotes/origin/codex/unix-regressions-red
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3868185Z Switched to a new branch 'codex/unix-regressions-red'
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3875148Z branch 'codex/unix-regressions-red' set up to track 'origin/codex/unix-regressions-red'.
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3882019Z ##[endgroup]
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3928607Z [command]/usr/bin/git log -1 --format=%H
+unix-red	Run actions/checkout@v4	2026-10-01T14:01:40.3958581Z 1037d55f98b89a40d7a9e7e9c4837cca4fd82b49
+unix-red	Run dtolnay/rust-toolchain@master	﻿2026-10-01T14:01:40.4622697Z ##[group]Run dtolnay/rust-toolchain@master
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4624111Z with:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4625159Z   toolchain: 1.98.1
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4626040Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4807923Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4889573Z ##[group]Run if [[ -z $toolchain ]]; then
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4890867Z ^[[36;1mif [[ -z $toolchain ]]; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4892773Z ^[[36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4895191Z ^[[36;1m  echo "'toolchain' is a required input" >&2^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4896362Z ^[[36;1m  exit 1^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4897641Z ^[[36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4899220Z ^[[36;1m  if [[ Linux == macOS ]]; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4901201Z ^[[36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4903230Z ^[[36;1m  else^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4905215Z ^[[36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4907013Z ^[[36;1m  fi^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4908148Z ^[[36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4910142Z ^[[36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4911897Z ^[[36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4914175Z ^[[36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4916123Z ^[[36;1melse^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4917082Z ^[[36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.4918257Z ^[[36;1mfi^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5173265Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5174892Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5175663Z   toolchain: 1.98.1
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5176480Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5335151Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=52]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5353143Z ##[start-action display=Construct rustup command line;id=__dtolnay_rust-toolchain.flags]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5406075Z ##[group]Run echo "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5408489Z ^[[36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5410871Z ^[[36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5412720Z ^[[36;1mecho "downgrade=" >> $GITHUB_OUTPUT^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5480396Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5481717Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5482490Z   targets:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5483244Z   components:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5484223Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5606920Z ##[end-action id=__dtolnay_rust-toolchain.flags;outcome=success;conclusion=success;duration_ms=25]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5613994Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5655357Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5657098Z ^[[36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5721545Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5722805Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5835708Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=21]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5842175Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5892843Z ##[group]Run if ! command -v rustup &>/dev/null; then
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5894702Z ^[[36;1mif ! command -v rustup &>/dev/null; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5897544Z ^[[36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5900173Z ^[[36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5901259Z ^[[36;1mfi^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5965213Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5966464Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5967226Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.5968174Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6073243Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=success;conclusion=success;duration_ms=22]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6080239Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6095838Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6112048Z ##[start-action display=rustup toolchain install 1.98.1;id=__dtolnay_rust-toolchain.__run_4]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6152256Z ##[group]Run rustup toolchain install 1.98.1 --profile minimal --no-self-update --force-non-host
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6154804Z ^[[36;1mrustup toolchain install 1.98.1 --profile minimal --no-self-update --force-non-host^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6218185Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6219405Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6220146Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6221125Z   RUSTUP_PERMIT_COPY_RENAME: 1
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:40.6222018Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:41.2254290Z info: syncing channel updates for 1.98.1-x86_64-unknown-linux-gnu
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:41.4685539Z info: latest update on 2026-09-03 for version 1.98.1 (48a229cea 2026-09-01)
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:41.4688085Z info: downloading 3 components
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8470422Z
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8540777Z   1.98.1-x86_64-unknown-linux-gnu installed - rustc 1.98.1 (48a229cea 2026-09-01)
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8541512Z
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8598738Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=8248]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8607360Z ##[start-action display=rustup default 1.98.1;id=__dtolnay_rust-toolchain.__run_5]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8631961Z ##[group]Run rustup default 1.98.1 --force-non-host
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8632404Z ^[[36;1mrustup default 1.98.1 --force-non-host^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8697919Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8698329Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8698584Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8698890Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8824238Z info: using existing install for 1.98.1-x86_64-unknown-linux-gnu
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8830614Z info: default toolchain set to 1.98.1-x86_64-unknown-linux-gnu
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8831187Z
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8896525Z   1.98.1-x86_64-unknown-linux-gnu unchanged - rustc 1.98.1 (48a229cea 2026-09-01)
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8897312Z
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8898569Z info: note that the toolchain '1.98.1-x86_64-unknown-linux-gnu' is currently in use (overridden by '/home/runner/work/remotecontroller/remotecontroller/rust-toolchain.toml')
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8913133Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=30]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8916462Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8939816Z ##[group]Run DATE=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8940732Z ^[[36;1mDATE=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8941432Z ^[[36;1mHASH=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-hash: //p')^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.8941988Z ^[[36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9006420Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9006985Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9007248Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9007549Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9355110Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=43]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9358353Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9506102Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9506853Z ^[[36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9507494Z ^[[36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9508060Z ^[[36;1mfi^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9586952Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9587410Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9587667Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9587974Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9694899Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=33]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9697507Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9729003Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9729433Z ^[[36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9729823Z ^[[36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9730165Z ^[[36;1mfi^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9791968Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9792369Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9792623Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9792932Z   CARGO_INCREMENTAL: 0
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9793204Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9899235Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=20]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9901807Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9925681Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9926300Z ^[[36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9927073Z ^[[36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9927879Z ^[[36;1m  if rustc +1.98.1 --version --verbose | grep -q '^release: 1\.6[89]\.'; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9928505Z ^[[36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9929102Z ^[[36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9929643Z ^[[36;1m  elif rustc +1.98.1 --version --verbose | grep -q '^release: 1\.6[67]\.'; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9930255Z ^[[36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9930839Z ^[[36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9931241Z ^[[36;1m  fi^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9931483Z ^[[36;1mfi^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9994544Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9994941Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9995197Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9995505Z   CARGO_INCREMENTAL: 0
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9995773Z   CARGO_TERM_COLOR: always
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:48.9996047Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0355211Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=45]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0358329Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0380940Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0381841Z ^[[36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0382697Z ^[[36;1mif rustc +1.98.1 --version --verbose | grep -q '^release: 1\.7[01]\.'; then^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0383332Z ^[[36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0383957Z ^[[36;1mfi^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0452743Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0453145Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0453422Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0454018Z   CARGO_INCREMENTAL: 0
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0454314Z   CARGO_TERM_COLOR: always
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0454602Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0950293Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=59]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0955447Z ##[start-action display=rustc +1.98.1 --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0976930Z ##[group]Run rustc +1.98.1 --version --verbose
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.0977340Z ^[[36;1mrustc +1.98.1 --version --verbose^[[0m
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1046342Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1046814Z env:
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1047086Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1047397Z   CARGO_INCREMENTAL: 0
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1047682Z   CARGO_TERM_COLOR: always
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1047963Z ##[endgroup]
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1367094Z rustc 1.98.1 (48a229cea 2026-09-01)
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1367810Z binary: rustc
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1368382Z commit-hash: 48a229ceaefd4985c50990b14116b6d856af0985
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1369058Z commit-date: 2026-09-01
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1369609Z host: x86_64-unknown-linux-gnu
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1370138Z release: 1.98.1
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1370611Z LLVM version: 22.1.8
+unix-red	Run dtolnay/rust-toolchain@master	2026-10-01T14:01:49.1387982Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=43]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	﻿2026-10-01T14:01:49.1452686Z ##[group]Run sudo apt-get update && sudo apt-get install -y strace
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:49.1453262Z ^[[36;1msudo apt-get update && sudo apt-get install -y strace^[[0m
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:49.1521128Z shell: /usr/bin/bash -e {0}
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:49.1521458Z env:
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:49.1521717Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:49.1522025Z   CARGO_INCREMENTAL: 0
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:49.1522310Z   CARGO_TERM_COLOR: always
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:49.1522583Z ##[endgroup]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.2427278Z Get:1 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.3087902Z Get:2 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.3267222Z Hit:3 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.3278441Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.3346196Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.3392428Z Get:6 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.5967807Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [509 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.7517079Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1359 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.7625004Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [303 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.7640177Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [181 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.7658301Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1699 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.7764218Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [341 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.7786169Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [388 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.7787637Z Get:17 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [456 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.7814960Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1717 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.7891302Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [393 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.7917976Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.8122841Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [5760 B]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.8547656Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [12.6 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.8638533Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1069 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.8701644Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [221 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.8720373Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [46.4 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.8733217Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1216 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.8799076Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [244 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.8818909Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [76.3 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.8832183Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1566 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:50.8910934Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [361 kB]
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:01:59.2795341Z Fetched 12.5 MB in 2s (6831 kB/s)
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:02:00.1326297Z Reading package lists...
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:02:00.1629611Z Reading package lists...
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:02:00.3452213Z Building dependency tree...
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:02:00.3459714Z Reading state information...
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:02:00.5240207Z strace is already the newest version (6.8-0ubuntu2).
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:02:00.5240888Z strace set to manually installed.
+unix-red	Run sudo apt-get update && sudo apt-get install -y strace	2026-10-01T14:02:00.5241913Z 0 upgraded, 0 newly installed, 0 to remove and 24 not upgraded.
+unix-red	Verify directory durability before retention	﻿2026-10-01T14:02:00.5288321Z ##[group]Run cargo test -p runtime-infrastructure --lib retention_directory_sync_order_is_durable --locked -- --nocapture
+unix-red	Verify directory durability before retention	2026-10-01T14:02:00.5289220Z ^[[36;1mcargo test -p runtime-infrastructure --lib retention_directory_sync_order_is_durable --locked -- --nocapture^[[0m
+unix-red	Verify directory durability before retention	2026-10-01T14:02:00.5351670Z shell: /usr/bin/bash -e {0}
+unix-red	Verify directory durability before retention	2026-10-01T14:02:00.5351930Z env:
+unix-red	Verify directory durability before retention	2026-10-01T14:02:00.5352130Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Verify directory durability before retention	2026-10-01T14:02:00.5352393Z   CARGO_INCREMENTAL: 0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:00.5352615Z   CARGO_TERM_COLOR: always
+unix-red	Verify directory durability before retention	2026-10-01T14:02:00.5352837Z ##[endgroup]
+unix-red	Verify directory durability before retention	2026-10-01T14:02:00.5967790Z info: syncing channel updates for 1.98.1-x86_64-unknown-linux-gnu
+unix-red	Verify directory durability before retention	2026-10-01T14:02:00.6851097Z info: latest update on 2026-09-03 for version 1.98.1 (48a229cea 2026-09-01)
+unix-red	Verify directory durability before retention	2026-10-01T14:02:00.6978825Z info: downloading 2 components
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.3873973Z ^[[1m^[[92m    Updating^[[0m crates.io index
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.8437313Z ^[[1m^[[92m Downloading^[[0m crates ...
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.8883914Z ^[[1m^[[92m  Downloaded^[[0m anes v0.1.6
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.8918895Z ^[[1m^[[92m  Downloaded^[[0m anstyle v1.0.14
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.8936018Z ^[[1m^[[92m  Downloaded^[[0m async-lock v3.4.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.8963363Z ^[[1m^[[92m  Downloaded^[[0m rustix-linux-procfs v0.1.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.8976558Z ^[[1m^[[92m  Downloaded^[[0m aho-corasick v1.1.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9054763Z ^[[1m^[[92m  Downloaded^[[0m itertools v0.13.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9145236Z ^[[1m^[[92m  Downloaded^[[0m which v4.4.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9161001Z ^[[1m^[[92m  Downloaded^[[0m ambient-authority v0.0.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9178072Z ^[[1m^[[92m  Downloaded^[[0m async-trait v0.1.92
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9229051Z ^[[1m^[[92m  Downloaded^[[0m streaming-iterator v0.1.9
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9246920Z ^[[1m^[[92m  Downloaded^[[0m tempfile v3.27.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9285407Z ^[[1m^[[92m  Downloaded^[[0m futures-util v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9456826Z ^[[1m^[[92m  Downloaded^[[0m subtle v2.6.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9470816Z ^[[1m^[[92m  Downloaded^[[0m plotters-svg v0.3.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9480474Z ^[[1m^[[92m  Downloaded^[[0m signal-hook-registry v1.4.8
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9495896Z ^[[1m^[[92m  Downloaded^[[0m same-file v1.0.6
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9518780Z ^[[1m^[[92m  Downloaded^[[0m shlex v1.3.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9536783Z ^[[1m^[[92m  Downloaded^[[0m slab v0.4.12
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9556127Z ^[[1m^[[92m  Downloaded^[[0m tagptr v0.2.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9575020Z ^[[1m^[[92m  Downloaded^[[0m proc-macro2 v1.0.107
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9620267Z ^[[1m^[[92m  Downloaded^[[0m generic-array v0.14.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9643639Z ^[[1m^[[92m  Downloaded^[[0m shlex v2.0.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9657846Z ^[[1m^[[92m  Downloaded^[[0m thiserror v2.0.21
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9731185Z ^[[1m^[[92m  Downloaded^[[0m tokio-macros v2.7.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9749279Z ^[[1m^[[92m  Downloaded^[[0m version_check v0.9.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9770966Z ^[[1m^[[92m  Downloaded^[[0m thiserror-impl v1.0.69
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9795814Z ^[[1m^[[92m  Downloaded^[[0m rustc-hash v1.1.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9812264Z ^[[1m^[[92m  Downloaded^[[0m tree-sitter-language v0.1.8
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9844318Z ^[[1m^[[92m  Downloaded^[[0m scopeguard v1.2.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9870887Z ^[[1m^[[92m  Downloaded^[[0m zmij v1.0.23
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9896410Z ^[[1m^[[92m  Downloaded^[[0m sha2 v0.10.9
+unix-red	Verify directory durability before retention	2026-10-01T14:02:01.9931589Z ^[[1m^[[92m  Downloaded^[[0m thiserror v1.0.69
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0053418Z ^[[1m^[[92m  Downloaded^[[0m cc v1.5.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0132506Z ^[[1m^[[92m  Downloaded^[[0m futures-channel v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0153545Z ^[[1m^[[92m  Downloaded^[[0m serde_derive v1.0.229
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0193631Z ^[[1m^[[92m  Downloaded^[[0m smallvec v1.16.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0211300Z ^[[1m^[[92m  Downloaded^[[0m thiserror-impl v2.0.21
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0227045Z ^[[1m^[[92m  Downloaded^[[0m tracing-core v0.1.36
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0261216Z ^[[1m^[[92m  Downloaded^[[0m zerocopy-derive v0.7.35
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0320207Z ^[[1m^[[92m  Downloaded^[[0m globset v0.4.20
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0335996Z ^[[1m^[[92m  Downloaded^[[0m parking_lot v0.12.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0360697Z ^[[1m^[[92m  Downloaded^[[0m plotters v0.3.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0455650Z ^[[1m^[[92m  Downloaded^[[0m quote v1.0.47
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0482735Z ^[[1m^[[92m  Downloaded^[[0m regex v1.13.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0535929Z ^[[1m^[[92m  Downloaded^[[0m rmp v0.8.15
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0576960Z ^[[1m^[[92m  Downloaded^[[0m rmp-serde v1.3.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0602537Z ^[[1m^[[92m  Downloaded^[[0m serde_core v1.0.229
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0636629Z ^[[1m^[[92m  Downloaded^[[0m unicode-ident v1.0.26
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0664962Z ^[[1m^[[92m  Downloaded^[[0m walkdir v2.5.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0682926Z ^[[1m^[[92m  Downloaded^[[0m futures-core v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0697066Z ^[[1m^[[92m  Downloaded^[[0m tracing-attributes v0.1.31
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0723572Z ^[[1m^[[92m  Downloaded^[[0m uuid v1.26.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0753222Z ^[[1m^[[92m  Downloaded^[[0m rayon-core v1.13.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0790934Z ^[[1m^[[92m  Downloaded^[[0m cfg-if v1.0.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0803718Z ^[[1m^[[92m  Downloaded^[[0m io-extras v0.19.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0826361Z ^[[1m^[[92m  Downloaded^[[0m syn v3.0.6
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0932433Z ^[[1m^[[92m  Downloaded^[[0m socket2 v0.6.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0951116Z ^[[1m^[[92m  Downloaded^[[0m tinytemplate v1.2.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.0968532Z ^[[1m^[[92m  Downloaded^[[0m serde v1.0.229
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1003772Z ^[[1m^[[92m  Downloaded^[[0m cexpr v0.6.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1023046Z ^[[1m^[[92m  Downloaded^[[0m log v0.4.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1049648Z ^[[1m^[[92m  Downloaded^[[0m moka v0.12.16
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1128849Z ^[[1m^[[92m  Downloaded^[[0m nom v7.1.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1181497Z ^[[1m^[[92m  Downloaded^[[0m clang-sys v1.9.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1205231Z ^[[1m^[[92m  Downloaded^[[0m criterion-plot v0.6.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1223342Z ^[[1m^[[92m  Downloaded^[[0m half v2.7.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1250999Z ^[[1m^[[92m  Downloaded^[[0m pin-project-lite v0.2.17
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1311441Z ^[[1m^[[92m  Downloaded^[[0m prettyplease v0.2.37
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1347554Z ^[[1m^[[92m  Downloaded^[[0m rayon v1.12.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1445592Z ^[[1m^[[92m  Downloaded^[[0m git2 v0.21.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1532486Z ^[[1m^[[92m  Downloaded^[[0m typenum v1.20.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1568245Z ^[[1m^[[92m  Downloaded^[[0m crossbeam-utils v0.8.23
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1596524Z ^[[1m^[[92m  Downloaded^[[0m lazy_static v1.5.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1614964Z ^[[1m^[[92m  Downloaded^[[0m tree-sitter-python v0.25.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1677699Z ^[[1m^[[92m  Downloaded^[[0m bindgen v0.66.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1740077Z ^[[1m^[[92m  Downloaded^[[0m zerocopy-derive v0.8.59
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1867807Z ^[[1m^[[92m  Downloaded^[[0m getrandom v0.4.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1906674Z ^[[1m^[[92m  Downloaded^[[0m ipnet v2.12.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1923726Z ^[[1m^[[92m  Downloaded^[[0m libsql v0.9.30
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.1988560Z ^[[1m^[[92m  Downloaded^[[0m libsql-sys v0.9.30
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2005627Z ^[[1m^[[92m  Downloaded^[[0m serde_json v1.0.151
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2080192Z ^[[1m^[[92m  Downloaded^[[0m tokio-util v0.7.19
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2160871Z ^[[1m^[[92m  Downloaded^[[0m tree-sitter v0.25.10
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2221830Z ^[[1m^[[92m  Downloaded^[[0m zerocopy v0.7.35
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2415674Z ^[[1m^[[92m  Downloaded^[[0m futures-task v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2428167Z ^[[1m^[[92m  Downloaded^[[0m cmake v0.1.58
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2441999Z ^[[1m^[[92m  Downloaded^[[0m io-lifetimes v3.0.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2459537Z ^[[1m^[[92m  Downloaded^[[0m portable-atomic v1.15.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2534384Z ^[[1m^[[92m  Downloaded^[[0m rustix v0.38.44
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2804772Z ^[[1m^[[92m  Downloaded^[[0m syn v2.0.119
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.2911619Z ^[[1m^[[92m  Downloaded^[[0m zerocopy v0.8.59
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3131218Z ^[[1m^[[92m  Downloaded^[[0m equivalent v1.0.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3142002Z ^[[1m^[[92m  Downloaded^[[0m tree-sitter-rust v0.24.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3244257Z ^[[1m^[[92m  Downloaded^[[0m regex-automata v0.4.18
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3386106Z ^[[1m^[[92m  Downloaded^[[0m regex-syntax v0.8.11
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3453534Z ^[[1m^[[92m  Downloaded^[[0m rustix v1.1.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3734762Z ^[[1m^[[92m  Downloaded^[[0m tracing v0.1.44
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3894667Z ^[[1m^[[92m  Downloaded^[[0m autocfg v1.5.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3914053Z ^[[1m^[[92m  Downloaded^[[0m ciborium-io v0.2.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3922348Z ^[[1m^[[92m  Downloaded^[[0m futures-macro v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3933039Z ^[[1m^[[92m  Downloaded^[[0m glob v0.3.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.3950158Z ^[[1m^[[92m  Downloaded^[[0m tokio v1.53.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.4412731Z ^[[1m^[[92m  Downloaded^[[0m crypto-common v0.1.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.4422284Z ^[[1m^[[92m  Downloaded^[[0m jobserver v0.1.35
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.4442147Z ^[[1m^[[92m  Downloaded^[[0m ciborium-ll v0.2.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.4453351Z ^[[1m^[[92m  Downloaded^[[0m maybe-owned v0.3.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.4466552Z ^[[1m^[[92m  Downloaded^[[0m clap_lex v1.1.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.4477849Z ^[[1m^[[92m  Downloaded^[[0m cpufeatures v0.2.17
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.4492297Z ^[[1m^[[92m  Downloaded^[[0m block-buffer v0.10.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.4502971Z ^[[1m^[[92m  Downloaded^[[0m peeking_take_while v0.1.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.4510839Z ^[[1m^[[92m  Downloaded^[[0m vcpkg v0.2.15
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5070705Z ^[[1m^[[92m  Downloaded^[[0m futures-io v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5079592Z ^[[1m^[[92m  Downloaded^[[0m lazycell v1.3.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5090540Z ^[[1m^[[92m  Downloaded^[[0m libloading v0.8.9
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5114849Z ^[[1m^[[92m  Downloaded^[[0m pkg-config v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5130320Z ^[[1m^[[92m  Downloaded^[[0m byteorder v1.5.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5146538Z ^[[1m^[[92m  Downloaded^[[0m fastrand v2.5.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5160519Z ^[[1m^[[92m  Downloaded^[[0m find-msvc-tools v0.1.14
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5177449Z ^[[1m^[[92m  Downloaded^[[0m lock_api v0.4.14
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5190019Z ^[[1m^[[92m  Downloaded^[[0m crossbeam-epoch v0.9.21
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5215885Z ^[[1m^[[92m  Downloaded^[[0m either v1.18.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5237269Z ^[[1m^[[92m  Downloaded^[[0m event-listener-strategy v0.5.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5251471Z ^[[1m^[[92m  Downloaded^[[0m bitflags v2.13.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5297761Z ^[[1m^[[92m  Downloaded^[[0m cap-std v4.0.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5331132Z ^[[1m^[[92m  Downloaded^[[0m io-lifetimes v2.0.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5348300Z ^[[1m^[[92m  Downloaded^[[0m itoa v1.0.18
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5363028Z ^[[1m^[[92m  Downloaded^[[0m plotters-backend v0.3.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5376109Z ^[[1m^[[92m  Downloaded^[[0m futures v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5427859Z ^[[1m^[[92m  Downloaded^[[0m mio v1.2.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5489865Z ^[[1m^[[92m  Downloaded^[[0m once_cell v1.21.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5515877Z ^[[1m^[[92m  Downloaded^[[0m parking_lot_core v0.9.12
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5537611Z ^[[1m^[[92m  Downloaded^[[0m event-listener v5.4.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5555910Z ^[[1m^[[92m  Downloaded^[[0m parking v2.2.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5567815Z ^[[1m^[[92m  Downloaded^[[0m fs-set-times v0.20.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5581980Z ^[[1m^[[92m  Downloaded^[[0m memchr v2.8.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5639283Z ^[[1m^[[92m  Downloaded^[[0m cast v0.3.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5651072Z ^[[1m^[[92m  Downloaded^[[0m ciborium v0.2.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5675409Z ^[[1m^[[92m  Downloaded^[[0m futures-executor v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5689297Z ^[[1m^[[92m  Downloaded^[[0m oorandom v11.1.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5699577Z ^[[1m^[[92m  Downloaded^[[0m cap-primitives v4.0.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5814269Z ^[[1m^[[92m  Downloaded^[[0m crossbeam-channel v0.5.17
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5855290Z ^[[1m^[[92m  Downloaded^[[0m indexmap v2.14.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5898980Z ^[[1m^[[92m  Downloaded^[[0m bytes v1.12.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5935093Z ^[[1m^[[92m  Downloaded^[[0m ignore v0.4.33
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.5960007Z ^[[1m^[[92m  Downloaded^[[0m hashbrown v0.17.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6013446Z ^[[1m^[[92m  Downloaded^[[0m minimal-lexical v0.2.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6062808Z ^[[1m^[[92m  Downloaded^[[0m criterion v0.7.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6137639Z ^[[1m^[[92m  Downloaded^[[0m clap_builder v4.6.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6204166Z ^[[1m^[[92m  Downloaded^[[0m home v0.5.12
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6214518Z ^[[1m^[[92m  Downloaded^[[0m num-traits v0.2.19
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6240958Z ^[[1m^[[92m  Downloaded^[[0m bstr v1.13.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6328773Z ^[[1m^[[92m  Downloaded^[[0m digest v0.10.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6349904Z ^[[1m^[[92m  Downloaded^[[0m futures-sink v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6358962Z ^[[1m^[[92m  Downloaded^[[0m errno v0.3.14
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6374906Z ^[[1m^[[92m  Downloaded^[[0m crossbeam-deque v0.8.8
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6390177Z ^[[1m^[[92m  Downloaded^[[0m clap v4.6.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6491616Z ^[[1m^[[92m  Downloaded^[[0m libz-sys v1.1.29
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.6725260Z ^[[1m^[[92m  Downloaded^[[0m libc v0.2.189
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.7167055Z ^[[1m^[[92m  Downloaded^[[0m libgit2-sys v0.18.8+1.9.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.7795345Z ^[[1m^[[92m  Downloaded^[[0m linux-raw-sys v0.4.15
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.8245548Z ^[[1m^[[92m  Downloaded^[[0m linux-raw-sys v0.12.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:02.8882070Z ^[[1m^[[92m  Downloaded^[[0m libsql-ffi v0.9.30
+unix-red	Verify directory durability before retention	2026-10-01T14:02:03.0553518Z ^[[1m^[[92m   Compiling^[[0m libc v0.2.189
+unix-red	Verify directory durability before retention	2026-10-01T14:02:03.0554446Z ^[[1m^[[92m   Compiling^[[0m proc-macro2 v1.0.107
+unix-red	Verify directory durability before retention	2026-10-01T14:02:03.3700810Z ^[[1m^[[92m   Compiling^[[0m unicode-ident v1.0.26
+unix-red	Verify directory durability before retention	2026-10-01T14:02:03.4095364Z ^[[1m^[[92m   Compiling^[[0m quote v1.0.47
+unix-red	Verify directory durability before retention	2026-10-01T14:02:03.9171556Z ^[[1m^[[92m   Compiling^[[0m cfg-if v1.0.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:03.9350310Z ^[[1m^[[92m   Compiling^[[0m jobserver v0.1.35
+unix-red	Verify directory durability before retention	2026-10-01T14:02:03.9874580Z ^[[1m^[[92m   Compiling^[[0m syn v3.0.6
+unix-red	Verify directory durability before retention	2026-10-01T14:02:04.1062687Z ^[[1m^[[92m   Compiling^[[0m shlex v2.0.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:04.1825151Z ^[[1m^[[92m   Compiling^[[0m find-msvc-tools v0.1.14
+unix-red	Verify directory durability before retention	2026-10-01T14:02:04.2869574Z ^[[1m^[[92m   Compiling^[[0m cc v1.5.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:05.3109067Z ^[[1m^[[92m   Compiling^[[0m syn v2.0.119
+unix-red	Verify directory durability before retention	2026-10-01T14:02:06.4456786Z ^[[1m^[[92m   Compiling^[[0m serde_core v1.0.229
+unix-red	Verify directory durability before retention	2026-10-01T14:02:06.5416661Z ^[[1m^[[92m   Compiling^[[0m memchr v2.8.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:08.2496907Z ^[[1m^[[92m   Compiling^[[0m pin-project-lite v0.2.17
+unix-red	Verify directory durability before retention	2026-10-01T14:02:08.2758848Z ^[[1m^[[92m   Compiling^[[0m bitflags v2.13.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:08.3773465Z ^[[1m^[[92m   Compiling^[[0m serde v1.0.229
+unix-red	Verify directory durability before retention	2026-10-01T14:02:08.3796837Z ^[[1m^[[92m   Compiling^[[0m serde_derive v1.0.229
+unix-red	Verify directory durability before retention	2026-10-01T14:02:08.4870901Z ^[[1m^[[92m   Compiling^[[0m regex-syntax v0.8.11
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.0512496Z ^[[1m^[[92m   Compiling^[[0m zmij v1.0.23
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.5936841Z ^[[1m^[[92m   Compiling^[[0m parking_lot_core v0.9.12
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.6597654Z ^[[1m^[[92m   Compiling^[[0m itoa v1.0.18
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.7286240Z ^[[1m^[[92m   Compiling^[[0m smallvec v1.16.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.7344981Z ^[[1m^[[92m   Compiling^[[0m getrandom v0.4.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.8024691Z ^[[1m^[[92m   Compiling^[[0m futures-sink v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.8327533Z ^[[1m^[[92m   Compiling^[[0m crossbeam-utils v0.8.23
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.8391386Z ^[[1m^[[92m   Compiling^[[0m futures-core v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.8889710Z ^[[1m^[[92m   Compiling^[[0m glob v0.3.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.9244702Z ^[[1m^[[92m   Compiling^[[0m scopeguard v1.2.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:10.9508899Z ^[[1m^[[92m   Compiling^[[0m lock_api v0.4.14
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.0733312Z ^[[1m^[[92m   Compiling^[[0m clang-sys v1.9.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.0785685Z ^[[1m^[[92m   Compiling^[[0m futures-channel v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.2002894Z ^[[1m^[[92m   Compiling^[[0m futures-macro v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.3037099Z ^[[1m^[[92m   Compiling^[[0m slab v0.4.12
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.3770838Z ^[[1m^[[92m   Compiling^[[0m rustix v0.38.44
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.5048156Z ^[[1m^[[92m   Compiling^[[0m futures-io v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.5575253Z ^[[1m^[[92m   Compiling^[[0m prettyplease v0.2.37
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.5896294Z ^[[1m^[[92m   Compiling^[[0m futures-task v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.6138043Z ^[[1m^[[92m   Compiling^[[0m log v0.4.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.6656821Z ^[[1m^[[92m   Compiling^[[0m once_cell v1.21.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.7035158Z ^[[1m^[[92m   Compiling^[[0m futures-util v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:11.7879233Z ^[[1m^[[92m   Compiling^[[0m parking_lot v0.12.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:12.3263421Z ^[[1m^[[92m   Compiling^[[0m bytes v1.12.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:12.7426569Z ^[[1m^[[92m   Compiling^[[0m serde_json v1.0.151
+unix-red	Verify directory durability before retention	2026-10-01T14:02:12.7944236Z ^[[1m^[[92m   Compiling^[[0m linux-raw-sys v0.4.15
+unix-red	Verify directory durability before retention	2026-10-01T14:02:12.9614805Z ^[[1m^[[92m   Compiling^[[0m crossbeam-epoch v0.9.21
+unix-red	Verify directory durability before retention	2026-10-01T14:02:13.0322472Z ^[[1m^[[92m   Compiling^[[0m autocfg v1.5.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:13.2335150Z ^[[1m^[[92m   Compiling^[[0m minimal-lexical v0.2.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:13.3508663Z ^[[1m^[[92m   Compiling^[[0m tree-sitter-language v0.1.8
+unix-red	Verify directory durability before retention	2026-10-01T14:02:13.4155027Z ^[[1m^[[92m   Compiling^[[0m nom v7.1.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:13.5138762Z ^[[1m^[[92m   Compiling^[[0m num-traits v0.2.19
+unix-red	Verify directory durability before retention	2026-10-01T14:02:14.4006539Z ^[[1m^[[92m   Compiling^[[0m regex-automata v0.4.18
+unix-red	Verify directory durability before retention	2026-10-01T14:02:14.8106816Z ^[[1m^[[92m   Compiling^[[0m libloading v0.8.9
+unix-red	Verify directory durability before retention	2026-10-01T14:02:14.8845101Z ^[[1m^[[92m   Compiling^[[0m errno v0.3.14
+unix-red	Verify directory durability before retention	2026-10-01T14:02:14.9348302Z ^[[1m^[[92m   Compiling^[[0m bindgen v0.66.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:15.0090766Z ^[[1m^[[92m   Compiling^[[0m pkg-config v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:15.2893668Z ^[[1m^[[92m   Compiling^[[0m either v1.18.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:15.4001269Z ^[[1m^[[92m   Compiling^[[0m version_check v0.9.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:15.5445170Z ^[[1m^[[92m   Compiling^[[0m home v0.5.12
+unix-red	Verify directory durability before retention	2026-10-01T14:02:15.5847760Z ^[[1m^[[92m   Compiling^[[0m rustix v1.1.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:15.7085910Z ^[[1m^[[92m   Compiling^[[0m thiserror v2.0.21
+unix-red	Verify directory durability before retention	2026-10-01T14:02:15.8557163Z ^[[1m^[[92m   Compiling^[[0m which v4.4.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:15.8799953Z ^[[1m^[[92m   Compiling^[[0m generic-array v0.14.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:15.9284787Z ^[[1m^[[92m   Compiling^[[0m regex v1.13.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:15.9766226Z ^[[1m^[[92m   Compiling^[[0m signal-hook-registry v1.4.8
+unix-red	Verify directory durability before retention	2026-10-01T14:02:16.8306480Z ^[[1m^[[92m   Compiling^[[0m cexpr v0.6.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:17.4425031Z ^[[1m^[[92m   Compiling^[[0m uuid v1.26.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:18.1662746Z ^[[1m^[[92m   Compiling^[[0m aho-corasick v1.1.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:18.3852871Z ^[[1m^[[92m   Compiling^[[0m tokio-macros v2.7.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:18.6873572Z ^[[1m^[[92m   Compiling^[[0m thiserror-impl v2.0.21
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.2977544Z ^[[1m^[[92m   Compiling^[[0m socket2 v0.6.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.3965859Z ^[[1m^[[92m   Compiling^[[0m mio v1.2.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.5603151Z ^[[1m^[[92m   Compiling^[[0m lazycell v1.3.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.5947316Z ^[[1m^[[92m   Compiling^[[0m shlex v1.3.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.6505238Z ^[[1m^[[92m   Compiling^[[0m lazy_static v1.5.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.6727292Z ^[[1m^[[92m   Compiling^[[0m crossbeam-deque v0.8.8
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.6755303Z ^[[1m^[[92m   Compiling^[[0m equivalent v1.0.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.6954838Z ^[[1m^[[92m   Compiling^[[0m rustc-hash v1.1.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.7245016Z ^[[1m^[[92m   Compiling^[[0m linux-raw-sys v0.12.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.7465103Z ^[[1m^[[92m   Compiling^[[0m peeking_take_while v0.1.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:19.7711648Z ^[[1m^[[92m   Compiling^[[0m vcpkg v0.2.15
+unix-red	Verify directory durability before retention	2026-10-01T14:02:20.0255081Z ^[[1m^[[92m   Compiling^[[0m zerocopy v0.8.59
+unix-red	Verify directory durability before retention	2026-10-01T14:02:20.1564938Z ^[[1m^[[92m   Compiling^[[0m libz-sys v1.1.29
+unix-red	Verify directory durability before retention	2026-10-01T14:02:22.2318940Z ^[[1m^[[92m   Compiling^[[0m tokio v1.53.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:25.9914045Z ^[[1m^[[92m   Compiling^[[0m zerocopy-derive v0.8.59
+unix-red	Verify directory durability before retention	2026-10-01T14:02:26.1065340Z ^[[1m^[[92m   Compiling^[[0m cmake v0.1.58
+unix-red	Verify directory durability before retention	2026-10-01T14:02:26.2959747Z ^[[1m^[[92m   Compiling^[[0m io-lifetimes v2.0.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:26.3855094Z ^[[1m^[[92m   Compiling^[[0m io-lifetimes v3.0.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:26.4695102Z ^[[1m^[[92m   Compiling^[[0m typenum v1.20.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:26.9501401Z ^[[1m^[[92m   Compiling^[[0m hashbrown v0.17.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:27.3180497Z ^[[1m^[[92m   Compiling^[[0m indexmap v2.14.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:28.0745906Z ^[[1m^[[92m   Compiling^[[0m libsql-ffi v0.9.30
+unix-red	Verify directory durability before retention	2026-10-01T14:02:29.5818828Z ^[[1m^[[92m   Compiling^[[0m tracing-core v0.1.36
+unix-red	Verify directory durability before retention	2026-10-01T14:02:29.8673039Z ^[[1m^[[92m   Compiling^[[0m tracing-attributes v0.1.31
+unix-red	Verify directory durability before retention	2026-10-01T14:02:30.5224819Z ^[[1m^[[92m   Compiling^[[0m async-trait v0.1.92
+unix-red	Verify directory durability before retention	2026-10-01T14:02:30.9606895Z ^[[1m^[[92m   Compiling^[[0m io-extras v0.19.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:30.9808338Z ^[[1m^[[92m   Compiling^[[0m parking v2.2.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:31.0526008Z ^[[1m^[[92m   Compiling^[[0m rayon-core v1.13.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:31.1311495Z ^[[1m^[[92m   Compiling^[[0m event-listener v5.4.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:31.2511993Z ^[[1m^[[92m   Compiling^[[0m tracing v0.1.44
+unix-red	Verify directory durability before retention	2026-10-01T14:02:31.3522573Z ^[[1m^[[92m   Compiling^[[0m half v2.7.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:31.9333465Z ^[[1m^[[92m   Compiling^[[0m tokio-util v0.7.19
+unix-red	Verify directory durability before retention	2026-10-01T14:02:32.4240854Z ^[[1m^[[92m   Compiling^[[0m runtime-domain v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/domain)
+unix-red	Verify directory durability before retention	2026-10-01T14:02:32.5524484Z ^[[1m^[[92m   Compiling^[[0m libgit2-sys v0.18.8+1.9.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:32.7209601Z ^[[1m^[[92m   Compiling^[[0m zerocopy-derive v0.7.35
+unix-red	Verify directory durability before retention	2026-10-01T14:02:33.1200866Z ^[[1m^[[92m   Compiling^[[0m same-file v1.0.6
+unix-red	Verify directory durability before retention	2026-10-01T14:02:33.1705514Z ^[[1m^[[92m   Compiling^[[0m anstyle v1.0.14
+unix-red	Verify directory durability before retention	2026-10-01T14:02:33.2715333Z ^[[1m^[[92m   Compiling^[[0m portable-atomic v1.15.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:33.4581272Z ^[[1m^[[92m   Compiling^[[0m cap-primitives v4.0.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:33.5450342Z ^[[1m^[[92m   Compiling^[[0m byteorder v1.5.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:33.6241824Z ^[[1m^[[92m   Compiling^[[0m thiserror v1.0.69
+unix-red	Verify directory durability before retention	2026-10-01T14:02:33.7182584Z ^[[1m^[[92m   Compiling^[[0m ciborium-io v0.2.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:33.7419713Z ^[[1m^[[92m   Compiling^[[0m plotters-backend v0.3.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:33.8717524Z ^[[1m^[[92m   Compiling^[[0m clap_lex v1.1.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:33.9566726Z ^[[1m^[[92m   Compiling^[[0m clap_builder v4.6.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:35.7433391Z ^[[1m^[[92m   Compiling^[[0m plotters-svg v0.3.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:35.8194809Z ^[[1m^[[92m   Compiling^[[0m ciborium-ll v0.2.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:35.9256671Z ^[[1m^[[92m   Compiling^[[0m zerocopy v0.7.35
+unix-red	Verify directory durability before retention	2026-10-01T14:02:36.3462135Z ^[[1m^[[92m   Compiling^[[0m walkdir v2.5.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:45.2594485Z ^[[1m^[[92m   Compiling^[[0m runtime-ports v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/ports)
+unix-red	Verify directory durability before retention	2026-10-01T14:02:45.3807903Z ^[[1m^[[92m   Compiling^[[0m fs-set-times v0.20.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:45.4297813Z ^[[1m^[[92m   Compiling^[[0m tree-sitter v0.25.10
+unix-red	Verify directory durability before retention	2026-10-01T14:02:45.5072059Z ^[[1m^[[92m   Compiling^[[0m event-listener-strategy v0.5.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:45.5501929Z ^[[1m^[[92m   Compiling^[[0m itertools v0.13.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:46.8452716Z ^[[1m^[[92m   Compiling^[[0m crypto-common v0.1.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:46.8815598Z ^[[1m^[[92m   Compiling^[[0m block-buffer v0.10.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:46.9259811Z ^[[1m^[[92m   Compiling^[[0m rmp v0.8.15
+unix-red	Verify directory durability before retention	2026-10-01T14:02:47.3270302Z ^[[1m^[[92m   Compiling^[[0m rustix-linux-procfs v0.1.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:47.4325061Z ^[[1m^[[92m   Compiling^[[0m futures-executor v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:47.5333033Z ^[[1m^[[92m   Compiling^[[0m thiserror-impl v1.0.69
+unix-red	Verify directory durability before retention	2026-10-01T14:02:48.1442254Z ^[[1m^[[92m   Compiling^[[0m bstr v1.13.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:48.4036878Z ^[[1m^[[92m   Compiling^[[0m tree-sitter-python v0.25.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:48.4665150Z ^[[1m^[[92m   Compiling^[[0m tree-sitter-rust v0.24.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:48.5270793Z ^[[1m^[[92m   Compiling^[[0m cast v0.3.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:48.5948897Z ^[[1m^[[92m   Compiling^[[0m ipnet v2.12.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:48.8355593Z ^[[1m^[[92m   Compiling^[[0m maybe-owned v0.3.4
+unix-red	Verify directory durability before retention	2026-10-01T14:02:48.9195673Z ^[[1m^[[92m   Compiling^[[0m cap-std v4.0.3
+unix-red	Verify directory durability before retention	2026-10-01T14:02:49.0048463Z ^[[1m^[[92m   Compiling^[[0m ambient-authority v0.0.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:49.4643565Z ^[[1m^[[92m   Compiling^[[0m criterion-plot v0.6.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:51.2918360Z ^[[1m^[[92m   Compiling^[[0m globset v0.4.20
+unix-red	Verify directory durability before retention	2026-10-01T14:02:51.6692894Z ^[[1m^[[92m   Compiling^[[0m futures v0.3.34
+unix-red	Verify directory durability before retention	2026-10-01T14:02:51.6918308Z ^[[1m^[[92m   Compiling^[[0m rmp-serde v1.3.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:51.9270996Z ^[[1m^[[92m   Compiling^[[0m digest v0.10.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:52.0133270Z ^[[1m^[[92m   Compiling^[[0m rayon v1.12.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:53.2969122Z ^[[1m^[[92m   Compiling^[[0m async-lock v3.4.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:54.4013139Z ^[[1m^[[92m   Compiling^[[0m libsql-sys v0.9.30
+unix-red	Verify directory durability before retention	2026-10-01T14:02:54.9291040Z ^[[1m^[[92m   Compiling^[[0m ciborium v0.2.2
+unix-red	Verify directory durability before retention	2026-10-01T14:02:55.2796273Z ^[[1m^[[92m   Compiling^[[0m plotters v0.3.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:55.9103318Z ^[[1m^[[92m   Compiling^[[0m clap v4.6.7
+unix-red	Verify directory durability before retention	2026-10-01T14:02:55.9312601Z ^[[1m^[[92m   Compiling^[[0m runtime-protocol v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/protocol)
+unix-red	Verify directory durability before retention	2026-10-01T14:02:56.1250905Z ^[[1m^[[92m   Compiling^[[0m tinytemplate v1.2.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:56.3390957Z ^[[1m^[[92m   Compiling^[[0m crossbeam-channel v0.5.17
+unix-red	Verify directory durability before retention	2026-10-01T14:02:56.5995839Z ^[[1m^[[92m   Compiling^[[0m subtle v2.6.1
+unix-red	Verify directory durability before retention	2026-10-01T14:02:56.6624632Z ^[[1m^[[92m   Compiling^[[0m streaming-iterator v0.1.9
+unix-red	Verify directory durability before retention	2026-10-01T14:02:56.8215154Z ^[[1m^[[92m   Compiling^[[0m tagptr v0.2.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:56.8773290Z ^[[1m^[[92m   Compiling^[[0m oorandom v11.1.5
+unix-red	Verify directory durability before retention	2026-10-01T14:02:56.9130451Z ^[[1m^[[92m   Compiling^[[0m fastrand v2.5.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:57.0072735Z ^[[1m^[[92m   Compiling^[[0m cpufeatures v0.2.17
+unix-red	Verify directory durability before retention	2026-10-01T14:02:57.0263095Z ^[[1m^[[92m   Compiling^[[0m anes v0.1.6
+unix-red	Verify directory durability before retention	2026-10-01T14:02:57.1202690Z ^[[1m^[[92m   Compiling^[[0m criterion v0.7.0
+unix-red	Verify directory durability before retention	2026-10-01T14:02:59.8232738Z ^[[1m^[[92m   Compiling^[[0m sha2 v0.10.9
+unix-red	Verify directory durability before retention	2026-10-01T14:03:00.8584456Z ^[[1m^[[92m   Compiling^[[0m tempfile v3.27.0
+unix-red	Verify directory durability before retention	2026-10-01T14:03:01.0543107Z ^[[1m^[[92m   Compiling^[[0m moka v0.12.16
+unix-red	Verify directory durability before retention	2026-10-01T14:03:02.1389781Z ^[[1m^[[92m   Compiling^[[0m runtime-transport v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/transport)
+unix-red	Verify directory durability before retention	2026-10-01T14:03:02.2392231Z ^[[1m^[[92m   Compiling^[[0m libsql v0.9.30
+unix-red	Verify directory durability before retention	2026-10-01T14:03:02.8469967Z ^[[1m^[[92m   Compiling^[[0m ignore v0.4.33
+unix-red	Verify directory durability before retention	2026-10-01T14:03:03.8846115Z ^[[1m^[[92m   Compiling^[[0m runtime-application v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/application)
+unix-red	Verify directory durability before retention	2026-10-01T14:03:06.1801355Z ^[[1m^[[92m   Compiling^[[0m git2 v0.21.0
+unix-red	Verify directory durability before retention	2026-10-01T14:03:08.1286521Z ^[[1m^[[92m   Compiling^[[0m runtime-infrastructure v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/infrastructure)
+unix-red	Verify directory durability before retention	2026-10-01T14:03:13.0026844Z ^[[1m^[[92m    Finished^[[0m `test` profile [unoptimized] target(s) in 1m 11s
+unix-red	Verify directory durability before retention	2026-10-01T14:03:13.0505101Z ^[[1m^[[92m     Running^[[0m unittests src/lib.rs (target/debug/deps/runtime_infrastructure-647454ba29c9376e)
+unix-red	Verify directory durability before retention	2026-10-01T14:03:13.0537125Z
+unix-red	Verify directory durability before retention	2026-10-01T14:03:13.0537369Z running 1 test
+unix-red	Verify directory durability before retention	2026-10-01T14:03:13.5028774Z test maintenance::tests::retention_directory_sync_order_is_durable ... ok
+unix-red	Verify directory durability before retention	2026-10-01T14:03:13.5029342Z
+unix-red	Verify directory durability before retention	2026-10-01T14:03:13.5029734Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.45s
+unix-red	Verify directory durability before retention	2026-10-01T14:03:13.5030301Z
+unix-red	Verify private config creation	﻿2026-10-01T14:03:13.5184756Z ##[group]Run cargo test -p local-daemon --bin local-daemon new_sensitive_file_is_owner_only --locked -- --nocapture
+unix-red	Verify private config creation	2026-10-01T14:03:13.5185630Z ^[[36;1mcargo test -p local-daemon --bin local-daemon new_sensitive_file_is_owner_only --locked -- --nocapture^[[0m
+unix-red	Verify private config creation	2026-10-01T14:03:13.5246978Z shell: /usr/bin/bash -e {0}
+unix-red	Verify private config creation	2026-10-01T14:03:13.5247224Z env:
+unix-red	Verify private config creation	2026-10-01T14:03:13.5247423Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Verify private config creation	2026-10-01T14:03:13.5247683Z   CARGO_INCREMENTAL: 0
+unix-red	Verify private config creation	2026-10-01T14:03:13.5247910Z   CARGO_TERM_COLOR: always
+unix-red	Verify private config creation	2026-10-01T14:03:13.5248329Z ##[endgroup]
+unix-red	Verify private config creation	2026-10-01T14:03:13.6156991Z ^[[1m^[[92m Downloading^[[0m crates ...
+unix-red	Verify private config creation	2026-10-01T14:03:13.6716119Z ^[[1m^[[92m  Downloaded^[[0m clap_derive v4.6.7
+unix-red	Verify private config creation	2026-10-01T14:03:13.6749665Z ^[[1m^[[92m  Downloaded^[[0m is_terminal_polyfill v1.70.2
+unix-red	Verify private config creation	2026-10-01T14:03:13.6762170Z ^[[1m^[[92m  Downloaded^[[0m matchers v0.2.0
+unix-red	Verify private config creation	2026-10-01T14:03:13.6777380Z ^[[1m^[[92m  Downloaded^[[0m strsim v0.11.1
+unix-red	Verify private config creation	2026-10-01T14:03:13.6793029Z ^[[1m^[[92m  Downloaded^[[0m fs2 v0.4.3
+unix-red	Verify private config creation	2026-10-01T14:03:13.6805392Z ^[[1m^[[92m  Downloaded^[[0m thread_local v1.1.10
+unix-red	Verify private config creation	2026-10-01T14:03:13.6818665Z ^[[1m^[[92m  Downloaded^[[0m toml_datetime v0.6.11
+unix-red	Verify private config creation	2026-10-01T14:03:13.6830084Z ^[[1m^[[92m  Downloaded^[[0m tracing-log v0.2.0
+unix-red	Verify private config creation	2026-10-01T14:03:13.6843921Z ^[[1m^[[92m  Downloaded^[[0m anstyle-parse v1.0.0
+unix-red	Verify private config creation	2026-10-01T14:03:13.6860545Z ^[[1m^[[92m  Downloaded^[[0m anyhow v1.0.104
+unix-red	Verify private config creation	2026-10-01T14:03:13.6902980Z ^[[1m^[[92m  Downloaded^[[0m anstyle-query v1.1.5
+unix-red	Verify private config creation	2026-10-01T14:03:13.6914993Z ^[[1m^[[92m  Downloaded^[[0m sharded-slab v0.1.7
+unix-red	Verify private config creation	2026-10-01T14:03:13.6950173Z ^[[1m^[[92m  Downloaded^[[0m utf8parse v0.2.2
+unix-red	Verify private config creation	2026-10-01T14:03:13.6961216Z ^[[1m^[[92m  Downloaded^[[0m winnow v0.7.15
+unix-red	Verify private config creation	2026-10-01T14:03:13.7075650Z ^[[1m^[[92m  Downloaded^[[0m nu-ansi-term v0.50.3
+unix-red	Verify private config creation	2026-10-01T14:03:13.7115591Z ^[[1m^[[92m  Downloaded^[[0m toml_edit v0.22.27
+unix-red	Verify private config creation	2026-10-01T14:03:13.7161449Z ^[[1m^[[92m  Downloaded^[[0m toml_write v0.1.2
+unix-red	Verify private config creation	2026-10-01T14:03:13.7175106Z ^[[1m^[[92m  Downloaded^[[0m tracing-subscriber v0.3.23
+unix-red	Verify private config creation	2026-10-01T14:03:13.7262968Z ^[[1m^[[92m  Downloaded^[[0m heck v0.5.0
+unix-red	Verify private config creation	2026-10-01T14:03:13.7276636Z ^[[1m^[[92m  Downloaded^[[0m anstream v1.0.0
+unix-red	Verify private config creation	2026-10-01T14:03:13.7631328Z ^[[1m^[[92m  Downloaded^[[0m colorchoice v1.0.5
+unix-red	Verify private config creation	2026-10-01T14:03:13.8010925Z ^[[1m^[[92m   Compiling^[[0m regex-automata v0.4.18
+unix-red	Verify private config creation	2026-10-01T14:03:13.8011895Z ^[[1m^[[92m   Compiling^[[0m tracing-core v0.1.36
+unix-red	Verify private config creation	2026-10-01T14:03:14.0959098Z ^[[1m^[[92m   Compiling^[[0m num-traits v0.2.19
+unix-red	Verify private config creation	2026-10-01T14:03:14.1442725Z ^[[1m^[[92m   Compiling^[[0m log v0.4.34
+unix-red	Verify private config creation	2026-10-01T14:03:14.2279625Z ^[[1m^[[92m   Compiling^[[0m tracing v0.1.44
+unix-red	Verify private config creation	2026-10-01T14:03:14.7624644Z ^[[1m^[[92m   Compiling^[[0m utf8parse v0.2.2
+unix-red	Verify private config creation	2026-10-01T14:03:14.7898992Z ^[[1m^[[92m   Compiling^[[0m anstyle-parse v1.0.0
+unix-red	Verify private config creation	2026-10-01T14:03:14.8579553Z ^[[1m^[[92m   Compiling^[[0m rmp v0.8.15
+unix-red	Verify private config creation	2026-10-01T14:03:15.0253288Z ^[[1m^[[92m   Compiling^[[0m is_terminal_polyfill v1.70.2
+unix-red	Verify private config creation	2026-10-01T14:03:15.0479675Z ^[[1m^[[92m   Compiling^[[0m anstyle-query v1.1.5
+unix-red	Verify private config creation	2026-10-01T14:03:15.0733372Z ^[[1m^[[92m   Compiling^[[0m colorchoice v1.0.5
+unix-red	Verify private config creation	2026-10-01T14:03:15.0998729Z ^[[1m^[[92m   Compiling^[[0m anstream v1.0.0
+unix-red	Verify private config creation	2026-10-01T14:03:15.2370424Z ^[[1m^[[92m   Compiling^[[0m rmp-serde v1.3.1
+unix-red	Verify private config creation	2026-10-01T14:03:15.4709134Z ^[[1m^[[92m   Compiling^[[0m libsql-sys v0.9.30
+unix-red	Verify private config creation	2026-10-01T14:03:15.6924352Z ^[[1m^[[92m   Compiling^[[0m globset v0.4.20
+unix-red	Verify private config creation	2026-10-01T14:03:16.0862666Z ^[[1m^[[92m   Compiling^[[0m regex v1.13.1
+unix-red	Verify private config creation	2026-10-01T14:03:16.3349081Z ^[[1m^[[92m   Compiling^[[0m strsim v0.11.1
+unix-red	Verify private config creation	2026-10-01T14:03:16.4887241Z ^[[1m^[[92m   Compiling^[[0m heck v0.5.0
+unix-red	Verify private config creation	2026-10-01T14:03:16.5779631Z ^[[1m^[[92m   Compiling^[[0m anyhow v1.0.104
+unix-red	Verify private config creation	2026-10-01T14:03:16.7026511Z ^[[1m^[[92m   Compiling^[[0m tree-sitter v0.25.10
+unix-red	Verify private config creation	2026-10-01T14:03:16.7429818Z ^[[1m^[[92m   Compiling^[[0m runtime-transport v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/transport)
+unix-red	Verify private config creation	2026-10-01T14:03:16.8451116Z ^[[1m^[[92m   Compiling^[[0m clap_derive v4.6.7
+unix-red	Verify private config creation	2026-10-01T14:03:17.0507818Z ^[[1m^[[92m   Compiling^[[0m clap_builder v4.6.7
+unix-red	Verify private config creation	2026-10-01T14:03:17.8642383Z ^[[1m^[[92m   Compiling^[[0m ignore v0.4.33
+unix-red	Verify private config creation	2026-10-01T14:03:18.7314456Z ^[[1m^[[92m   Compiling^[[0m libsql v0.9.30
+unix-red	Verify private config creation	2026-10-01T14:03:19.0451240Z ^[[1m^[[92m   Compiling^[[0m matchers v0.2.0
+unix-red	Verify private config creation	2026-10-01T14:03:19.0876925Z ^[[1m^[[92m   Compiling^[[0m git2 v0.21.0
+unix-red	Verify private config creation	2026-10-01T14:03:19.3614064Z ^[[1m^[[92m   Compiling^[[0m runtime-application v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/application)
+unix-red	Verify private config creation	2026-10-01T14:03:19.5542080Z ^[[1m^[[92m   Compiling^[[0m tracing-log v0.2.0
+unix-red	Verify private config creation	2026-10-01T14:03:19.6442627Z ^[[1m^[[92m   Compiling^[[0m sharded-slab v0.1.7
+unix-red	Verify private config creation	2026-10-01T14:03:19.9255336Z ^[[1m^[[92m   Compiling^[[0m thread_local v1.1.10
+unix-red	Verify private config creation	2026-10-01T14:03:20.0139044Z ^[[1m^[[92m   Compiling^[[0m toml_write v0.1.2
+unix-red	Verify private config creation	2026-10-01T14:03:20.0931791Z ^[[1m^[[92m   Compiling^[[0m toml_datetime v0.6.11
+unix-red	Verify private config creation	2026-10-01T14:03:20.1905972Z ^[[1m^[[92m   Compiling^[[0m nu-ansi-term v0.50.3
+unix-red	Verify private config creation	2026-10-01T14:03:20.3320935Z ^[[1m^[[92m   Compiling^[[0m winnow v0.7.15
+unix-red	Verify private config creation	2026-10-01T14:03:21.4067145Z ^[[1m^[[92m   Compiling^[[0m toml_edit v0.22.27
+unix-red	Verify private config creation	2026-10-01T14:03:21.4292170Z ^[[1m^[[92m   Compiling^[[0m runtime-infrastructure v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/infrastructure)
+unix-red	Verify private config creation	2026-10-01T14:03:23.2329906Z ^[[1m^[[92m   Compiling^[[0m tracing-subscriber v0.3.23
+unix-red	Verify private config creation	2026-10-01T14:03:24.4969060Z ^[[1m^[[92m   Compiling^[[0m clap v4.6.7
+unix-red	Verify private config creation	2026-10-01T14:03:24.6784246Z ^[[1m^[[92m   Compiling^[[0m fs2 v0.4.3
+unix-red	Verify private config creation	2026-10-01T14:03:26.2584849Z ^[[1m^[[92m   Compiling^[[0m local-daemon v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/apps/local-daemon)
+unix-red	Verify private config creation	2026-10-01T14:03:27.2286100Z ^[[1m^[[92m    Finished^[[0m `test` profile [unoptimized] target(s) in 13.67s
+unix-red	Verify private config creation	2026-10-01T14:03:27.2393586Z ^[[1m^[[92m     Running^[[0m unittests src/main.rs (target/debug/deps/local_daemon-e7f597dfc501eb75)
+unix-red	Verify private config creation	2026-10-01T14:03:27.2406284Z
+unix-red	Verify private config creation	2026-10-01T14:03:27.2406460Z running 1 test
+unix-red	Verify private config creation	2026-10-01T14:03:27.2429370Z test install::tests::new_sensitive_file_is_owner_only_in_traversable_directory ... ok
+unix-red	Verify private config creation	2026-10-01T14:03:27.2430062Z
+unix-red	Verify private config creation	2026-10-01T14:03:27.2430493Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+unix-red	Verify private config creation	2026-10-01T14:03:27.2430898Z
+unix-red	Verify private replacement	﻿2026-10-01T14:03:27.2520330Z ##[group]Run cargo test -p local-daemon --bin local-daemon replacement_and_backup_keep_private_config_owner_only --locked -- --nocapture
+unix-red	Verify private replacement	2026-10-01T14:03:27.2521332Z ^[[36;1mcargo test -p local-daemon --bin local-daemon replacement_and_backup_keep_private_config_owner_only --locked -- --nocapture^[[0m
+unix-red	Verify private replacement	2026-10-01T14:03:27.2582371Z shell: /usr/bin/bash -e {0}
+unix-red	Verify private replacement	2026-10-01T14:03:27.2582633Z env:
+unix-red	Verify private replacement	2026-10-01T14:03:27.2582838Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Verify private replacement	2026-10-01T14:03:27.2583110Z   CARGO_INCREMENTAL: 0
+unix-red	Verify private replacement	2026-10-01T14:03:27.2583352Z   CARGO_TERM_COLOR: always
+unix-red	Verify private replacement	2026-10-01T14:03:27.2583575Z ##[endgroup]
+unix-red	Verify private replacement	2026-10-01T14:03:27.4176018Z ^[[1m^[[92m    Finished^[[0m `test` profile [unoptimized] target(s) in 0.12s
+unix-red	Verify private replacement	2026-10-01T14:03:27.4236681Z ^[[1m^[[92m     Running^[[0m unittests src/main.rs (target/debug/deps/local_daemon-e7f597dfc501eb75)
+unix-red	Verify private replacement	2026-10-01T14:03:27.4249321Z
+unix-red	Verify private replacement	2026-10-01T14:03:27.4249527Z running 1 test
+unix-red	Verify private replacement	2026-10-01T14:03:27.4268519Z test host::tests::replacement_and_backup_keep_private_config_owner_only ... ok
+unix-red	Verify private replacement	2026-10-01T14:03:27.4268984Z
+unix-red	Verify private replacement	2026-10-01T14:03:27.4269306Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+unix-red	Verify private replacement	2026-10-01T14:03:27.4269703Z
+unix-red	Verify policy config stays outside writable workspace	﻿2026-10-01T14:03:27.4347307Z ##[group]Run cargo test -p local-daemon --test config_security --locked -- --nocapture
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:27.4347942Z ^[[36;1mcargo test -p local-daemon --test config_security --locked -- --nocapture^[[0m
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:27.4409656Z shell: /usr/bin/bash -e {0}
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:27.4409914Z env:
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:27.4410130Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:27.4410391Z   CARGO_INCREMENTAL: 0
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:27.4410616Z   CARGO_TERM_COLOR: always
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:27.4410838Z ##[endgroup]
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:27.5986631Z ^[[1m^[[92m   Compiling^[[0m local-daemon v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/apps/local-daemon)
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9464268Z ^[[1m^[[92m    Finished^[[0m `test` profile [unoptimized] target(s) in 1.47s
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9571957Z ^[[1m^[[92m     Running^[[0m tests/config_security.rs (target/debug/deps/config_security-acbe4959e9af1679)
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9584022Z
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9584197Z running 7 tests
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9642494Z test refuses_config_symlink_outside_workspace_pointing_inside ... ok
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9681619Z test refuses_lexical_workspace_config_even_when_symlink_points_outside ... ok
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9719863Z test refuses_missing_config_under_directory_symlink_into_workspace ... ok
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9757127Z test refuses_missing_workspace_config_before_writing ... ok
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9838595Z test refuses_config_under_real_workspace_when_workspace_uses_alias ... ok
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9841175Z test refuses_existing_workspace_policy_config ... ok
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9843587Z test default_config_is_initialized_in_private_state ... ok
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9844274Z
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9844546Z test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+unix-red	Verify policy config stays outside writable workspace	2026-10-01T14:03:28.9844921Z
+unix-red	Post Run actions/checkout@v4	﻿2026-10-01T14:03:29.0027480Z Post job cleanup.
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.0903599Z [command]/usr/bin/git version
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.0949596Z git version 2.55.0
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.0992556Z Temporarily overriding HOME='/home/runner/work/_temp/d0409874-6b7f-4062-b4e6-4d6736371ac0' before making global git config changes
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.0994297Z Adding repository directory to the temporary git global config as a safe directory
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.0999227Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/remotecontroller/remotecontroller
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.1043654Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.1088092Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.1344545Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.1378462Z http.https://github.com/.extraheader
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.1392492Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.1436250Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.1694834Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+unix-red	Post Run actions/checkout@v4	2026-10-01T14:03:29.1769512Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+unix-red	Complete job	﻿2026-10-01T14:03:29.2211624Z Cleaning up orphan processes
+unix-red	Complete job	2026-10-01T14:03:29.2502125Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

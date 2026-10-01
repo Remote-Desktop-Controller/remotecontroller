@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 [dependencies]
 runtime-protocol.workspace = true
+runtime-ports.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true
 bytes.workspace = true

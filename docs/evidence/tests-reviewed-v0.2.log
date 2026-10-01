@@ -1,0 +1,294 @@
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\local\statement.rs:342:20
+    |
+342 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+    = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+    |
+342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\local\impls.rs:163:16
+    |
+163 |     fn columns(&self) -> Vec<Column> {
+    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                |
+    |                the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+163 |     fn columns(&self) -> Vec<Column<'_>> {
+    |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> vendor\libsql\src\statement.rs:27:16
+   |
+27 |     fn columns(&self) -> Vec<Column>;
+   |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+   |                |
+   |                the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+27 |     fn columns(&self) -> Vec<Column<'_>>;
+   |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\statement.rs:106:20
+    |
+106 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+   Compiling local-daemon v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\apps\local-daemon)
+   Compiling runtime-infrastructure v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\infrastructure)
+    Finished `test` profile [unoptimized] target(s) in 54.66s
+     Running unittests src\main.rs (target\debug\deps\local_daemon-bbca680f0613ea56.exe)
+
+running 4 tests
+test host::tests::preserves_and_backups_configuration ... ok
+test install::tests::rejects_hash_before_copy ... ok
+test install::tests::install_verified_uninstall_preserves_state ... ok
+test install::tests::failed_update_preserves_verified_active_release ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running tests\config_security.rs (target\debug\deps\config_security-b38e7d37720c5ea3.exe)
+
+running 3 tests
+test refuses_missing_workspace_config_before_writing ... ok
+test refuses_existing_workspace_policy_config ... ok
+test default_config_is_initialized_in_private_state ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.81s
+
+     Running tests\fullstack.rs (target\debug\deps\fullstack-15949679886e5ad3.exe)
+
+running 5 tests
+test native_process_leaf_fixture ... ignored, native process fixture; invoked by crash test
+test native_process_tree_fixture ... ignored, native process tree fixture; invoked by crash test
+test mcp_to_daemon_abrupt_restart_reconnect_idempotency_and_stdout ... ok
+test abrupt_daemon_crash_kills_native_tree_and_preserves_synced_output ... ok
+test abrupt_crash_during_batch_restores_journal_before_reconnect ... ok
+
+test result: ok. 3 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 8.99s
+
+     Running tests\lifecycle.rs (target\debug\deps\lifecycle-ca2e353f06102c74.exe)
+
+running 1 test
+2026-10-01T14:25:04.278496Z  INFO mcp_gateway: MCP gateway connected
+2026-10-01T14:25:04.283032Z  INFO serve_inner: rmcp::service: Service initialized as server peer_info=Some(InitializeRequestParams { meta: None, protocol_version: ProtocolVersion("2024-11-05"), capabilities: ClientCapabilities { experimental: None, extensions: None, roots: None, sampling: None, elicitation: None }, client_info: Implementation { name: "native-installer-test", title: None, version: "1", description: None, icons: None, website_url: None } })
+2026-10-01T14:25:04.284274Z  INFO serve_inner: rmcp::service: received notification notification=InitializedNotification(NotificationNoParam { method: InitializedNotificationMethod, extensions: Extensions })
+2026-10-01T14:25:04.286190Z  INFO serve_inner: rmcp::handler::server: client initialized
+2026-10-01T14:25:04.298572Z  INFO serve_inner: rmcp::service: input stream terminated
+2026-10-01T14:25:04.298774Z  INFO serve_inner: rmcp::service: serve finished quit_reason=Closed
+Uninstall scheduled after this executable exits; result: \\?\C:\Users\Notebook\AppData\Local\Temp\.tmppjjH5m\profile\uninstall-status.json
+test installed_connect_bootstraps_real_daemon_and_mcp ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.63s
+
+     Running unittests src\main.rs (target\debug\deps\mcp_gateway-b809ff0a4137d01c.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_application-e3fea398b0da2004.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_domain-d4d38d19ce24c758.exe)
+
+running 2 tests
+test tests::terminal_operations_cannot_restart ... ok
+test tests::policy_never_grants_unlisted_capability ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_infrastructure-d9577988c690b8d6.exe)
+
+running 13 tests
+test files::integrity_tests::hidden_attribute_and_native_dacl_survive_atomic_replacement ... ok
+test files::integrity_tests::guarded_deletion_restores_binary_and_timestamp ... ok
+test files::integrity_tests::legacy_unprotected_dacl_survives_without_added_parent_aces ... ok
+test files::integrity_tests::guarded_binary_rollback_preserves_content_and_metadata ... ok
+test files::integrity_tests::preparation_rejects_external_binary_writer ... ok
+test files::integrity_tests::named_stream_is_rejected_without_losing_either_stream ... ok
+test processes::process_spool::tests::crash_between_data_sync_and_metadata_commit_preserves_bytes ... ok
+test storage::snapshot_metadata_tests::legacy_snapshot_json_decodes_without_metadata ... ok
+test files::integrity_tests::rollback_rejects_external_writer_without_mutating_other_files ... ok
+test storage::snapshot_metadata_tests::metadata_and_guard_roundtrip_through_infrastructure_dto ... ok
+test processes::process_spool::tests::capture_is_durable_before_process_exit_and_quota_is_explicit ... ok
+test tools::tests::poisoned_workspace_is_checked_under_mutation_lock ... ok
+test maintenance::tests::retention_backs_up_terminal_spool_and_preserves_running_spool ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+     Running tests\context_maintenance.rs (target\debug\deps\context_maintenance-ba9d84872aefbf58.exe)
+
+running 7 tests
+test backup_preserves_spools_and_never_overwrites_destination ... ok
+test process_rollups_use_real_metrics_and_raw_references ... ok
+test backup_reopens_and_retention_preserves_prepared_and_workspace ... ok
+test unicode_budget_never_splits_codepoint ... ok
+test query_options_change_selection_and_cache ... ok
+test only_old_rolled_back_terminal_checkpoints_are_retained_out ... ok
+test selected_task_precedes_unrelated_failure ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s
+
+     Running tests\files.rs (target\debug\deps\files-3f550a6200cbdace.exe)
+
+running 6 tests
+test legacy_rollback_does_not_overwrite_external_binary_edit ... ok
+test atomic_write_preserves_readonly_and_timestamps ... ok
+test atomic_write_preserves_modified_time_root_and_nested ... ok
+test oversized_ignore_policy_is_denied ... ok
+test directory_link_escape_rejected ... ok
+test traversal_ignore_and_atomic_write ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests\ipc.rs (target\debug\deps\ipc-e7a38fb45d5a0f8b.exe)
+
+running 1 test
+test local_ipc_round_trip_progress_version_and_reconnect ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
+
+     Running tests\kernel.rs (target\debug\deps\kernel-7b91e289b547b252.exe)
+
+running 13 tests
+test case_variant_cannot_modify_ignore_policy ... ok
+test cancellation_does_not_hide_cleanup_failure ... ok
+test cancellation_after_commit_preserves_successful_result ... ok
+test duplicate_mutation_executes_once_and_conflicting_payload_is_rejected ... ok
+test binary_checkpoint_and_raw_event_are_restorable ... ok
+test checkpoint_rollback_restores_existing_and_removes_created_files ... ok
+test policy_and_payload_validation_fail_closed ... ok
+test partial_batch_failure_restores_earlier_files ... ok
+test explicit_snapshot_rolls_back_only_recorded_runtime_changes ... ok
+test restart_restores_prepared_journal_and_marks_interrupted_operation ... ok
+test rollback_refuses_external_changes_and_preserves_their_bytes ... ok
+test versioned_context_never_reuses_pre_mutation_projection ... ok
+test rust_ast_query_and_git_read_tools_are_real ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.96s
+
+     Running tests\processes.rs (target\debug\deps\processes-cd85c322b38a2281.exe)
+
+running 9 tests
+test executable_fingerprint_has_a_measured_runtime_cost ... ok
+test legacy_rule_deserialization_does_not_silently_approve_unconfined_execution ... ok
+test deadline_times_out_child_and_unlisted_arguments_are_denied ... ok
+test operation_cancellation_kills_child_and_records_cancelled ... ok
+test sleeper ... ignored, process fixture, intentionally sleeps until killed
+test tree_parent ... ignored, process tree fixture
+test cancellation_terminates_descendant_tree ... ok
+test executable_changed_after_local_approval_is_denied ... ok
+test scheduler_applies_backpressure_to_live_operations ... ok
+
+test result: ok. 7 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 4.51s
+
+     Running tests\storage.rs (target\debug\deps\storage-588eb3794e1a0c49.exe)
+
+running 2 tests
+test operation_claim_is_durable_and_unique ... ok
+test causal_query_repeated_large_selection_is_ordered_bounded_and_scoped ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.19s
+
+     Running tests\stress.rs (target\debug\deps\stress-f1240d409e7eddb7.exe)
+
+running 1 test
+test ten_thousand_files_thousand_edits_cancel_rollback_restart has been running for over 60 seconds
+test ten_thousand_files_thousand_edits_cancel_rollback_restart ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 103.79s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_ports-217a1ef9ab7406d4.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_protocol-e9c613444e38dca7.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\runtime_transport-8e2b72c9ce8b1135.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\authentication.rs (target\debug\deps\authentication-aa5971c0daea5735.exe)
+
+running 1 test
+test wrong_secret_and_wrong_version_are_rejected ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\framing.rs (target\debug\deps\framing-4ad74aabfa522047.exe)
+
+running 2 tests
+test excessive_frame_rejected_before_allocation ... ok
+test framed_message_round_trip ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_application
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_domain
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_infrastructure
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_ports
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests runtime_transport
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

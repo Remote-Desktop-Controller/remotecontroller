@@ -1,0 +1,66 @@
+   Compiling libsql v0.9.30 (C:\Users\Notebook\Documents\Remote Desktop Controller\.bootstrap\libsql-regression)
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> ..\..\vendor\libsql\src\local\statement.rs:342:20
+    |
+342 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+    = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+    |
+342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> ..\..\vendor\libsql\src\local\impls.rs:163:16
+    |
+163 |     fn columns(&self) -> Vec<Column> {
+    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                |
+    |                the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+163 |     fn columns(&self) -> Vec<Column<'_>> {
+    |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> ..\..\vendor\libsql\src\statement.rs:27:16
+   |
+27 |     fn columns(&self) -> Vec<Column>;
+   |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+   |                |
+   |                the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+27 |     fn columns(&self) -> Vec<Column<'_>>;
+   |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> ..\..\vendor\libsql\src\statement.rs:106:20
+    |
+106 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: `libsql` (lib test) generated 4 warnings (run `cargo fix --lib -p libsql --tests` to apply 4 suggestions)
+    Finished `test` profile [unoptimized] target(s) in 6.44s
+     Running unittests ..\..\vendor\libsql\src\lib.rs (target\debug\deps\libsql-0decbb5cc00f637a.exe)
+
+running 1 test
+test local::connection::tests::disconnect_is_idempotent_and_clears_closed_handle ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s

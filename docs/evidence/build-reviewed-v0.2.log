@@ -1,0 +1,61 @@
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\local\statement.rs:342:20
+    |
+342 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+    = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+    |
+342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\local\impls.rs:163:16
+    |
+163 |     fn columns(&self) -> Vec<Column> {
+    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                |
+    |                the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+163 |     fn columns(&self) -> Vec<Column<'_>> {
+    |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> vendor\libsql\src\statement.rs:27:16
+   |
+27 |     fn columns(&self) -> Vec<Column>;
+   |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+   |                |
+   |                the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+27 |     fn columns(&self) -> Vec<Column<'_>>;
+   |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\statement.rs:106:20
+    |
+106 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+   Compiling runtime-infrastructure v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\infrastructure)
+   Compiling local-daemon v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\apps\local-daemon)
+    Finished `dev` profile [unoptimized] target(s) in 30.69s

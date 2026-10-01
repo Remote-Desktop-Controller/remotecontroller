@@ -1,0 +1,483 @@
+unix-red	Observe missing directory durability before correction	﻿2026-10-01T13:56:46.4525118Z ##[group]Run cargo test -p runtime-infrastructure --lib retention_directory_sync_order_is_durable --locked -- --nocapture
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:46.4526018Z ^[[36;1mcargo test -p runtime-infrastructure --lib retention_directory_sync_order_is_durable --locked -- --nocapture^[[0m
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:46.4588570Z shell: /usr/bin/bash -e {0}
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:46.4588822Z env:
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:46.4589021Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:46.4589269Z   CARGO_INCREMENTAL: 0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:46.4589485Z   CARGO_TERM_COLOR: always
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:46.4589703Z ##[endgroup]
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:46.5210442Z info: syncing channel updates for 1.98.1-x86_64-unknown-linux-gnu
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:46.5971670Z info: latest update on 2026-09-03 for version 1.98.1 (48a229cea 2026-09-01)
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:46.6105937Z info: downloading 2 components
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.2865647Z ^[[1m^[[92m    Updating^[[0m crates.io index
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.6995615Z ^[[1m^[[92m Downloading^[[0m crates ...
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7409012Z ^[[1m^[[92m  Downloaded^[[0m rustc-hash v1.1.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7424425Z ^[[1m^[[92m  Downloaded^[[0m plotters-svg v0.3.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7439774Z ^[[1m^[[92m  Downloaded^[[0m errno v0.3.14
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7465924Z ^[[1m^[[92m  Downloaded^[[0m futures-io v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7478919Z ^[[1m^[[92m  Downloaded^[[0m proc-macro2 v1.0.107
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7525628Z ^[[1m^[[92m  Downloaded^[[0m ciborium-ll v0.2.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7542518Z ^[[1m^[[92m  Downloaded^[[0m event-listener-strategy v0.5.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7559771Z ^[[1m^[[92m  Downloaded^[[0m same-file v1.0.6
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7583647Z ^[[1m^[[92m  Downloaded^[[0m quote v1.0.47
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7628315Z ^[[1m^[[92m  Downloaded^[[0m rustix-linux-procfs v0.1.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7646281Z ^[[1m^[[92m  Downloaded^[[0m prettyplease v0.2.37
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7692983Z ^[[1m^[[92m  Downloaded^[[0m sha2 v0.10.9
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7723170Z ^[[1m^[[92m  Downloaded^[[0m unicode-ident v1.0.26
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7753337Z ^[[1m^[[92m  Downloaded^[[0m slab v0.4.12
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7769020Z ^[[1m^[[92m  Downloaded^[[0m tokio-macros v2.7.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7781816Z ^[[1m^[[92m  Downloaded^[[0m cpufeatures v0.2.17
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7804441Z ^[[1m^[[92m  Downloaded^[[0m portable-atomic v1.15.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7881237Z ^[[1m^[[92m  Downloaded^[[0m shlex v1.3.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.7895198Z ^[[1m^[[92m  Downloaded^[[0m zerocopy v0.7.35
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8135472Z ^[[1m^[[92m  Downloaded^[[0m maybe-owned v0.3.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8148312Z ^[[1m^[[92m  Downloaded^[[0m signal-hook-registry v1.4.8
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8161203Z ^[[1m^[[92m  Downloaded^[[0m tinytemplate v1.2.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8178841Z ^[[1m^[[92m  Downloaded^[[0m which v4.4.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8194380Z ^[[1m^[[92m  Downloaded^[[0m scopeguard v1.2.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8210810Z ^[[1m^[[92m  Downloaded^[[0m subtle v2.6.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8230600Z ^[[1m^[[92m  Downloaded^[[0m tempfile v3.27.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8257146Z ^[[1m^[[92m  Downloaded^[[0m zerocopy-derive v0.7.35
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8307757Z ^[[1m^[[92m  Downloaded^[[0m tagptr v0.2.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8321539Z ^[[1m^[[92m  Downloaded^[[0m thiserror v1.0.69
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8381579Z ^[[1m^[[92m  Downloaded^[[0m thiserror v2.0.21
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8449000Z ^[[1m^[[92m  Downloaded^[[0m thiserror-impl v1.0.69
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8462674Z ^[[1m^[[92m  Downloaded^[[0m thiserror-impl v2.0.21
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8477808Z ^[[1m^[[92m  Downloaded^[[0m tree-sitter-language v0.1.8
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8496193Z ^[[1m^[[92m  Downloaded^[[0m tracing-core v0.1.36
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8523624Z ^[[1m^[[92m  Downloaded^[[0m walkdir v2.5.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8541890Z ^[[1m^[[92m  Downloaded^[[0m futures-macro v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8552493Z ^[[1m^[[92m  Downloaded^[[0m shlex v2.0.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8565416Z ^[[1m^[[92m  Downloaded^[[0m streaming-iterator v0.1.9
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8577336Z ^[[1m^[[92m  Downloaded^[[0m tracing-attributes v0.1.31
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8603984Z ^[[1m^[[92m  Downloaded^[[0m version_check v0.9.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8616355Z ^[[1m^[[92m  Downloaded^[[0m zmij v1.0.23
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8634237Z ^[[1m^[[92m  Downloaded^[[0m rmp v0.8.15
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8674872Z ^[[1m^[[92m  Downloaded^[[0m rmp-serde v1.3.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8692776Z ^[[1m^[[92m  Downloaded^[[0m serde v1.0.229
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8728099Z ^[[1m^[[92m  Downloaded^[[0m smallvec v1.16.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8741753Z ^[[1m^[[92m  Downloaded^[[0m socket2 v0.6.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8759999Z ^[[1m^[[92m  Downloaded^[[0m tree-sitter-python v0.25.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8822485Z ^[[1m^[[92m  Downloaded^[[0m serde_derive v1.0.229
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8853053Z ^[[1m^[[92m  Downloaded^[[0m uuid v1.26.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8883238Z ^[[1m^[[92m  Downloaded^[[0m rayon-core v1.13.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8921594Z ^[[1m^[[92m  Downloaded^[[0m serde_core v1.0.229
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8948785Z ^[[1m^[[92m  Downloaded^[[0m parking v2.2.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8959525Z ^[[1m^[[92m  Downloaded^[[0m cfg-if v1.0.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8972557Z ^[[1m^[[92m  Downloaded^[[0m clap_lex v1.1.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.8983435Z ^[[1m^[[92m  Downloaded^[[0m async-lock v3.4.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9005226Z ^[[1m^[[92m  Downloaded^[[0m find-msvc-tools v0.1.14
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9021535Z ^[[1m^[[92m  Downloaded^[[0m typenum v1.20.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9056284Z ^[[1m^[[92m  Downloaded^[[0m cast v0.3.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9067727Z ^[[1m^[[92m  Downloaded^[[0m ciborium-io v0.2.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9075178Z ^[[1m^[[92m  Downloaded^[[0m crypto-common v0.1.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9084605Z ^[[1m^[[92m  Downloaded^[[0m equivalent v1.0.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9094561Z ^[[1m^[[92m  Downloaded^[[0m fs-set-times v0.20.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9108500Z ^[[1m^[[92m  Downloaded^[[0m lazy_static v1.5.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9126311Z ^[[1m^[[92m  Downloaded^[[0m lazycell v1.3.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9136284Z ^[[1m^[[92m  Downloaded^[[0m plotters-backend v0.3.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9149136Z ^[[1m^[[92m  Downloaded^[[0m regex v1.13.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9205852Z ^[[1m^[[92m  Downloaded^[[0m serde_json v1.0.151
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9282248Z ^[[1m^[[92m  Downloaded^[[0m zerocopy-derive v0.8.59
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9411266Z ^[[1m^[[92m  Downloaded^[[0m ambient-authority v0.0.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9424258Z ^[[1m^[[92m  Downloaded^[[0m block-buffer v0.10.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9434980Z ^[[1m^[[92m  Downloaded^[[0m futures-core v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9448697Z ^[[1m^[[92m  Downloaded^[[0m futures-sink v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9457399Z ^[[1m^[[92m  Downloaded^[[0m futures-task v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9469881Z ^[[1m^[[92m  Downloaded^[[0m home v0.5.12
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9480179Z ^[[1m^[[92m  Downloaded^[[0m peeking_take_while v0.1.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9488319Z ^[[1m^[[92m  Downloaded^[[0m tokio-util v0.7.19
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9569172Z ^[[1m^[[92m  Downloaded^[[0m anes v0.1.6
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9597841Z ^[[1m^[[92m  Downloaded^[[0m crossbeam-deque v0.8.8
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9613055Z ^[[1m^[[92m  Downloaded^[[0m globset v0.4.20
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9628561Z ^[[1m^[[92m  Downloaded^[[0m ipnet v2.12.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9645500Z ^[[1m^[[92m  Downloaded^[[0m jobserver v0.1.35
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9665166Z ^[[1m^[[92m  Downloaded^[[0m pin-project-lite v0.2.17
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9724967Z ^[[1m^[[92m  Downloaded^[[0m pkg-config v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9740414Z ^[[1m^[[92m  Downloaded^[[0m rayon v1.12.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9837050Z ^[[1m^[[92m  Downloaded^[[0m tree-sitter v0.25.10
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9898476Z ^[[1m^[[92m  Downloaded^[[0m async-trait v0.1.92
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9936255Z ^[[1m^[[92m  Downloaded^[[0m autocfg v1.5.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9955410Z ^[[1m^[[92m  Downloaded^[[0m byteorder v1.5.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9971699Z ^[[1m^[[92m  Downloaded^[[0m cexpr v0.6.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:47.9990872Z ^[[1m^[[92m  Downloaded^[[0m cmake v0.1.58
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0005300Z ^[[1m^[[92m  Downloaded^[[0m digest v0.10.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0024665Z ^[[1m^[[92m  Downloaded^[[0m fastrand v2.5.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0039688Z ^[[1m^[[92m  Downloaded^[[0m futures-channel v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0059219Z ^[[1m^[[92m  Downloaded^[[0m futures-executor v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0073977Z ^[[1m^[[92m  Downloaded^[[0m generic-array v0.14.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0089003Z ^[[1m^[[92m  Downloaded^[[0m glob v0.3.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0104409Z ^[[1m^[[92m  Downloaded^[[0m io-extras v0.19.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0126741Z ^[[1m^[[92m  Downloaded^[[0m io-lifetimes v2.0.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0144201Z ^[[1m^[[92m  Downloaded^[[0m io-lifetimes v3.0.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0161459Z ^[[1m^[[92m  Downloaded^[[0m itoa v1.0.18
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0176223Z ^[[1m^[[92m  Downloaded^[[0m libloading v0.8.9
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0200059Z ^[[1m^[[92m  Downloaded^[[0m libsql-sys v0.9.30
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0217276Z ^[[1m^[[92m  Downloaded^[[0m lock_api v0.4.14
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0230550Z ^[[1m^[[92m  Downloaded^[[0m once_cell v1.21.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0256212Z ^[[1m^[[92m  Downloaded^[[0m oorandom v11.1.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0266276Z ^[[1m^[[92m  Downloaded^[[0m parking_lot v0.12.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0291871Z ^[[1m^[[92m  Downloaded^[[0m parking_lot_core v0.9.12
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0313514Z ^[[1m^[[92m  Downloaded^[[0m rustix v1.1.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0589812Z ^[[1m^[[92m  Downloaded^[[0m anstyle v1.0.14
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0604269Z ^[[1m^[[92m  Downloaded^[[0m cap-std v4.0.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0635006Z ^[[1m^[[92m  Downloaded^[[0m ciborium v0.2.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0659440Z ^[[1m^[[92m  Downloaded^[[0m clang-sys v1.9.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0683114Z ^[[1m^[[92m  Downloaded^[[0m criterion-plot v0.6.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0702098Z ^[[1m^[[92m  Downloaded^[[0m crossbeam-utils v0.8.23
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0729954Z ^[[1m^[[92m  Downloaded^[[0m either v1.18.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0744949Z ^[[1m^[[92m  Downloaded^[[0m getrandom v0.4.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0784365Z ^[[1m^[[92m  Downloaded^[[0m log v0.4.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0809792Z ^[[1m^[[92m  Downloaded^[[0m num-traits v0.2.19
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0836184Z ^[[1m^[[92m  Downloaded^[[0m regex-syntax v0.8.11
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.0903661Z ^[[1m^[[92m  Downloaded^[[0m rustix v0.38.44
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.1170078Z ^[[1m^[[92m  Downloaded^[[0m vcpkg v0.2.15
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.1724895Z ^[[1m^[[92m  Downloaded^[[0m bytes v1.12.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.1761815Z ^[[1m^[[92m  Downloaded^[[0m clap v4.6.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.1863715Z ^[[1m^[[92m  Downloaded^[[0m crossbeam-epoch v0.9.21
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.1889372Z ^[[1m^[[92m  Downloaded^[[0m event-listener v5.4.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.1906718Z ^[[1m^[[92m  Downloaded^[[0m futures v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.1958534Z ^[[1m^[[92m  Downloaded^[[0m half v2.7.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.1985587Z ^[[1m^[[92m  Downloaded^[[0m ignore v0.4.33
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2010457Z ^[[1m^[[92m  Downloaded^[[0m bitflags v2.13.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2056137Z ^[[1m^[[92m  Downloaded^[[0m cap-primitives v4.0.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2170777Z ^[[1m^[[92m  Downloaded^[[0m minimal-lexical v0.2.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2217301Z ^[[1m^[[92m  Downloaded^[[0m zerocopy v0.8.59
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2433799Z ^[[1m^[[92m  Downloaded^[[0m cc v1.5.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2467259Z ^[[1m^[[92m  Downloaded^[[0m crossbeam-channel v0.5.17
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2507870Z ^[[1m^[[92m  Downloaded^[[0m indexmap v2.14.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2551100Z ^[[1m^[[92m  Downloaded^[[0m memchr v2.8.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2607542Z ^[[1m^[[92m  Downloaded^[[0m mio v1.2.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2670124Z ^[[1m^[[92m  Downloaded^[[0m nom v7.1.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2723034Z ^[[1m^[[92m  Downloaded^[[0m syn v3.0.6
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2833587Z ^[[1m^[[92m  Downloaded^[[0m criterion v0.7.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.2909043Z ^[[1m^[[92m  Downloaded^[[0m plotters v0.3.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3005360Z ^[[1m^[[92m  Downloaded^[[0m syn v2.0.119
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3111828Z ^[[1m^[[92m  Downloaded^[[0m itertools v0.13.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3181354Z ^[[1m^[[92m  Downloaded^[[0m libsql v0.9.30
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3245870Z ^[[1m^[[92m  Downloaded^[[0m aho-corasick v1.1.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3299110Z ^[[1m^[[92m  Downloaded^[[0m clap_builder v4.6.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3363806Z ^[[1m^[[92m  Downloaded^[[0m tree-sitter-rust v0.24.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3467248Z ^[[1m^[[92m  Downloaded^[[0m futures-util v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3603335Z ^[[1m^[[92m  Downloaded^[[0m hashbrown v0.17.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3656394Z ^[[1m^[[92m  Downloaded^[[0m bindgen v0.66.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3718744Z ^[[1m^[[92m  Downloaded^[[0m moka v0.12.16
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3796939Z ^[[1m^[[92m  Downloaded^[[0m git2 v0.21.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.3886004Z ^[[1m^[[92m  Downloaded^[[0m regex-automata v0.4.18
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.4029821Z ^[[1m^[[92m  Downloaded^[[0m tracing v0.1.44
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.4188624Z ^[[1m^[[92m  Downloaded^[[0m bstr v1.13.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.4268517Z ^[[1m^[[92m  Downloaded^[[0m tokio v1.53.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.4731593Z ^[[1m^[[92m  Downloaded^[[0m libc v0.2.189
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.5171899Z ^[[1m^[[92m  Downloaded^[[0m libz-sys v1.1.29
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.5405345Z ^[[1m^[[92m  Downloaded^[[0m libgit2-sys v0.18.8+1.9.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.6038384Z ^[[1m^[[92m  Downloaded^[[0m linux-raw-sys v0.4.15
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.6492254Z ^[[1m^[[92m  Downloaded^[[0m linux-raw-sys v0.12.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.7134959Z ^[[1m^[[92m  Downloaded^[[0m libsql-ffi v0.9.30
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.8824826Z ^[[1m^[[92m   Compiling^[[0m libc v0.2.189
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:48.8825405Z ^[[1m^[[92m   Compiling^[[0m proc-macro2 v1.0.107
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:49.1216116Z ^[[1m^[[92m   Compiling^[[0m quote v1.0.47
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:49.2010488Z ^[[1m^[[92m   Compiling^[[0m unicode-ident v1.0.26
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:49.6875756Z ^[[1m^[[92m   Compiling^[[0m cfg-if v1.0.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:49.7043757Z ^[[1m^[[92m   Compiling^[[0m jobserver v0.1.35
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:49.7569857Z ^[[1m^[[92m   Compiling^[[0m syn v3.0.6
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:49.8822200Z ^[[1m^[[92m   Compiling^[[0m shlex v2.0.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:49.9608344Z ^[[1m^[[92m   Compiling^[[0m find-msvc-tools v0.1.14
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:50.0678077Z ^[[1m^[[92m   Compiling^[[0m cc v1.5.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:51.1389796Z ^[[1m^[[92m   Compiling^[[0m syn v2.0.119
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:52.2684202Z ^[[1m^[[92m   Compiling^[[0m memchr v2.8.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:52.6534450Z ^[[1m^[[92m   Compiling^[[0m serde_core v1.0.229
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:54.1643059Z ^[[1m^[[92m   Compiling^[[0m pin-project-lite v0.2.17
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:54.1911818Z ^[[1m^[[92m   Compiling^[[0m serde v1.0.229
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:54.2086753Z ^[[1m^[[92m   Compiling^[[0m bitflags v2.13.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:54.3033254Z ^[[1m^[[92m   Compiling^[[0m serde_derive v1.0.229
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:54.3079404Z ^[[1m^[[92m   Compiling^[[0m regex-syntax v0.8.11
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:55.8492726Z ^[[1m^[[92m   Compiling^[[0m zmij v1.0.23
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.5251929Z ^[[1m^[[92m   Compiling^[[0m parking_lot_core v0.9.12
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.5810048Z ^[[1m^[[92m   Compiling^[[0m itoa v1.0.18
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.6108687Z ^[[1m^[[92m   Compiling^[[0m getrandom v0.4.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.6637219Z ^[[1m^[[92m   Compiling^[[0m scopeguard v1.2.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.6823755Z ^[[1m^[[92m   Compiling^[[0m smallvec v1.16.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.6931126Z ^[[1m^[[92m   Compiling^[[0m glob v0.3.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.7908240Z ^[[1m^[[92m   Compiling^[[0m futures-sink v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.8231521Z ^[[1m^[[92m   Compiling^[[0m futures-core v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.8738075Z ^[[1m^[[92m   Compiling^[[0m crossbeam-utils v0.8.23
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.8778230Z ^[[1m^[[92m   Compiling^[[0m clang-sys v1.9.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:56.9758345Z ^[[1m^[[92m   Compiling^[[0m futures-channel v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.0861014Z ^[[1m^[[92m   Compiling^[[0m lock_api v0.4.14
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.1112191Z ^[[1m^[[92m   Compiling^[[0m futures-macro v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.2028909Z ^[[1m^[[92m   Compiling^[[0m log v0.4.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.2744004Z ^[[1m^[[92m   Compiling^[[0m once_cell v1.21.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.3708923Z ^[[1m^[[92m   Compiling^[[0m rustix v0.38.44
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.4972855Z ^[[1m^[[92m   Compiling^[[0m futures-io v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.5016111Z ^[[1m^[[92m   Compiling^[[0m prettyplease v0.2.37
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.5548949Z ^[[1m^[[92m   Compiling^[[0m slab v0.4.12
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.5551142Z ^[[1m^[[92m   Compiling^[[0m futures-task v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.6260114Z ^[[1m^[[92m   Compiling^[[0m futures-util v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:57.6485109Z ^[[1m^[[92m   Compiling^[[0m parking_lot v0.12.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:58.1890773Z ^[[1m^[[92m   Compiling^[[0m bytes v1.12.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:58.5686614Z ^[[1m^[[92m   Compiling^[[0m serde_json v1.0.151
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:58.6219631Z ^[[1m^[[92m   Compiling^[[0m tree-sitter-language v0.1.8
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:58.6825411Z ^[[1m^[[92m   Compiling^[[0m autocfg v1.5.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:58.8862443Z ^[[1m^[[92m   Compiling^[[0m linux-raw-sys v0.4.15
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:59.0573634Z ^[[1m^[[92m   Compiling^[[0m minimal-lexical v0.2.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:59.1749974Z ^[[1m^[[92m   Compiling^[[0m crossbeam-epoch v0.9.21
+unix-red	Observe missing directory durability before correction	2026-10-01T13:56:59.2493718Z ^[[1m^[[92m   Compiling^[[0m nom v7.1.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:00.2691282Z ^[[1m^[[92m   Compiling^[[0m num-traits v0.2.19
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:00.3305536Z ^[[1m^[[92m   Compiling^[[0m regex-automata v0.4.18
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:00.7363888Z ^[[1m^[[92m   Compiling^[[0m libloading v0.8.9
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:00.8132505Z ^[[1m^[[92m   Compiling^[[0m errno v0.3.14
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:00.8631147Z ^[[1m^[[92m   Compiling^[[0m either v1.18.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:00.9724339Z ^[[1m^[[92m   Compiling^[[0m rustix v1.1.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:01.0973655Z ^[[1m^[[92m   Compiling^[[0m home v0.5.12
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:01.1341478Z ^[[1m^[[92m   Compiling^[[0m pkg-config v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:01.4246877Z ^[[1m^[[92m   Compiling^[[0m bindgen v0.66.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:01.5008124Z ^[[1m^[[92m   Compiling^[[0m version_check v0.9.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:01.6508737Z ^[[1m^[[92m   Compiling^[[0m thiserror v2.0.21
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:01.8052924Z ^[[1m^[[92m   Compiling^[[0m generic-array v0.14.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:01.8217794Z ^[[1m^[[92m   Compiling^[[0m regex v1.13.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:01.8562988Z ^[[1m^[[92m   Compiling^[[0m which v4.4.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:02.0040482Z ^[[1m^[[92m   Compiling^[[0m signal-hook-registry v1.4.8
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:02.8424017Z ^[[1m^[[92m   Compiling^[[0m cexpr v0.6.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:03.4344833Z ^[[1m^[[92m   Compiling^[[0m uuid v1.26.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:04.1586068Z ^[[1m^[[92m   Compiling^[[0m aho-corasick v1.1.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:04.3463536Z ^[[1m^[[92m   Compiling^[[0m thiserror-impl v2.0.21
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:05.0455062Z ^[[1m^[[92m   Compiling^[[0m tokio-macros v2.7.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:05.3148107Z ^[[1m^[[92m   Compiling^[[0m socket2 v0.6.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:05.3744044Z ^[[1m^[[92m   Compiling^[[0m mio v1.2.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:05.5838765Z ^[[1m^[[92m   Compiling^[[0m lazycell v1.3.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:05.6179383Z ^[[1m^[[92m   Compiling^[[0m equivalent v1.0.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:05.6378716Z ^[[1m^[[92m   Compiling^[[0m zerocopy v0.8.59
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:05.6404185Z ^[[1m^[[92m   Compiling^[[0m peeking_take_while v0.1.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:05.6658437Z ^[[1m^[[92m   Compiling^[[0m vcpkg v0.2.15
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:05.7858402Z ^[[1m^[[92m   Compiling^[[0m rustc-hash v1.1.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:05.8138169Z ^[[1m^[[92m   Compiling^[[0m linux-raw-sys v0.12.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:06.0155940Z ^[[1m^[[92m   Compiling^[[0m crossbeam-deque v0.8.8
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:06.0878820Z ^[[1m^[[92m   Compiling^[[0m lazy_static v1.5.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:06.1135986Z ^[[1m^[[92m   Compiling^[[0m shlex v1.3.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:06.1946154Z ^[[1m^[[92m   Compiling^[[0m libz-sys v1.1.29
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:08.3730592Z ^[[1m^[[92m   Compiling^[[0m tokio v1.53.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:12.2679026Z ^[[1m^[[92m   Compiling^[[0m zerocopy-derive v0.8.59
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:12.2721817Z ^[[1m^[[92m   Compiling^[[0m cmake v0.1.58
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:12.4696799Z ^[[1m^[[92m   Compiling^[[0m io-lifetimes v2.0.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:12.5601190Z ^[[1m^[[92m   Compiling^[[0m hashbrown v0.17.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:12.9143188Z ^[[1m^[[92m   Compiling^[[0m io-lifetimes v3.0.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:13.0042834Z ^[[1m^[[92m   Compiling^[[0m typenum v1.20.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:13.8041893Z ^[[1m^[[92m   Compiling^[[0m indexmap v2.14.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:14.2190633Z ^[[1m^[[92m   Compiling^[[0m libsql-ffi v0.9.30
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:15.9428427Z ^[[1m^[[92m   Compiling^[[0m tracing-core v0.1.36
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:16.2338429Z ^[[1m^[[92m   Compiling^[[0m tracing-attributes v0.1.31
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:16.9067021Z ^[[1m^[[92m   Compiling^[[0m async-trait v0.1.92
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:17.0770239Z ^[[1m^[[92m   Compiling^[[0m rayon-core v1.13.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:17.1242774Z ^[[1m^[[92m   Compiling^[[0m io-extras v0.19.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:17.2152720Z ^[[1m^[[92m   Compiling^[[0m parking v2.2.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:17.3910442Z ^[[1m^[[92m   Compiling^[[0m event-listener v5.4.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:17.5126914Z ^[[1m^[[92m   Compiling^[[0m tracing v0.1.44
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:17.6186839Z ^[[1m^[[92m   Compiling^[[0m half v2.7.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:18.2520664Z ^[[1m^[[92m   Compiling^[[0m tokio-util v0.7.19
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:18.7758121Z ^[[1m^[[92m   Compiling^[[0m runtime-domain v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/domain)
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:18.9171898Z ^[[1m^[[92m   Compiling^[[0m libgit2-sys v0.18.8+1.9.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:19.0948552Z ^[[1m^[[92m   Compiling^[[0m zerocopy-derive v0.7.35
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:19.5049866Z ^[[1m^[[92m   Compiling^[[0m thiserror v1.0.69
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:19.6054804Z ^[[1m^[[92m   Compiling^[[0m anstyle v1.0.14
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:19.7058986Z ^[[1m^[[92m   Compiling^[[0m portable-atomic v1.15.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:19.8983128Z ^[[1m^[[92m   Compiling^[[0m plotters-backend v0.3.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:20.0225741Z ^[[1m^[[92m   Compiling^[[0m cap-primitives v4.0.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:20.1118736Z ^[[1m^[[92m   Compiling^[[0m same-file v1.0.6
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:20.1607588Z ^[[1m^[[92m   Compiling^[[0m ciborium-io v0.2.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:20.1845353Z ^[[1m^[[92m   Compiling^[[0m byteorder v1.5.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:20.2651803Z ^[[1m^[[92m   Compiling^[[0m clap_lex v1.1.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:20.3544325Z ^[[1m^[[92m   Compiling^[[0m clap_builder v4.6.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:22.4547940Z ^[[1m^[[92m   Compiling^[[0m zerocopy v0.7.35
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:22.8554690Z ^[[1m^[[92m   Compiling^[[0m ciborium-ll v0.2.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:22.9417071Z ^[[1m^[[92m   Compiling^[[0m walkdir v2.5.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:23.1522961Z ^[[1m^[[92m   Compiling^[[0m plotters-svg v0.3.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:31.9555322Z ^[[1m^[[92m   Compiling^[[0m runtime-ports v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/ports)
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:32.0818523Z ^[[1m^[[92m   Compiling^[[0m fs-set-times v0.20.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:32.1319815Z ^[[1m^[[92m   Compiling^[[0m tree-sitter v0.25.10
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:32.2138977Z ^[[1m^[[92m   Compiling^[[0m event-listener-strategy v0.5.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:32.6418588Z ^[[1m^[[92m   Compiling^[[0m itertools v0.13.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:33.5765763Z ^[[1m^[[92m   Compiling^[[0m crypto-common v0.1.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:33.6144030Z ^[[1m^[[92m   Compiling^[[0m block-buffer v0.10.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:33.6606763Z ^[[1m^[[92m   Compiling^[[0m rmp v0.8.15
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:34.0759279Z ^[[1m^[[92m   Compiling^[[0m rustix-linux-procfs v0.1.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:34.1849078Z ^[[1m^[[92m   Compiling^[[0m futures-executor v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:34.2902234Z ^[[1m^[[92m   Compiling^[[0m thiserror-impl v1.0.69
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:34.9481111Z ^[[1m^[[92m   Compiling^[[0m bstr v1.13.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:35.2287524Z ^[[1m^[[92m   Compiling^[[0m tree-sitter-rust v0.24.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:35.2962579Z ^[[1m^[[92m   Compiling^[[0m tree-sitter-python v0.25.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:35.3606065Z ^[[1m^[[92m   Compiling^[[0m ambient-authority v0.0.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:35.3806509Z ^[[1m^[[92m   Compiling^[[0m cap-std v4.0.3
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:35.4656053Z ^[[1m^[[92m   Compiling^[[0m cast v0.3.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:35.5366159Z ^[[1m^[[92m   Compiling^[[0m maybe-owned v0.3.4
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:35.6195402Z ^[[1m^[[92m   Compiling^[[0m ipnet v2.12.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:36.2756582Z ^[[1m^[[92m   Compiling^[[0m criterion-plot v0.6.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:38.1528801Z ^[[1m^[[92m   Compiling^[[0m globset v0.4.20
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:38.5483754Z ^[[1m^[[92m   Compiling^[[0m futures v0.3.34
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:38.5714210Z ^[[1m^[[92m   Compiling^[[0m rmp-serde v1.3.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:38.8212699Z ^[[1m^[[92m   Compiling^[[0m digest v0.10.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:38.9094914Z ^[[1m^[[92m   Compiling^[[0m rayon v1.12.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:40.1701830Z ^[[1m^[[92m   Compiling^[[0m async-lock v3.4.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:41.2646005Z ^[[1m^[[92m   Compiling^[[0m libsql-sys v0.9.30
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:41.8126484Z ^[[1m^[[92m   Compiling^[[0m plotters v0.3.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:42.4778617Z ^[[1m^[[92m   Compiling^[[0m ciborium v0.2.2
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:42.8264305Z ^[[1m^[[92m   Compiling^[[0m clap v4.6.7
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:42.8480309Z ^[[1m^[[92m   Compiling^[[0m runtime-protocol v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/protocol)
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:43.0489100Z ^[[1m^[[92m   Compiling^[[0m tinytemplate v1.2.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:43.2612357Z ^[[1m^[[92m   Compiling^[[0m crossbeam-channel v0.5.17
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:43.5260332Z ^[[1m^[[92m   Compiling^[[0m oorandom v11.1.5
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:43.5631287Z ^[[1m^[[92m   Compiling^[[0m fastrand v2.5.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:43.6626124Z ^[[1m^[[92m   Compiling^[[0m streaming-iterator v0.1.9
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:43.8299511Z ^[[1m^[[92m   Compiling^[[0m subtle v2.6.1
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:43.8960559Z ^[[1m^[[92m   Compiling^[[0m tagptr v0.2.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:43.9526749Z ^[[1m^[[92m   Compiling^[[0m cpufeatures v0.2.17
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:43.9728433Z ^[[1m^[[92m   Compiling^[[0m anes v0.1.6
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:44.0731708Z ^[[1m^[[92m   Compiling^[[0m criterion v0.7.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:46.8538090Z ^[[1m^[[92m   Compiling^[[0m sha2 v0.10.9
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:47.9147171Z ^[[1m^[[92m   Compiling^[[0m moka v0.12.16
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:48.6941756Z ^[[1m^[[92m   Compiling^[[0m runtime-transport v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/transport)
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:49.1581557Z ^[[1m^[[92m   Compiling^[[0m tempfile v3.27.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:49.3559253Z ^[[1m^[[92m   Compiling^[[0m libsql v0.9.30
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:49.9936115Z ^[[1m^[[92m   Compiling^[[0m ignore v0.4.33
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:51.0557658Z ^[[1m^[[92m   Compiling^[[0m runtime-application v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/application)
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:53.1979637Z ^[[1m^[[92m   Compiling^[[0m git2 v0.21.0
+unix-red	Observe missing directory durability before correction	2026-10-01T13:57:55.1874957Z ^[[1m^[[92m   Compiling^[[0m runtime-infrastructure v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/infrastructure)
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.0281122Z ^[[1m^[[92m    Finished^[[0m `test` profile [unoptimized] target(s) in 1m 12s
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.0766121Z ^[[1m^[[92m     Running^[[0m unittests src/lib.rs (target/debug/deps/runtime_infrastructure-647454ba29c9376e)
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.0798596Z
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.0798775Z running 1 test
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5303351Z
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5310221Z thread 'maintenance::tests::retention_directory_sync_order_is_durable' (6133) panicked at crates/infrastructure/src/maintenance.rs:383:18:
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5311394Z backup directory entry must be synced before retention
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5311863Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5312682Z ^[[1m^[[91merror^[[0m: test failed, to rerun pass `-p runtime-infrastructure --lib`
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5313253Z test maintenance::tests::retention_directory_sync_order_is_durable ... FAILED
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5313576Z
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5313662Z failures:
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5313797Z
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5313880Z failures:
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5314168Z     maintenance::tests::retention_directory_sync_order_is_durable
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5314740Z
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5315013Z test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.45s
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5315396Z
+unix-red	Observe missing directory durability before correction	2026-10-01T13:58:00.5420263Z ##[error]Process completed with exit code 101.
+unix-red	Observe private config creation before correction	﻿2026-10-01T13:58:00.5483674Z ##[group]Run cargo test -p local-daemon --bin local-daemon install::privacy_red:: --locked -- --nocapture
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.5484439Z ^[[36;1mcargo test -p local-daemon --bin local-daemon install::privacy_red:: --locked -- --nocapture^[[0m
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.5546302Z shell: /usr/bin/bash -e {0}
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.5546553Z env:
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.5546753Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.5547012Z   CARGO_INCREMENTAL: 0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.5547457Z   CARGO_TERM_COLOR: always
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.5547708Z ##[endgroup]
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6470004Z ^[[1m^[[92m Downloading^[[0m crates ...
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6795509Z ^[[1m^[[92m  Downloaded^[[0m anstream v1.0.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6817053Z ^[[1m^[[92m  Downloaded^[[0m matchers v0.2.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6829303Z ^[[1m^[[92m  Downloaded^[[0m colorchoice v1.0.5
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6838690Z ^[[1m^[[92m  Downloaded^[[0m heck v0.5.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6853377Z ^[[1m^[[92m  Downloaded^[[0m is_terminal_polyfill v1.70.2
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6866287Z ^[[1m^[[92m  Downloaded^[[0m anstyle-query v1.1.5
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6884048Z ^[[1m^[[92m  Downloaded^[[0m fs2 v0.4.3
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6904217Z ^[[1m^[[92m  Downloaded^[[0m anstyle-parse v1.0.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6920564Z ^[[1m^[[92m  Downloaded^[[0m anyhow v1.0.104
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6961907Z ^[[1m^[[92m  Downloaded^[[0m clap_derive v4.6.7
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.6984452Z ^[[1m^[[92m  Downloaded^[[0m nu-ansi-term v0.50.3
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7009372Z ^[[1m^[[92m  Downloaded^[[0m strsim v0.11.1
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7023093Z ^[[1m^[[92m  Downloaded^[[0m thread_local v1.1.10
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7037034Z ^[[1m^[[92m  Downloaded^[[0m sharded-slab v0.1.7
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7072965Z ^[[1m^[[92m  Downloaded^[[0m toml_write v0.1.2
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7086976Z ^[[1m^[[92m  Downloaded^[[0m toml_edit v0.22.27
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7134419Z ^[[1m^[[92m  Downloaded^[[0m toml_datetime v0.6.11
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7146299Z ^[[1m^[[92m  Downloaded^[[0m tracing-log v0.2.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7161375Z ^[[1m^[[92m  Downloaded^[[0m utf8parse v0.2.2
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7172080Z ^[[1m^[[92m  Downloaded^[[0m tracing-subscriber v0.3.23
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7259398Z ^[[1m^[[92m  Downloaded^[[0m winnow v0.7.15
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7751307Z ^[[1m^[[92m   Compiling^[[0m regex-automata v0.4.18
+unix-red	Observe private config creation before correction	2026-10-01T13:58:00.7752266Z ^[[1m^[[92m   Compiling^[[0m tracing-core v0.1.36
+unix-red	Observe private config creation before correction	2026-10-01T13:58:01.0890619Z ^[[1m^[[92m   Compiling^[[0m num-traits v0.2.19
+unix-red	Observe private config creation before correction	2026-10-01T13:58:01.1370811Z ^[[1m^[[92m   Compiling^[[0m log v0.4.34
+unix-red	Observe private config creation before correction	2026-10-01T13:58:01.2279077Z ^[[1m^[[92m   Compiling^[[0m tracing v0.1.44
+unix-red	Observe private config creation before correction	2026-10-01T13:58:01.8312946Z ^[[1m^[[92m   Compiling^[[0m utf8parse v0.2.2
+unix-red	Observe private config creation before correction	2026-10-01T13:58:01.8598023Z ^[[1m^[[92m   Compiling^[[0m anstyle-parse v1.0.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:01.9283435Z ^[[1m^[[92m   Compiling^[[0m rmp v0.8.15
+unix-red	Observe private config creation before correction	2026-10-01T13:58:02.1029847Z ^[[1m^[[92m   Compiling^[[0m anstyle-query v1.1.5
+unix-red	Observe private config creation before correction	2026-10-01T13:58:02.1296325Z ^[[1m^[[92m   Compiling^[[0m colorchoice v1.0.5
+unix-red	Observe private config creation before correction	2026-10-01T13:58:02.1570273Z ^[[1m^[[92m   Compiling^[[0m is_terminal_polyfill v1.70.2
+unix-red	Observe private config creation before correction	2026-10-01T13:58:02.1792362Z ^[[1m^[[92m   Compiling^[[0m anstream v1.0.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:02.3140398Z ^[[1m^[[92m   Compiling^[[0m rmp-serde v1.3.1
+unix-red	Observe private config creation before correction	2026-10-01T13:58:02.5572350Z ^[[1m^[[92m   Compiling^[[0m libsql-sys v0.9.30
+unix-red	Observe private config creation before correction	2026-10-01T13:58:02.7899657Z ^[[1m^[[92m   Compiling^[[0m globset v0.4.20
+unix-red	Observe private config creation before correction	2026-10-01T13:58:03.1810167Z ^[[1m^[[92m   Compiling^[[0m regex v1.13.1
+unix-red	Observe private config creation before correction	2026-10-01T13:58:03.4230305Z ^[[1m^[[92m   Compiling^[[0m strsim v0.11.1
+unix-red	Observe private config creation before correction	2026-10-01T13:58:03.5734695Z ^[[1m^[[92m   Compiling^[[0m heck v0.5.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:03.6688980Z ^[[1m^[[92m   Compiling^[[0m anyhow v1.0.104
+unix-red	Observe private config creation before correction	2026-10-01T13:58:03.7117717Z ^[[1m^[[92m   Compiling^[[0m clap_derive v4.6.7
+unix-red	Observe private config creation before correction	2026-10-01T13:58:03.8031234Z ^[[1m^[[92m   Compiling^[[0m runtime-transport v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/transport)
+unix-red	Observe private config creation before correction	2026-10-01T13:58:03.9069809Z ^[[1m^[[92m   Compiling^[[0m tree-sitter v0.25.10
+unix-red	Observe private config creation before correction	2026-10-01T13:58:04.2428143Z ^[[1m^[[92m   Compiling^[[0m clap_builder v4.6.7
+unix-red	Observe private config creation before correction	2026-10-01T13:58:04.7394564Z ^[[1m^[[92m   Compiling^[[0m ignore v0.4.33
+unix-red	Observe private config creation before correction	2026-10-01T13:58:05.5994764Z ^[[1m^[[92m   Compiling^[[0m libsql v0.9.30
+unix-red	Observe private config creation before correction	2026-10-01T13:58:06.2445727Z ^[[1m^[[92m   Compiling^[[0m matchers v0.2.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:06.2644059Z ^[[1m^[[92m   Compiling^[[0m git2 v0.21.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:06.2885704Z ^[[1m^[[92m   Compiling^[[0m runtime-application v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/application)
+unix-red	Observe private config creation before correction	2026-10-01T13:58:06.4797945Z ^[[1m^[[92m   Compiling^[[0m tracing-log v0.2.0
+unix-red	Observe private config creation before correction	2026-10-01T13:58:06.5649866Z ^[[1m^[[92m   Compiling^[[0m sharded-slab v0.1.7
+unix-red	Observe private config creation before correction	2026-10-01T13:58:06.8605099Z ^[[1m^[[92m   Compiling^[[0m thread_local v1.1.10
+unix-red	Observe private config creation before correction	2026-10-01T13:58:06.9483063Z ^[[1m^[[92m   Compiling^[[0m toml_datetime v0.6.11
+unix-red	Observe private config creation before correction	2026-10-01T13:58:07.0499311Z ^[[1m^[[92m   Compiling^[[0m winnow v0.7.15
+unix-red	Observe private config creation before correction	2026-10-01T13:58:08.1084394Z ^[[1m^[[92m   Compiling^[[0m nu-ansi-term v0.50.3
+unix-red	Observe private config creation before correction	2026-10-01T13:58:08.2507505Z ^[[1m^[[92m   Compiling^[[0m toml_write v0.1.2
+unix-red	Observe private config creation before correction	2026-10-01T13:58:08.3371145Z ^[[1m^[[92m   Compiling^[[0m toml_edit v0.22.27
+unix-red	Observe private config creation before correction	2026-10-01T13:58:08.6645013Z ^[[1m^[[92m   Compiling^[[0m tracing-subscriber v0.3.23
+unix-red	Observe private config creation before correction	2026-10-01T13:58:09.9143351Z ^[[1m^[[92m   Compiling^[[0m runtime-infrastructure v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/crates/infrastructure)
+unix-red	Observe private config creation before correction	2026-10-01T13:58:10.1554664Z ^[[1m^[[92m   Compiling^[[0m clap v4.6.7
+unix-red	Observe private config creation before correction	2026-10-01T13:58:10.3466011Z ^[[1m^[[92m   Compiling^[[0m fs2 v0.4.3
+unix-red	Observe private config creation before correction	2026-10-01T13:58:14.4166340Z ^[[1m^[[92m   Compiling^[[0m local-daemon v0.2.0 (/home/runner/work/remotecontroller/remotecontroller/apps/local-daemon)
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4574293Z ^[[1m^[[92m    Finished^[[0m `test` profile [unoptimized] target(s) in 14.86s
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4691429Z ^[[1m^[[92m     Running^[[0m unittests src/main.rs (target/debug/deps/local_daemon-e7f597dfc501eb75)
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4705236Z
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4705465Z running 1 test
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4724113Z
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4725443Z thread 'install::privacy_red::new_sensitive_file_is_owner_only_in_traversable_directory' (6698) panicked at apps/local-daemon/src/install.rs:425:9:
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4727051Z assertion `left == right` failed
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4727929Z   left: 420
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4728347Z  right: 384
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4729131Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4730837Z ^[[1m^[[91merror^[[0m: test failed, to rerun pass `-p local-daemon --bin local-daemon`
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4732533Z test install::privacy_red::new_sensitive_file_is_owner_only_in_traversable_directory ... FAILED
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4733581Z
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4733723Z failures:
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4733902Z
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4734020Z failures:
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4734545Z     install::privacy_red::new_sensitive_file_is_owner_only_in_traversable_directory
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4735042Z
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4735443Z test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4736030Z
+unix-red	Observe private config creation before correction	2026-10-01T13:58:15.4794042Z ##[error]Process completed with exit code 101.
+unix-red	Observe private replacement before correction	﻿2026-10-01T13:58:15.4823199Z ##[group]Run cargo test -p local-daemon --bin local-daemon host::privacy_red:: --locked -- --nocapture
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.4823959Z ^[[36;1mcargo test -p local-daemon --bin local-daemon host::privacy_red:: --locked -- --nocapture^[[0m
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.4887559Z shell: /usr/bin/bash -e {0}
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.4887841Z env:
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.4888048Z   CARGO_HOME: /home/runner/.cargo
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.4888317Z   CARGO_INCREMENTAL: 0
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.4888542Z   CARGO_TERM_COLOR: always
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.4888770Z ##[endgroup]
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6502884Z ^[[1m^[[92m    Finished^[[0m `test` profile [unoptimized] target(s) in 0.12s
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6569459Z ^[[1m^[[92m     Running^[[0m unittests src/main.rs (target/debug/deps/local_daemon-e7f597dfc501eb75)
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6584511Z
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6584757Z running 1 test
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6601851Z
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6603165Z thread 'host::privacy_red::replacement_and_backup_keep_private_config_owner_only' (6708) panicked at apps/local-daemon/src/host.rs:173:13:
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6604517Z assertion `left == right` failed
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6604971Z   left: 420
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6605298Z  right: 384
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6605831Z note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6606783Z test host::privacy_red::replacement_and_backup_keep_private_config_owner_only ... FAILED
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6609073Z
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6609231Z failures:
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6609419Z
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6609553Z failures:
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6610090Z     host::privacy_red::replacement_and_backup_keep_private_config_owner_only
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6610616Z
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6611107Z test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6611715Z
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6619360Z ^[[1m^[[91merror^[[0m: test failed, to rerun pass `-p local-daemon --bin local-daemon`
+unix-red	Observe private replacement before correction	2026-10-01T13:58:15.6668849Z ##[error]Process completed with exit code 101.

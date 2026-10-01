@@ -8,6 +8,10 @@ pub struct RuntimeConfig {
     pub files: FileLimits,
     pub allowed_programs: Vec<ProgramRule>,
     pub process_buffer_bytes: usize,
+    pub process_spool_bytes: u64,
+    pub process_spool_total_bytes: u64,
+    #[serde(skip)]
+    pub guardian_path: Option<std::path::PathBuf>,
     pub cache_capacity: u64,
     pub cache_ttl_seconds: u64,
     pub operation_timeout_ms: u64,
@@ -21,6 +25,9 @@ impl Default for RuntimeConfig {
             files: FileLimits::default(),
             allowed_programs: vec![],
             process_buffer_bytes: 64 * 1024,
+            process_spool_bytes: 16 * 1024 * 1024,
+            process_spool_total_bytes: 256 * 1024 * 1024,
+            guardian_path: None,
             cache_capacity: 256,
             cache_ttl_seconds: 10_800,
             operation_timeout_ms: 60_000,
@@ -70,6 +77,10 @@ impl From<SchedulerConfig> for SchedulerLimits {
 impl RuntimeConfig {
     pub fn validate(&self) -> runtime_ports::Result<()> {
         if self.ipc_connections == 0
+            || self.process_spool_bytes == 0
+            || self.process_spool_bytes > 1024 * 1024 * 1024
+            || self.process_spool_total_bytes < self.process_spool_bytes
+            || self.process_spool_total_bytes > 16 * 1024 * 1024 * 1024
             || self.ipc_connections > 1024
             || self.progress_capacity == 0
             || self.progress_capacity > 1024

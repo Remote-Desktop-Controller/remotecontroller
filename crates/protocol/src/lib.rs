@@ -42,6 +42,7 @@ pub struct RequestEnvelope {
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Request {
+    Shutdown,
     Catalog,
     Heartbeat,
     Execute { tool: String, input: Value },

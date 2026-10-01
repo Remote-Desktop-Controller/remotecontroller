@@ -34,6 +34,7 @@ impl ProgressPort for ChannelProgress {
     }
 }
 pub struct Kernel {
+    pub shutdown: tokio_util::sync::CancellationToken,
     pub workspace: Workspace,
     pub executor: Arc<Executor<LocalStore>>,
     pub services: Arc<Services>,
@@ -57,12 +58,20 @@ impl Kernel {
             config.cache_capacity,
             Duration::from_secs(config.cache_ttl_seconds),
         ));
-        let processes = Arc::new(ProcessManager::new(
+        let processes = ProcessManager::new(
             files.clone(),
             store.clone(),
             config.allowed_programs.clone(),
             config.process_buffer_bytes,
-        )?);
+        )?
+        .with_spool_limits(config.process_spool_bytes, config.process_spool_total_bytes)?;
+        #[cfg(unix)]
+        let processes = if let Some(path) = config.guardian_path.clone() {
+            processes.with_guardian(path)?
+        } else {
+            processes
+        };
+        let processes = Arc::new(processes);
         let services = Services::new(files, store.clone(), context, processes);
         services.recover(workspace.id).await?;
         let executor = Executor::new(
@@ -73,6 +82,7 @@ impl Kernel {
         )?;
         executor.recover(workspace.id).await?;
         Ok(Arc::new(Self {
+            shutdown: tokio_util::sync::CancellationToken::new(),
             workspace,
             executor,
             services,
@@ -137,10 +147,19 @@ impl Kernel {
                 let m = &self.executor.metrics;
                 let c = &self.services.context.metrics;
                 let s = &self.services.store.metrics;
+                use sha2::Digest;
+                let config_fingerprint = format!(
+                    "{:x}",
+                    sha2::Sha256::digest(
+                        serde_json::to_vec(&self.config)
+                            .map_err(|e| PortError::Tool(e.to_string()))?
+                    )
+                );
                 Ok(
-                    serde_json::json!({"alive":true,"workspace_id":self.workspace.id.to_string(),"metrics":{"queue_depth":m.queue_depth.load(Relaxed),"active_operations":m.active.load(Relaxed),"tool_success":m.success.load(Relaxed),"tool_failure":m.failure.load(Relaxed),"cancel_count":m.cancelled.load(Relaxed),"operation_duration_ms_total":m.duration_ms.load(Relaxed),"cache_hits":c.hits.load(Relaxed),"cache_misses":c.misses.load(Relaxed),"storage_calls":s.calls.load(Relaxed),"storage_micros_total":s.elapsed_micros.load(Relaxed)}}),
+                    serde_json::json!({"alive":true,"workspace_id":self.workspace.id.to_string(),"root":self.workspace.root,"capabilities":self.executor.capabilities().into_iter().map(|c|format!("{c:?}")).collect::<Vec<_>>(),"config_fingerprint":config_fingerprint,"metrics":{"queue_depth":m.queue_depth.load(Relaxed),"active_operations":m.active.load(Relaxed),"tool_success":m.success.load(Relaxed),"tool_failure":m.failure.load(Relaxed),"cancel_count":m.cancelled.load(Relaxed),"operation_duration_ms_total":m.duration_ms.load(Relaxed),"cache_hits":c.hits.load(Relaxed),"cache_misses":c.misses.load(Relaxed),"storage_calls":s.calls.load(Relaxed),"storage_micros_total":s.elapsed_micros.load(Relaxed)}}),
                 )
             }
+            Request::Shutdown => Ok(serde_json::json!({"stopping":true})),
             Request::GetOperation { operation_id } => Ok(operation_json(
                 &self
                     .executor

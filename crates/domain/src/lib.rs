@@ -195,6 +195,50 @@ pub struct Artifact {
 pub struct FileSnapshot {
     pub path: String,
     pub content: Option<Vec<u8>>,
+    pub metadata: Option<FileMetadata>,
+    /// Persisted expected state after application, used to guard recovery.
+    pub restore_precondition: Option<FilePrecondition>,
+}
+impl FileSnapshot {
+    pub fn new(path: impl Into<String>, content: Option<Vec<u8>>) -> Self {
+        Self {
+            path: path.into(),
+            content,
+            metadata: None,
+            restore_precondition: None,
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum FilePrecondition {
+    Missing,
+    Sha256([u8; 32]),
+}
+/// Pure platform metadata; infrastructure owns native capture and DTO encoding.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FileMetadata {
+    pub accessed: std::time::SystemTime,
+    pub modified: std::time::SystemTime,
+    pub readonly: bool,
+    pub unix: Option<UnixFileMetadata>,
+    pub windows: Option<WindowsFileMetadata>,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UnixFileMetadata {
+    pub mode: u32,
+    pub uid: u32,
+    pub gid: u32,
+    pub extended_attributes: Vec<(Vec<u8>, Vec<u8>)>,
+    /// Native text representation of macOS extended ACL; Linux ACLs are xattrs.
+    pub acl: Option<Vec<u8>>,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct WindowsFileMetadata {
+    pub created: std::time::SystemTime,
+    pub attributes: u32,
+    /// Native self-relative descriptor containing the discretionary ACL.
+    pub dacl: Vec<u8>,
+    pub dacl_protected: bool,
 }
 #[derive(Clone, Debug)]
 pub struct Checkpoint {

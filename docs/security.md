@@ -1,7 +1,7 @@
 # Segurança e fronteira de confiança
 
 Default: ReadWorkspace e GitRead. Escrita exige grant do operador. Processo
-exige allowlist de executável absoluto e **vetor exato de argumentos**, sem
+exige aprovação local, pin SHA-256 de executável absoluto e **vetor exato de argumentos**, sem
 shell genérico. env_clear impede herança de segredos; SystemRoot é preservado no
 Windows. Como não há sandbox de filesystem/rede para filhos, process.spawn
 exige também OutsideWorkspaceAccess e NetworkAccess. O operador concede ambas
@@ -28,10 +28,14 @@ usuários locais, mas não pretende isolar um processo malicioso que já execute
 com as mesmas credenciais do usuário e possa ler seus segredos. Administrador/SYSTEM
 permanece fora desse modelo. Não existe bypass secreto nem autenticação cloud.
 
-Processos: Job Object com KILL_ON_JOB_CLOSE no Windows; process group no Unix.
-Cancelamento tenta encerrar descendentes. A associação ao job ocorre logo após
-spawn; não é sandbox completa. Não matar PID persistido no restart: ele pode
-ter sido reutilizado. Saída usa buffers finitos e persiste dados limitados.
+Processos: no Windows, CREATE_SUSPENDED permite associação ao Job Object com
+KILL_ON_JOB_CLOSE antes de retomar a thread. No Unix, um guardian separado mantém
+heartbeat por pipe; EOF após crash do daemon encerra o grupo do processo alvo.
+Cancelamento fecha esse heartbeat e aguarda o guardian. Essas funções gerenciam
+lifecycle; não são sandbox. Um descendente Unix que abandone deliberadamente o
+grupo fica fora dessa garantia. Não matar PID persistido no restart: ele pode
+ter sido reutilizado. Saída é sincronizada progressivamente em spool privado,
+com quotas, buffers de cauda finitos e indicadores de truncamento/captura incompleta.
 
 Limites reais: atomicidade entre múltiplos arquivos é obtida por journal/rollback,
 não por transação do filesystem; writers externos devem ser coordenados com o
