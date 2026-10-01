@@ -114,3 +114,13 @@ ZIP Windows v0.2.0 e manifest foram verificados por SHA-256:
 [pacote](../evidence/package-final-v0.2.json).
 
 O CI tri-OS final e a publicação na main/release aguardam confirmação remota.
+
+Follow-up macOS: o runner encontrou configuração aceita quando aliases distintos
+de workspace/parent (`/var` e `/private/var`) antecediam um link para fora do root.
+A checagem agora verifica cada ancestral existente por caminho resolvido, além
+das verificações lexicais e do destino final. A regressão original e um caso
+Unix portátil com aliases distintos cobrem esse caminho.
+[RED macOS](../evidence/macos-alias-red-v0.2.log). Fmt/Clippy, configuração Windows,
+rebuild release e os sete casos MCP/lifecycle/config passaram após esse ajuste:
+[config-debug](../evidence/alias-config-debug-v0.2.log),
+[release-MCP](../evidence/alias-release-mcp-v0.2.log). Novo CI tri-OS necessário.

@@ -124,6 +124,7 @@ pub fn resolve(args: &mut Args) -> Result<()> {
     ensure!(
         !within_lexical_root(&lexical_config, &lexical_root)
             && !within_lexical_root(&lexical_config, &lexical_absolute(&root)?)
+            && !config_crosses_workspace(config, &root)?
             && !resolved_config_location(config)?.starts_with(&root),
         "configuration must be outside workspace"
     );
@@ -206,6 +207,22 @@ fn resolved_config_location(path: &Path) -> Result<PathBuf> {
             Err(error) => return Err(error.into()),
         }
     }
+}
+fn config_crosses_workspace(path: &Path, canonical_root: &Path) -> Result<bool> {
+    // A parent alias can hide the workspace's spelling before another link
+    // points outside it. Check every existing ancestor before that escape.
+    for ancestor in std::path::absolute(path)?.ancestors() {
+        match std::fs::symlink_metadata(ancestor) {
+            Ok(_) => {
+                if ancestor.canonicalize()?.starts_with(canonical_root) {
+                    return Ok(true);
+                }
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.into()),
+        }
+    }
+    Ok(false)
 }
 pub fn capabilities(args: &Args) -> Vec<Capability> {
     let mut c = vec![Capability::ReadWorkspace, Capability::GitRead];

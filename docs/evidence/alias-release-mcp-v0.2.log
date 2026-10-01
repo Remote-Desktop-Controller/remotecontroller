@@ -1,0 +1,92 @@
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\local\statement.rs:342:20
+    |
+342 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+    = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+    |
+342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\local\impls.rs:163:16
+    |
+163 |     fn columns(&self) -> Vec<Column> {
+    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                |
+    |                the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+163 |     fn columns(&self) -> Vec<Column<'_>> {
+    |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> vendor\libsql\src\statement.rs:27:16
+   |
+27 |     fn columns(&self) -> Vec<Column>;
+   |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+   |                |
+   |                the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+27 |     fn columns(&self) -> Vec<Column<'_>>;
+   |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\statement.rs:106:20
+    |
+106 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+    Finished `test` profile [unoptimized] target(s) in 1.30s
+     Running tests\config_security.rs (target\debug\deps\config_security-b38e7d37720c5ea3.exe)
+
+running 3 tests
+test refuses_existing_workspace_policy_config ... ok
+test refuses_missing_workspace_config_before_writing ... ok
+test default_config_is_initialized_in_private_state ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.57s
+
+     Running tests\fullstack.rs (target\debug\deps\fullstack-15949679886e5ad3.exe)
+
+running 5 tests
+test native_process_leaf_fixture ... ignored, native process fixture; invoked by crash test
+test native_process_tree_fixture ... ignored, native process tree fixture; invoked by crash test
+test mcp_to_daemon_abrupt_restart_reconnect_idempotency_and_stdout ... ok
+test abrupt_daemon_crash_kills_native_tree_and_preserves_synced_output ... ok
+test abrupt_crash_during_batch_restores_journal_before_reconnect ... ok
+
+test result: ok. 3 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 9.77s
+
+     Running tests\lifecycle.rs (target\debug\deps\lifecycle-ca2e353f06102c74.exe)
+
+running 1 test
+2026-10-01T14:50:39.823861Z  INFO mcp_gateway: MCP gateway connected
+2026-10-01T14:50:39.825401Z  INFO serve_inner: rmcp::service: Service initialized as server peer_info=Some(InitializeRequestParams { meta: None, protocol_version: ProtocolVersion("2024-11-05"), capabilities: ClientCapabilities { experimental: None, extensions: None, roots: None, sampling: None, elicitation: None }, client_info: Implementation { name: "native-installer-test", title: None, version: "1", description: None, icons: None, website_url: None } })
+2026-10-01T14:50:39.826178Z  INFO serve_inner: rmcp::service: received notification notification=InitializedNotification(NotificationNoParam { method: InitializedNotificationMethod, extensions: Extensions })
+2026-10-01T14:50:39.826682Z  INFO serve_inner: rmcp::handler::server: client initialized
+2026-10-01T14:50:39.832274Z  INFO serve_inner: rmcp::service: input stream terminated
+2026-10-01T14:50:39.832410Z  INFO serve_inner: rmcp::service: serve finished quit_reason=Closed
+Uninstall scheduled after this executable exits; result: \\?\C:\Users\Notebook\AppData\Local\Temp\.tmprmsyZP\profile\uninstall-status.json
+test installed_connect_bootstraps_real_daemon_and_mcp ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.18s

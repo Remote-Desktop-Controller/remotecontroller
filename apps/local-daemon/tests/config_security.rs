@@ -141,3 +141,35 @@ fn refuses_config_under_real_workspace_when_workspace_uses_alias() {
     ));
     assert!(!outside.join("runtime.json").exists());
 }
+
+#[cfg(unix)]
+#[test]
+fn refuses_config_crossing_workspace_through_distinct_parent_alias() {
+    let t = tempfile::tempdir().unwrap();
+    let workspace = t.path().join("workspace");
+    std::fs::create_dir(&workspace).unwrap();
+    let workspace_alias = t.path().join("workspace-alias");
+    std::os::unix::fs::symlink(&workspace, &workspace_alias).unwrap();
+    let parent_alias = t.path().join("parent-alias");
+    std::os::unix::fs::symlink(t.path(), &parent_alias).unwrap();
+    let outside = t.path().join("outside");
+    std::fs::create_dir(&outside).unwrap();
+    let existing_config = outside.join("existing.json");
+    std::fs::write(&existing_config, b"existing external configuration").unwrap();
+    let outside_link = workspace.join("outside-link");
+    std::os::unix::fs::symlink(&outside, &outside_link).unwrap();
+    let config = parent_alias
+        .join("workspace")
+        .join("outside-link")
+        .join("runtime.json");
+    rejected(init(
+        &workspace_alias,
+        &t.path().join("profile"),
+        Some(&config),
+    ));
+    assert!(!outside.join("runtime.json").exists());
+    assert_eq!(
+        std::fs::read(existing_config).unwrap(),
+        b"existing external configuration"
+    );
+}
