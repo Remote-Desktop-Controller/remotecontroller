@@ -1,4 +1,4 @@
-name: native-unix-regressions-red
+name: native-unix-regressions-green
 on: [push, workflow_dispatch]
 jobs:
   unix-red:
@@ -9,13 +9,16 @@ jobs:
         with:
           toolchain: 1.98.1
       - run: sudo apt-get update && sudo apt-get install -y strace
-      - name: Observe missing directory durability before correction
+      - name: Verify directory durability before retention
         run: cargo test -p runtime-infrastructure --lib retention_directory_sync_order_is_durable --locked -- --nocapture
-      - name: Observe private config creation before correction
+      - name: Verify private config creation
         if: always()
         run: |
-          cargo test -p local-daemon --bin local-daemon install::privacy_red:: --locked -- --nocapture
-      - name: Observe private replacement before correction
+          cargo test -p local-daemon --bin local-daemon new_sensitive_file_is_owner_only --locked -- --nocapture
+      - name: Verify private replacement
         if: always()
         run: |
-          cargo test -p local-daemon --bin local-daemon host::privacy_red:: --locked -- --nocapture
+          cargo test -p local-daemon --bin local-daemon replacement_and_backup_keep_private_config_owner_only --locked -- --nocapture
+      - name: Verify policy config stays outside writable workspace
+        if: always()
+        run: cargo test -p local-daemon --test config_security --locked -- --nocapture

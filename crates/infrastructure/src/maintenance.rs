@@ -128,6 +128,7 @@ impl Maintenance {
                 .map_err(storage_error)?
                 .sync_all()
                 .map_err(storage_error)?;
+            sync_directory(database_path.parent().unwrap_or(Path::new(".")))?;
             Ok(BackupInfo {
                 database_bytes: fs::metadata(&database_path).map_err(storage_error)?.len(),
                 database_path,
@@ -194,6 +195,7 @@ impl Maintenance {
         let mut audit = private_create(&audit_path)?;
         audit.write_all(&serialized).map_err(storage_error)?;
         audit.sync_all().map_err(storage_error)?;
+        sync_directory(audit_path.parent().unwrap_or(Path::new(".")))?;
         let ids = report.checkpoint_ids.clone();
         let cutoff = policy.older_than_ms.min(i64::MAX as u64) as i64;
         report.removed_records=self.store.run(move|c|async move {
@@ -287,6 +289,9 @@ fn copy_private_tree(
             let entry = entry.map_err(storage_error)?;
             copy_private_tree(&entry.path(), &target.join(entry.file_name()), bytes, count)?;
         }
+        // Persist children before their containing directory is published by
+        // the backup parent sync. Any error must abort retention before deletion.
+        sync_directory(target)?;
     } else if meta.is_file() {
         *count += 1;
         *bytes = bytes.saturating_add(meta.len());
@@ -306,6 +311,22 @@ fn copy_private_tree(
             "backup refuses special spool files".into(),
         ));
     }
+    Ok(())
+}
+fn sync_directory(path: &Path) -> Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW)
+            .open(path)
+            .map_err(storage_error)?
+            .sync_all()
+            .map_err(storage_error)?;
+    }
+    #[cfg(not(unix))]
+    let _ = path;
     Ok(())
 }
 fn private_create(path: &Path) -> Result<fs::File> {
