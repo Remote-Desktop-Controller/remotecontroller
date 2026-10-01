@@ -1,5 +1,9 @@
 # remotecontroller
 
+Objetivo: um produto de acesso ao computador pelo ChatGPT, com conta, pareamento,
+arquivos e terminal. A v0.2 publicada conclui o runtime local; a experiência remota
+do produto permanece em construção. [Escopo e gate de entrega](docs/product-scope.md).
+
 Runtime local em Rust para hosts MCP. O gateway stdio é um adapter; o daemon
 executa as ferramentas, aplica políticas e persiste o histórico em libSQL.
 Não existe serviço cloud, porta TCP ou dependência de Node/Python/Docker no uso.

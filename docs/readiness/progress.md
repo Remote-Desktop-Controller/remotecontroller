@@ -1,5 +1,8 @@
 # SDD ledger — plan: docs/readiness/plan.md
 
+Este ledger registra o marco do runtime local. O produto completo de conexão
+remota pelo ChatGPT permanece em construção; veja [escopo original](../product-scope.md).
+
 **Candidata v0.2 concluída e publicada em 2026-10-01.** Código integrado à main
 pela [PR #1](https://github.com/Remote-Desktop-Controller/remotecontroller/pull/1).
 [Release v0.2.0](https://github.com/Remote-Desktop-Controller/remotecontroller/releases/tag/v0.2.0)
