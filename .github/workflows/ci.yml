@@ -13,7 +13,9 @@ jobs:
         run: cargo test -p runtime-infrastructure --lib retention_directory_sync_order_is_durable --locked -- --nocapture
       - name: Observe private config creation before correction
         if: always()
-        run: cargo test -p local-daemon --bin local-daemon install::privacy_red:: --locked -- --nocapture
+        run: |
+          cargo test -p local-daemon --bin local-daemon install::privacy_red:: --locked -- --nocapture
       - name: Observe private replacement before correction
         if: always()
-        run: cargo test -p local-daemon --bin local-daemon host::privacy_red:: --locked -- --nocapture
+        run: |
+          cargo test -p local-daemon --bin local-daemon host::privacy_red:: --locked -- --nocapture
