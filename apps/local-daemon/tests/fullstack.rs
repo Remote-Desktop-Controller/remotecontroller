@@ -502,10 +502,14 @@ async fn abrupt_crash_during_batch_restores_journal_before_reconnect() {
             .await
     });
     loop {
-        let done = tokio::time::timeout(Duration::from_secs(20), rx.recv())
-            .await
-            .unwrap()
-            .unwrap();
+        let done = match tokio::time::timeout(Duration::from_secs(20), rx.recv()).await {
+            Ok(Some(done)) => done,
+            Ok(None) => panic!(
+                "batch ended before the crash point: {:?}",
+                worker.await.unwrap()
+            ),
+            Err(error) => panic!("batch did not reach the crash point: {error}"),
+        };
         if done >= 64 {
             break;
         }
