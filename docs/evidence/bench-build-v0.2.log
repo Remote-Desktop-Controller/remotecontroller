@@ -1,0 +1,21 @@
+   Compiling tempfile v3.27.0
+   Compiling runtime-transport v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\transport)
+   Compiling criterion v0.7.0
+   Compiling runtime-infrastructure v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\infrastructure)
+   Compiling rmcp v3.5.0
+   Compiling local-daemon v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\apps\local-daemon)
+   Compiling mcp-gateway v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\apps\mcp-gateway)
+   Compiling runtime-application v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\application)
+   Compiling runtime-ports v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\ports)
+   Compiling runtime-protocol v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\protocol)
+   Compiling runtime-domain v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\domain)
+    Finished `bench` profile [optimized] target(s) in 8m 29s
+  Executable benches src\main.rs (target\release\deps\local_daemon-ac7424346e2f4451.exe)
+  Executable benches src\main.rs (target\release\deps\mcp_gateway-8654b017ec04650f.exe)
+  Executable benches src\lib.rs (target\release\deps\runtime_application-765bf9343af7f306.exe)
+  Executable benches src\lib.rs (target\release\deps\runtime_domain-650d9b3be35a92e4.exe)
+  Executable benches src\lib.rs (target\release\deps\runtime_infrastructure-9d471058cc020955.exe)
+  Executable benches\runtime.rs (target\release\deps\runtime-180fdd53fe11717f.exe)
+  Executable benches src\lib.rs (target\release\deps\runtime_ports-3253c01017594acd.exe)
+  Executable benches src\lib.rs (target\release\deps\runtime_protocol-9fc2411dd8fdce83.exe)
+  Executable benches src\lib.rs (target\release\deps\runtime_transport-77170918e2d5a099.exe)

@@ -26,10 +26,17 @@ pub fn digest(path: &Path) -> Result<String> {
     Ok(format!("{:x}", h.finalize()))
 }
 pub fn atomic_new(path: &Path, bytes: &[u8]) -> Result<()> {
-    let mut f = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(path)?;
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut f = options.open(path)?;
+    // On Windows, set the private ACL while the new file is still empty.
+    // Unix creation already uses 0600, independent of the caller's umask.
+    runtime_transport::private_file(path)?;
     f.write_all(bytes)?;
     f.sync_all()?;
     Ok(())
@@ -354,6 +361,20 @@ pub fn finish_uninstall(profile: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
+    #[test]
+    fn new_sensitive_file_is_owner_only_in_traversable_directory() {
+        use std::os::unix::fs::PermissionsExt;
+        let t = tempfile::tempdir().unwrap();
+        std::fs::set_permissions(t.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
+        let p = t.path().join("config.json");
+        atomic_new(&p, b"private token").unwrap();
+        assert_eq!(
+            std::fs::metadata(&p).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        assert_eq!(std::fs::read(&p).unwrap(), b"private token");
+    }
     fn bundle(root: &Path) -> PathBuf {
         let p = root.join("source");
         std::fs::create_dir(&p).unwrap();

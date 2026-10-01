@@ -1161,10 +1161,39 @@ mod native_metadata {
         ) -> u32;
     }
     #[cfg(windows)]
+    #[link(name = "ntdll")]
+    unsafe extern "system" {
+        fn NtSetSecurityObject(
+            handle: *mut std::ffi::c_void,
+            security_info: u32,
+            descriptor: *const std::ffi::c_void,
+        ) -> i32;
+        fn RtlNtStatusToDosError(status: i32) -> u32;
+    }
+    #[cfg(windows)]
     pub(super) fn set_windows_dacl(file: &File, metadata: &WindowsFileMetadata) -> io::Result<()> {
         use std::os::windows::io::AsRawHandle;
         use windows_sys::Win32::Security::*;
         validate_dacl_descriptor(&metadata.dacl)?;
+        let control = u16::from_le_bytes([metadata.dacl[2], metadata.dacl[3]]);
+        if control & 0x0400 == 0 && !metadata.dacl_protected {
+            // SetSecurityInfo converts legacy ACLs to auto-inheritance and may
+            // append parent ACEs. Restore the already captured descriptor on
+            // the pinned file handle, with the same WRITE_DAC access check.
+            let status = unsafe {
+                NtSetSecurityObject(
+                    file.as_raw_handle(),
+                    DACL_SECURITY_INFORMATION,
+                    metadata.dacl.as_ptr().cast(),
+                )
+            };
+            if status < 0 {
+                return Err(io::Error::from_raw_os_error(
+                    unsafe { RtlNtStatusToDosError(status) } as i32,
+                ));
+            }
+            return Ok(());
+        }
         let offset = u32::from_le_bytes(metadata.dacl[16..20].try_into().unwrap()) as usize;
         let dacl = if offset == 0 {
             std::ptr::null()
@@ -1314,6 +1343,63 @@ mod integrity_tests {
             std::fs::metadata(path).unwrap().modified().unwrap(),
             timestamp
         );
+    }
+    #[cfg(windows)]
+    #[test]
+    fn legacy_unprotected_dacl_survives_without_added_parent_aces() {
+        use std::os::windows::ffi::OsStrExt;
+        use windows_sys::Win32::Security::{DACL_SECURITY_INFORMATION, SetFileSecurityW};
+        let (root, files) = workspace();
+        let path = root.path().join("legacy-acl");
+        std::fs::write(&path, b"original").unwrap();
+        let before = files.snapshot_sync("legacy-acl").unwrap();
+        let mut descriptor = before.metadata.unwrap().windows.unwrap().dacl;
+        let mut control = u16::from_le_bytes([descriptor[2], descriptor[3]]);
+        control &= !(0x0100 | 0x0400 | 0x1000);
+        descriptor[2..4].copy_from_slice(&control.to_le_bytes());
+        let offset = u32::from_le_bytes(descriptor[16..20].try_into().unwrap()) as usize;
+        let count = u16::from_le_bytes([descriptor[offset + 4], descriptor[offset + 5]]) as usize;
+        let mut entry = offset + 8;
+        for _ in 0..count {
+            descriptor[entry + 1] &= !0x10;
+            entry += u16::from_le_bytes([descriptor[entry + 2], descriptor[entry + 3]]) as usize;
+        }
+        let wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+        // Build a real legacy descriptor on the fixture, not a mocked snapshot.
+        assert_ne!(
+            unsafe {
+                SetFileSecurityW(
+                    wide.as_ptr(),
+                    DACL_SECURITY_INFORMATION,
+                    descriptor.as_mut_ptr().cast(),
+                )
+            },
+            0,
+            "{}",
+            std::io::Error::last_os_error()
+        );
+        let original = files.snapshot_sync("legacy-acl").unwrap();
+        let dacl = &original
+            .metadata
+            .as_ref()
+            .unwrap()
+            .windows
+            .as_ref()
+            .unwrap()
+            .dacl;
+        assert_eq!(
+            u16::from_le_bytes([dacl[2], dacl[3]]) & 0x0400,
+            0,
+            "fixture must retain legacy inheritance model"
+        );
+        files
+            .apply_snapshot_sync(&original, Some(b"changed"))
+            .unwrap();
+        let after = files.snapshot_sync("legacy-acl").unwrap();
+        assert!(native_metadata::same_state(
+            original.metadata.as_ref().unwrap(),
+            after.metadata.as_ref().unwrap()
+        ));
     }
     #[cfg(windows)]
     #[test]

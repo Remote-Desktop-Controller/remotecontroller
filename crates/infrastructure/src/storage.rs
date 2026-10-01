@@ -456,8 +456,8 @@ impl EventRepository for LocalStore {
     }
     async fn causal(&self, ws: WorkspaceId, op: OperationId, limit: usize) -> Result<Vec<Event>> {
         self.run(move |c| async move {
-            // Bounded graph traversal avoids the recursive-CTE native crash reproduced
-            // by optimized Windows GNU benchmarks on libSQL 0.9.30.
+            // Bound graph traversal and check workspace membership at each step.
+            // Native connection ownership is handled by the vendored libSQL patch.
             use std::collections::{HashSet,VecDeque};
             let limit=limit.min(1000);
             if limit==0{return Ok(Vec::new());}

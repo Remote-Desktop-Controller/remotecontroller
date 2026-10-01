@@ -22,6 +22,9 @@ $manifest = @{ version = $Version; files = $files } | ConvertTo-Json -Depth 5
 [System.IO.File]::WriteAllText((Join-Path $bundle 'manifest.json'), $manifest, [System.Text.UTF8Encoding]::new($false))
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../docs/install.md') -Destination (Join-Path $bundle 'INSTALL.md')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../LICENSE') -Destination (Join-Path $bundle 'LICENSE')
+New-Item -ItemType Directory -Path (Join-Path $bundle 'LICENSES') -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../vendor/libsql/LICENSE.md') -Destination (Join-Path $bundle 'LICENSES/libsql.md')
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot '../vendor/libsql/PATCH.md') -Destination (Join-Path $bundle 'LICENSES/libsql-patch.md')
 $archive = Join-Path $OutputDirectory "$bundleName.zip"
 Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath $archive
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()

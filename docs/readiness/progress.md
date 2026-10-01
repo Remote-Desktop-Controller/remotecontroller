@@ -56,3 +56,61 @@ preservados; snapshots legados alterados sem guard continuam recusados.
 Assinatura pública permanece dependente de certificado externo; nenhum certificado
 de code signing está disponível nesta máquina. O pacote utiliza checksums e não
 declara sandbox de OS nem isolamento contra malware do mesmo usuário.
+
+## Fechamento retomado — 2026-10-01
+
+Correções finais confirmadas por regressões:
+
+- ACL legada Windows: `SetSecurityInfo` acrescentava ACEs herdadas. O descriptor
+  original agora é restaurado pelo handle com `NtSetSecurityObject`; RED e GREEN
+  locais estão em [dacl-red](../evidence/dacl-red-v0.2.log) e
+  [dacl-green](../evidence/dacl-green-v0.2.log).
+- libSQL 0.9.30 fechava duas vezes a conexão nativa. Patch local de uma linha
+  torna o fechamento idempotente, preservando o resto do código/dependências.
+  [RED](../evidence/libsql-close-red-v0.2.log),
+  [GREEN](../evidence/libsql-close-green-v0.2.log) e
+  [proveniência](../../vendor/libsql/PATCH.md).
+- Configuração de política agora deve ficar fora do workspace, por caminho
+  lexical e resolvido, incluindo links e arquivos ainda ausentes. Temporários,
+  backups e configuração registrada são privados antes de gravar os bytes.
+- Backup/retention Unix sincroniza as pastas copiadas em pós-ordem e o parent
+  do banco/audit antes da primeira remoção. O teste Linux observa os syscalls
+  reais com strace, além de conferir os conteúdos preservados.
+
+As três regressões Unix falharam no código anterior pelos motivos esperados:
+[runner RED](https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/36872436503),
+[log](../evidence/unix-regressions-red-v0.2.log). Após a correção, o mesmo runner
+passou os testes de durabilidade, duas permissões e sete casos de configuração:
+[runner GREEN](https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/36873117889),
+[log](../evidence/unix-regressions-green-v0.2.log).
+
+Suíte Windows anterior ao último follow-up: 63 testes, zero falhas; crash de
+lote/reconexão e árvores de processo passaram. Stress terminou em 115,34 s.
+Os oito benchmarks finais terminaram com código 0, inclusive causal_query;
+storage em release também passou (dois testes). Logs:
+[tests-final](../evidence/tests-final-v0.2.log),
+[criterion-final](../evidence/criterion-final-v0.2.log),
+[storage-release](../evidence/storage-release-final-v0.2.log).
+
+Revisão independente da candidata completa identificou as três lacunas acima;
+o follow-up aprovou as correções sem pendência Critical/Important. O CI agora
+executa ownership do libSQL, benchmarks reais, storage otimizado e MCP/lifecycle
+com os executáveis release.
+
+Gates locais após follow-up concluídos: fmt/check/Clippy all-targets/all-features,
+build, **66 testes Windows com zero falhas** e quatro fixtures de processo
+invocados pelos próprios testes. Último stress: 103,79 s, com todos os conteúdos
+verificados. [Testes revisados](../evidence/tests-reviewed-v0.2.log),
+[check](../evidence/check-reviewed-v0.2.log),
+[Clippy](../evidence/clippy-reviewed-v0.2.log),
+[build](../evidence/build-reviewed-v0.2.log).
+
+Build release final passou. Os executáveis release passaram configuração (3),
+crash/MCP/processos (3) e instalação/update/uninstall (1):
+[release-fullstack](../evidence/release-fullstack-final-v0.2.log).
+Imports do GNU local contêm apenas DLLs Windows/UCRT:
+[inventário](../evidence/release-imports-final-v0.2.log).
+ZIP Windows v0.2.0 e manifest foram verificados por SHA-256:
+[pacote](../evidence/package-final-v0.2.json).
+
+O CI tri-OS final e a publicação na main/release aguardam confirmação remota.

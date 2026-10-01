@@ -13,13 +13,27 @@ jobs:
         with:
           toolchain: 1.98.1
           components: rustfmt, clippy
+      - name: Install syscall observer for Linux durability regression
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y strace
       - run: cargo fmt --check
       - run: cargo check --workspace --locked
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - run: cargo build --workspace --locked
       - run: cargo test --workspace --locked
+      - name: Verify native libSQL close ownership
+        shell: pwsh
+        run: ./tools/test-libsql-patch.ps1
       - run: cargo bench --no-run --locked
+      - run: cargo bench --workspace --bench runtime --locked
+      - run: cargo test --workspace --test storage --release --locked
       - run: cargo build --release --workspace --locked
+      - name: Exercise installed release binaries through MCP
+        shell: pwsh
+        run: |
+          $env:RUNTIME_TEST_BIN_DIR = (Join-Path $pwd 'target/release')
+          cargo test --workspace --test fullstack --test lifecycle --test config_security --locked
+          exit $LASTEXITCODE
       - name: Package verified native executables
         shell: pwsh
         run: ./tools/package.ps1

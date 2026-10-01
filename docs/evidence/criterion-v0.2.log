@@ -1,0 +1,80 @@
+   Compiling syn v3.0.6
+   Compiling serde_core v1.0.229
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling serde_derive v1.0.229
+   Compiling futures-macro v0.3.34
+   Compiling futures-util v0.3.34
+   Compiling bytes v1.12.1
+   Compiling tokio-macros v2.7.2
+   Compiling thiserror-impl v2.0.21
+   Compiling uuid v1.26.1
+   Compiling regex-automata v0.4.18
+   Compiling thiserror v2.0.21
+   Compiling tokio v1.53.1
+   Compiling tracing-core v0.1.36
+   Compiling async-trait v0.1.92
+   Compiling tracing v0.1.44
+   Compiling tokio-util v0.7.19
+   Compiling runtime-domain v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\domain)
+   Compiling log v0.4.34
+   Compiling runtime-ports v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\ports)
+   Compiling regex v1.13.1
+   Compiling futures-executor v0.3.34
+   Compiling clap_builder v4.6.7
+   Compiling futures v0.3.34
+   Compiling globset v0.4.20
+   Compiling rmp-serde v1.3.1
+   Compiling libsql-sys v0.9.30
+   Compiling runtime-protocol v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\protocol)
+   Compiling runtime-transport v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\transport)
+   Compiling moka v0.12.16
+   Compiling tree-sitter v0.25.10
+   Compiling git2 v0.21.0
+   Compiling libsql v0.9.30
+   Compiling clap v4.6.7
+   Compiling ignore v0.4.33
+   Compiling ciborium v0.2.2
+   Compiling runtime-application v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\application)
+   Compiling tinytemplate v1.2.1
+   Compiling runtime-infrastructure v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\infrastructure)
+   Compiling criterion v0.7.0
+    Finished `bench` profile [optimized] target(s) in 5m 58s
+     Running benches\runtime.rs (target\release\deps\runtime-c1856eddaeb9f07b.exe)
+Gnuplot not found, using plotters backend
+Benchmarking cache_hit
+Benchmarking cache_hit: Warming up for 1.0000 s
+Benchmarking cache_hit: Collecting 10 samples in estimated 2.0000 s (2.1M iterations)
+Benchmarking cache_hit: Analyzing
+cache_hit               time:   [562.25 ns 577.28 ns 596.98 ns]
+                        change: [−35.016% −21.951% −5.3899%] (p = 0.04 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking cache_miss
+Benchmarking cache_miss: Warming up for 1.0000 s
+Benchmarking cache_miss: Collecting 10 samples in estimated 2.0000 s (4.8M iterations)
+Benchmarking cache_miss: Analyzing
+cache_miss              time:   [399.49 ns 401.33 ns 404.24 ns]
+                        change: [−1.5173% +0.3510% +2.4017%] (p = 0.75 > 0.05)
+                        No change in performance detected.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking event_insert
+Benchmarking event_insert: Warming up for 1.0000 s
+Benchmarking event_insert: Collecting 10 samples in estimated 2.0244 s (165 iterations)
+Benchmarking event_insert: Analyzing
+event_insert            time:   [13.171 ms 13.607 ms 14.202 ms]
+                        change: [−35.373% −22.550% −9.1858%] (p = 0.01 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking causal_query
+Benchmarking causal_query: Warming up for 1.0000 s
+error: bench failed, to rerun pass `-p runtime-infrastructure --bench runtime`
+
+Caused by:
+  process didn't exit successfully: `C:\Users\Notebook\Documents\Remote Desktop Controller\target\release\deps\runtime-c1856eddaeb9f07b.exe --bench` (exit code: 0xc0000005, STATUS_ACCESS_VIOLATION)

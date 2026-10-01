@@ -2,6 +2,12 @@
 
 Registro histórico v0.1 abaixo. Evidências v0.2: [readiness/progress](readiness/progress.md).
 
+Fechamento local v0.2 em 2026-10-01: 66 testes Windows passaram, zero falhas,
+fmt/check/Clippy, release build, oito benchmarks e sete testes MCP/lifecycle/config
+com os binários release passaram. Regressões Unix de durabilidade/permissões e
+sete casos de configuração passaram em runner Linux com RED/GREEN registrado.
+Logs e estado do CI final/publicação estão na matriz de readiness acima.
+
 Ambiente desta sessão: Windows x86_64, Rust 1.98.1 GNU, GCC/MinGW existente.
 Repositório novo; nenhum remoto Git configurado. Não há deploy/cloud nesta tarefa.
 

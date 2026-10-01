@@ -1,6 +1,10 @@
 [workspace]
 members = ["crates/domain", "crates/ports", "crates/application", "crates/protocol", "crates/transport", "crates/infrastructure", "apps/local-daemon", "apps/mcp-gateway"]
 resolver = "2"
+exclude = ["vendor/libsql"]
+
+[patch.crates-io]
+libsql = { path = "vendor/libsql" }
 
 [workspace.package]
 version = "0.2.0"

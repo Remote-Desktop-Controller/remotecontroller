@@ -24,6 +24,11 @@ Perfil padrão: `%USERPROFILE%\.local-runtime` ou `$HOME/.local-runtime`.
 canonicalizado. O perfil deve ficar fora do projeto. Use os mesmos argumentos de
 workspace, perfil e permissões nos comandos de diagnóstico e conexão.
 
+Se usar `--config`, mantenha o arquivo fora do workspace; caminhos e links que
+permitam ao MCP editar a própria política são recusados. O padrão `runtime.json`
+fica na pasta privada de estado. Configurações registradas e seus backups são
+gravados com acesso exclusivo ao usuário.
+
 ```powershell
 .\local-daemon.exe doctor --workspace "C:\meu-projeto" --allow-write
 .\local-daemon.exe stop --workspace "C:\meu-projeto"

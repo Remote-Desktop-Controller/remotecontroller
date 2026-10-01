@@ -1,0 +1,117 @@
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\local\statement.rs:342:20
+    |
+342 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+    = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+    |
+342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\local\impls.rs:163:16
+    |
+163 |     fn columns(&self) -> Vec<Column> {
+    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                |
+    |                the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+163 |     fn columns(&self) -> Vec<Column<'_>> {
+    |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> vendor\libsql\src\statement.rs:27:16
+   |
+27 |     fn columns(&self) -> Vec<Column>;
+   |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+   |                |
+   |                the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+27 |     fn columns(&self) -> Vec<Column<'_>>;
+   |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\statement.rs:106:20
+    |
+106 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+    Finished `bench` profile [optimized] target(s) in 1.17s
+     Running benches\runtime.rs (target\release\deps\runtime-af53643b38193c66.exe)
+Gnuplot not found, using plotters backend
+Benchmarking cache_hit
+Benchmarking cache_hit: Warming up for 1.0000 s
+Benchmarking cache_hit: Collecting 10 samples in estimated 2.0001 s (1.4M iterations)
+Benchmarking cache_hit: Analyzing
+cache_hit               time:   [1.1674 µs 1.2446 µs 1.3499 µs]
+
+Benchmarking cache_miss
+Benchmarking cache_miss: Warming up for 1.0000 s
+Benchmarking cache_miss: Collecting 10 samples in estimated 2.0000 s (1.5M iterations)
+Benchmarking cache_miss: Analyzing
+cache_miss              time:   [961.68 ns 1.1321 µs 1.3664 µs]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking event_insert
+Benchmarking event_insert: Warming up for 1.0000 s
+Benchmarking event_insert: Collecting 10 samples in estimated 2.3731 s (165 iterations)
+Benchmarking event_insert: Analyzing
+event_insert            time:   [12.337 ms 13.750 ms 16.611 ms]
+
+Benchmarking causal_query
+Benchmarking causal_query: Warming up for 1.0000 s
+Benchmarking causal_query: Collecting 10 samples in estimated 2.8241 s (165 iterations)
+Benchmarking causal_query: Analyzing
+causal_query            time:   [7.4260 ms 7.9206 ms 8.7686 ms]
+
+Benchmarking file_scan_1000
+Benchmarking file_scan_1000: Warming up for 1.0000 s
+
+Warning: Unable to complete 10 samples in 2.0s. You may wish to increase target time to 2.2s.
+Benchmarking file_scan_1000: Collecting 10 samples in estimated 2.2118 s (10 iterations)
+Benchmarking file_scan_1000: Analyzing
+file_scan_1000          time:   [208.95 ms 243.02 ms 284.08 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking batch_read_100
+Benchmarking batch_read_100: Warming up for 1.0000 s
+Benchmarking batch_read_100: Collecting 10 samples in estimated 3.7737 s (110 iterations)
+Benchmarking batch_read_100: Analyzing
+batch_read_100          time:   [36.013 ms 36.978 ms 37.872 ms]
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking context_compilation_128
+Benchmarking context_compilation_128: Warming up for 1.0000 s
+Benchmarking context_compilation_128: Collecting 10 samples in estimated 2.0056 s (16k iterations)
+Benchmarking context_compilation_128: Analyzing
+context_compilation_128 time:   [81.710 µs 85.854 µs 88.670 µs]
+
+Benchmarking ipc_round_trip_with_handshake
+Benchmarking ipc_round_trip_with_handshake: Warming up for 1.0000 s
+Benchmarking ipc_round_trip_with_handshake: Collecting 10 samples in estimated 2.0298 s (2805 iterations)
+Benchmarking ipc_round_trip_with_handshake: Analyzing
+ipc_round_trip_with_handshake
+                        time:   [617.41 µs 655.18 µs 692.27 µs]

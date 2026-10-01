@@ -128,6 +128,7 @@ impl Maintenance {
                 .map_err(storage_error)?
                 .sync_all()
                 .map_err(storage_error)?;
+            sync_directory(database_path.parent().unwrap_or(Path::new(".")))?;
             Ok(BackupInfo {
                 database_bytes: fs::metadata(&database_path).map_err(storage_error)?.len(),
                 database_path,
@@ -194,6 +195,7 @@ impl Maintenance {
         let mut audit = private_create(&audit_path)?;
         audit.write_all(&serialized).map_err(storage_error)?;
         audit.sync_all().map_err(storage_error)?;
+        sync_directory(audit_path.parent().unwrap_or(Path::new(".")))?;
         let ids = report.checkpoint_ids.clone();
         let cutoff = policy.older_than_ms.min(i64::MAX as u64) as i64;
         report.removed_records=self.store.run(move|c|async move {
@@ -287,6 +289,9 @@ fn copy_private_tree(
             let entry = entry.map_err(storage_error)?;
             copy_private_tree(&entry.path(), &target.join(entry.file_name()), bytes, count)?;
         }
+        // Persist children before their containing directory is published by
+        // the backup parent sync. Any error must abort retention before deletion.
+        sync_directory(target)?;
     } else if meta.is_file() {
         *count += 1;
         *bytes = bytes.saturating_add(meta.len());
@@ -308,6 +313,22 @@ fn copy_private_tree(
     }
     Ok(())
 }
+fn sync_directory(path: &Path) -> Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW)
+            .open(path)
+            .map_err(storage_error)?
+            .sync_all()
+            .map_err(storage_error)?;
+    }
+    #[cfg(not(unix))]
+    let _ = path;
+    Ok(())
+}
 fn private_create(path: &Path) -> Result<fs::File> {
     let mut options = fs::OpenOptions::new();
     options.write(true).create_new(true);
@@ -326,6 +347,80 @@ mod tests {
     use super::*;
     use runtime_domain::*;
     use runtime_ports::{OperationRepository, WorkspaceRepository};
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn retention_directory_sync_order_is_durable() {
+        let trace_dir = tempfile::tempdir().unwrap();
+        let trace_path = trace_dir.path().join("syscalls.log");
+        let output = std::process::Command::new("strace")
+            .args([
+                "-f",
+                "-yy",
+                "-e",
+                "trace=fsync,fdatasync,unlink,unlinkat",
+                "-o",
+            ])
+            .arg(&trace_path)
+            .arg(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "maintenance::tests::retention_backs_up_terminal_spool_and_preserves_running_spool",
+                "--nocapture",
+            ])
+            .output()
+            .expect("Linux durability gate requires strace");
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        let fixture = stdout
+            .lines()
+            .find_map(|line| line.strip_prefix("DURABILITY_FIXTURE|"))
+            .unwrap();
+        let fields: Vec<_> = fixture.split('|').collect();
+        let root = Path::new(fields[0]);
+        let trace = fs::read_to_string(trace_path).unwrap();
+        let lines: Vec<_> = trace.lines().collect();
+        let synced = |line: &&str, path: &Path| {
+            line.contains("fsync(")
+                && line.contains(&format!("<{}>", path.display()))
+                && line.contains("= 0")
+        };
+        let audit = root.join("backup.maintenance.json");
+        let audit_sync = lines
+            .iter()
+            .position(|line| synced(line, &audit))
+            .expect("audit bytes must be synced");
+        for directory in [
+            root.join("backup.spool"),
+            root.join("backup.spool").join(fields[1]),
+            root.join("backup.spool").join(fields[2]),
+        ] {
+            let directory_sync = lines
+                .iter()
+                .position(|line| synced(line, &directory))
+                .expect("backup directory entry must be synced before retention");
+            assert!(
+                directory_sync < audit_sync,
+                "backup must be durable before its audit"
+            );
+        }
+        let first_removal = lines
+            .iter()
+            .position(|line| {
+                (line.contains("unlink(") || line.contains("unlinkat("))
+                    && line.contains("/process-spool/")
+            })
+            .expect("fixture must remove a real live spool");
+        assert!(
+            lines[audit_sync + 1..first_removal]
+                .iter()
+                .any(|line| synced(line, root)),
+            "backup and audit parent must be synced before removal"
+        );
+    }
     #[tokio::test]
     async fn retention_backs_up_terminal_spool_and_preserves_running_spool() {
         let dir = tempfile::tempdir().unwrap();
@@ -381,6 +476,12 @@ mod tests {
             vec![ids[0].clone()]
         );
         let backup = dir.path().join("backup.db");
+        println!(
+            "DURABILITY_FIXTURE|{}|{}|{}",
+            dir.path().display(),
+            ids[0],
+            ids[1]
+        );
         let report = m.run(&policy, false, Some(&backup)).await.unwrap();
         assert_eq!(report.removed_spools, 1);
         assert!(!dir.path().join("process-spool").join(&ids[0]).exists());

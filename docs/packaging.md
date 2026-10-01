@@ -11,8 +11,9 @@ v0.2 requer nova execução. Evidências atuais: `readiness/progress.md`.
 Windows GNU pode depender das DLLs de runtime MinGW conforme link final.
 Inspecionar imports e incluir runtime necessário ou adotar build MSVC na release.
 Neste build, objdump verificou somente DLLs Windows/UCRT em ambos os executáveis
-de desenvolvimento; não houve import de DLL externa MinGW. O mesmo inventário
-deve acompanhar os binários finais.
+de desenvolvimento; não houve import de DLL externa MinGW. O inventário final
+GNU v0.2 também confirmou somente Windows/UCRT:
+[release-imports-final-v0.2](evidence/release-imports-final-v0.2.log).
 Não distribuir token, banco, cargo registry, target inteiro ou config com paths do
 desenvolvedor. O CLI instala por usuário e verifica manifest SHA-256 antes/depois
 da cópia; atualização local mantém versão anterior e troca ativação atomicamente.

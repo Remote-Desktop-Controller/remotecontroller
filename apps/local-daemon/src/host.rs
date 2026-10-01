@@ -8,6 +8,9 @@ pub fn replace_with_backup(path: &Path, bytes: &[u8]) -> Result<()> {
             !std::fs::symlink_metadata(path)?.file_type().is_symlink(),
             "configuration cannot be link"
         );
+        // ReplaceFileW preserves the destination's ACL, so tighten it before
+        // replacement as well as protecting the new temporary and backup files.
+        runtime_transport::private_file(path)?;
         let old = std::fs::read(path)?;
         let backup = path.with_extension(format!("backup-{}", uuid::Uuid::new_v4()));
         crate::install::atomic_new(&backup, &old)?;
@@ -131,6 +134,31 @@ pub fn register(host: &str, path: &Path, args: &crate::Args) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
+    #[test]
+    fn replacement_and_backup_keep_private_config_owner_only() {
+        use std::os::unix::fs::PermissionsExt;
+        let t = tempfile::tempdir().unwrap();
+        std::fs::set_permissions(t.path(), std::fs::Permissions::from_mode(0o755)).unwrap();
+        let p = t.path().join("config.json");
+        std::fs::write(&p, b"old private token").unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o600)).unwrap();
+        replace_with_backup(&p, b"new private token").unwrap();
+        assert_eq!(std::fs::read(&p).unwrap(), b"new private token");
+        let files: Vec<_> = std::fs::read_dir(t.path())
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .collect();
+        assert_eq!(files.len(), 2);
+        for file in &files {
+            assert_eq!(
+                std::fs::metadata(file).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+        let backup = files.iter().find(|file| **file != p).unwrap();
+        assert_eq!(std::fs::read(backup).unwrap(), b"old private token");
+    }
     #[test]
     fn preserves_and_backups_configuration() {
         let t = tempfile::tempdir().unwrap();

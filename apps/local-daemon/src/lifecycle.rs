@@ -12,7 +12,7 @@ use runtime_protocol::{Metadata, Request, RequestEnvelope};
 use runtime_transport::{Client, private_directory, read_secret};
 use sha2::{Digest, Sha256};
 use std::{
-    path::PathBuf,
+    path::{Component, Path, PathBuf},
     process::{Command, Stdio},
     time::Duration,
 };
@@ -93,6 +93,7 @@ pub fn resolve(args: &mut Args) -> Result<()> {
     if args.workspace.is_none() {
         args.workspace = Some(std::env::current_dir()?);
     }
+    let lexical_root = lexical_absolute(args.workspace.as_ref().unwrap())?;
     let root = args.workspace.as_ref().unwrap().canonicalize()?;
     args.workspace = Some(root.clone());
     if args.state_dir.is_none() {
@@ -118,7 +119,93 @@ pub fn resolve(args: &mut Args) -> Result<()> {
     if args.config.is_none() {
         args.config = Some(args.state_dir.as_ref().unwrap().join("runtime.json"));
     }
+    let config = args.config.as_ref().unwrap();
+    let lexical_config = lexical_absolute(config)?;
+    ensure!(
+        !within_lexical_root(&lexical_config, &lexical_root)
+            && !within_lexical_root(&lexical_config, &lexical_absolute(&root)?)
+            && !resolved_config_location(config)?.starts_with(&root),
+        "configuration must be outside workspace"
+    );
     Ok(())
+}
+fn lexical_absolute(path: &Path) -> Result<PathBuf> {
+    let mut normalized = PathBuf::new();
+    for component in std::path::absolute(path)?.components() {
+        match component {
+            #[cfg(windows)]
+            Component::Prefix(prefix) => {
+                // Canonical Windows paths use verbatim prefixes. Compare them
+                // in the same lexical form as ordinary CLI paths.
+                use std::path::Prefix;
+                match prefix.kind() {
+                    Prefix::VerbatimDisk(drive) | Prefix::Disk(drive) => {
+                        normalized.push(format!("{}:", char::from(drive).to_ascii_uppercase()));
+                    }
+                    Prefix::VerbatimUNC(server, share) | Prefix::UNC(server, share) => {
+                        let mut unc = std::ffi::OsString::from(r"\\");
+                        unc.push(server);
+                        unc.push(r"\");
+                        unc.push(share);
+                        normalized.push(unc);
+                    }
+                    _ => normalized.push(component.as_os_str()),
+                }
+            }
+            Component::CurDir => {}
+            Component::ParentDir => {
+                normalized.pop();
+            }
+            component => normalized.push(component.as_os_str()),
+        }
+    }
+    Ok(normalized)
+}
+fn within_lexical_root(path: &Path, root: &Path) -> bool {
+    #[cfg(windows)]
+    {
+        let mut path = path.components();
+        root.components().all(|root_component| {
+            path.next().is_some_and(|component| {
+                component
+                    .as_os_str()
+                    .to_string_lossy()
+                    .eq_ignore_ascii_case(&root_component.as_os_str().to_string_lossy())
+            })
+        })
+    }
+    #[cfg(not(windows))]
+    path.starts_with(root)
+}
+fn resolved_config_location(path: &Path) -> Result<PathBuf> {
+    let absolute = std::path::absolute(path)?;
+    let mut ancestor = absolute.as_path();
+    let mut missing = Vec::new();
+    loop {
+        match std::fs::symlink_metadata(ancestor) {
+            Ok(_) => {
+                // Canonicalize the nearest existing ancestor so a missing config
+                // beneath a workspace-pointing directory link is rejected too.
+                let mut resolved = ancestor.canonicalize()?;
+                for component in missing.iter().rev() {
+                    resolved.push(component);
+                }
+                return Ok(resolved);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                missing.push(
+                    ancestor
+                        .file_name()
+                        .context("configuration path has no existing ancestor")?
+                        .to_os_string(),
+                );
+                ancestor = ancestor
+                    .parent()
+                    .context("configuration path has no existing ancestor")?;
+            }
+            Err(error) => return Err(error.into()),
+        }
+    }
 }
 pub fn capabilities(args: &Args) -> Vec<Capability> {
     let mut c = vec![Capability::ReadWorkspace, Capability::GitRead];

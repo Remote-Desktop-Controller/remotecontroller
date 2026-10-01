@@ -1,0 +1,277 @@
+ Downloading crates ...
+  Downloaded anstream v1.0.0
+  Downloaded anstyle-query v1.1.5
+  Downloaded matchers v0.2.0
+  Downloaded colorchoice v1.0.5
+  Downloaded base64 v0.23.1
+  Downloaded darling_macro v0.24.1
+  Downloaded heck v0.5.0
+  Downloaded once_cell_polyfill v1.70.2
+  Downloaded ref-cast-impl v1.0.27
+  Downloaded anstyle-parse v1.0.0
+  Downloaded schemars v1.2.2
+  Downloaded ident_case v1.0.1
+  Downloaded darling_core v0.24.1
+  Downloaded ref-cast v1.0.27
+  Downloaded schemars_derive v1.2.2
+  Downloaded anstyle-wincon v3.0.11
+  Downloaded clap_derive v4.6.7
+  Downloaded fs2 v0.4.3
+  Downloaded strsim v0.11.1
+  Downloaded toml_write v0.1.2
+  Downloaded rmcp v3.5.0
+  Downloaded chrono v0.4.45
+  Downloaded is_terminal_polyfill v1.70.2
+  Downloaded serde_derive_internals v0.30.0
+  Downloaded utf8parse v0.2.2
+  Downloaded dyn-clone v1.0.20
+  Downloaded winnow v0.7.15
+  Downloaded toml_datetime v0.6.11
+  Downloaded anyhow v1.0.104
+  Downloaded pastey v0.2.3
+  Downloaded rmcp-macros v3.5.0
+  Downloaded darling v0.24.1
+  Downloaded toml_edit v0.22.27
+  Downloaded winapi v0.3.9
+  Downloaded winapi-x86_64-pc-windows-gnu v0.4.0
+   Compiling syn v3.0.6
+    Checking windows-link v0.2.1
+   Compiling serde_core v1.0.229
+    Checking memchr v2.8.3
+    Checking cfg-if v1.0.5
+    Checking windows-sys v0.61.2
+   Compiling serde v1.0.229
+   Compiling serde_derive v1.0.229
+    Checking pin-project-lite v0.2.17
+    Checking smallvec v1.16.2
+    Checking getrandom v0.4.3
+    Checking futures-sink v0.3.34
+    Checking scopeguard v1.2.0
+   Compiling serde_json v1.0.151
+    Checking futures-core v0.3.34
+    Checking futures-channel v0.3.34
+    Checking lock_api v0.4.14
+    Checking parking_lot_core v0.9.12
+    Checking zmij v1.0.23
+   Compiling futures-macro v0.3.34
+    Checking futures-io v0.3.34
+    Checking slab v0.4.12
+    Checking futures-task v0.3.34
+    Checking itoa v1.0.18
+    Checking bytes v1.12.1
+    Checking futures-util v0.3.34
+    Checking parking_lot v0.12.5
+    Checking uuid v1.26.1
+   Compiling thiserror-impl v2.0.21
+    Checking thiserror v2.0.21
+    Checking once_cell v1.21.4
+    Checking socket2 v0.6.5
+    Checking mio v1.2.3
+   Compiling tokio-macros v2.7.2
+    Checking num-traits v0.2.19
+    Checking tokio v1.53.1
+   Compiling async-trait v0.1.92
+    Checking tracing-core v0.1.36
+    Checking runtime-domain v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\domain)
+    Checking aho-corasick v1.1.5
+    Checking regex-syntax v0.8.11
+    Checking tokio-util v0.7.19
+    Checking tracing v0.1.44
+    Checking crossbeam-utils v0.8.23
+    Checking regex-automata v0.4.18
+    Checking runtime-ports v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\ports)
+    Checking rmp v0.8.15
+    Checking log v0.4.34
+    Checking rmp-serde v1.3.1
+    Checking crossbeam-epoch v0.9.21
+    Checking runtime-protocol v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\protocol)
+    Checking windows_x86_64_gnu v0.52.6
+    Checking utf8parse v0.2.2
+    Checking subtle v2.6.1
+    Checking anstyle v1.0.14
+    Checking equivalent v1.0.2
+    Checking once_cell_polyfill v1.70.2
+    Checking anstyle-wincon v3.0.11
+    Checking anstyle-parse v1.0.0
+    Checking windows-targets v0.52.6
+    Checking windows_x86_64_gnu v0.53.1
+    Checking futures-executor v0.3.34
+    Checking anstyle-query v1.1.5
+    Checking is_terminal_polyfill v1.70.2
+    Checking bitflags v2.13.2
+    Checking colorchoice v1.0.5
+    Checking typenum v1.20.1
+    Checking anstream v1.0.0
+    Checking futures v0.3.34
+    Checking windows-targets v0.53.5
+    Checking windows-sys v0.59.0
+    Checking generic-array v0.14.7
+    Checking crossbeam-deque v0.8.8
+    Checking runtime-transport v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\transport)
+    Checking winapi-util v0.1.11
+    Checking strsim v0.11.1
+    Checking parking v2.2.1
+    Checking clap_lex v1.1.1
+   Compiling heck v0.5.0
+    Checking clap_builder v4.6.7
+   Compiling clap_derive v4.6.7
+    Checking event-listener v5.4.2
+    Checking same-file v1.0.6
+    Checking windows-sys v0.60.2
+    Checking io-lifetimes v2.0.4
+    Checking io-lifetimes v3.0.1
+    Checking libc v0.2.189
+    Checking tree-sitter-language v0.1.8
+    Checking fastrand v2.5.0
+    Checking byteorder v1.5.0
+    Checking zerocopy v0.7.35
+    Checking io-extras v0.19.0
+    Checking tempfile v3.27.0
+    Checking libz-sys v1.1.29
+    Checking fs-set-times v0.20.3
+    Checking libsql-ffi v0.9.30
+    Checking clap v4.6.7
+    Checking walkdir v2.5.0
+    Checking event-listener-strategy v0.5.4
+    Checking winx v0.36.4
+    Checking block-buffer v0.10.4
+    Checking crypto-common v0.1.7
+    Checking regex v1.13.1
+    Checking bstr v1.13.1
+    Checking ambient-authority v0.0.2
+    Checking maybe-owned v0.3.4
+    Checking ipnet v2.12.2
+    Checking globset v0.4.20
+    Checking cap-primitives v4.0.3
+    Checking thiserror v1.0.69
+    Checking digest v0.10.7
+    Checking async-lock v3.4.2
+    Checking libsql-sys v0.9.30
+    Checking libgit2-sys v0.18.8+1.9.7
+    Checking portable-atomic v1.15.0
+    Checking crossbeam-channel v0.5.17
+    Checking tagptr v0.2.0
+    Checking streaming-iterator v0.1.9
+    Checking cpufeatures v0.2.17
+    Checking sha2 v0.10.9
+    Checking tree-sitter v0.25.10
+    Checking moka v0.12.16
+    Checking git2 v0.21.0
+    Checking libsql v0.9.30 (C:\Users\Notebook\Documents\Remote Desktop Controller\vendor\libsql)
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\local\statement.rs:342:20
+    |
+342 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+    = note: `#[warn(mismatched_lifetime_syntaxes)]` on by default
+help: use `'_` for type paths
+    |
+342 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\local\impls.rs:163:16
+    |
+163 |     fn columns(&self) -> Vec<Column> {
+    |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                |
+    |                the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+163 |     fn columns(&self) -> Vec<Column<'_>> {
+    |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+  --> vendor\libsql\src\statement.rs:27:16
+   |
+27 |     fn columns(&self) -> Vec<Column>;
+   |                ^^^^^         ^^^^^^ the same lifetime is hidden here
+   |                |
+   |                the lifetime is elided here
+   |
+   = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+   |
+27 |     fn columns(&self) -> Vec<Column<'_>>;
+   |                                    ++++
+
+warning: hiding a lifetime that's elided elsewhere is confusing
+   --> vendor\libsql\src\statement.rs:106:20
+    |
+106 |     pub fn columns(&self) -> Vec<Column> {
+    |                    ^^^^^         ^^^^^^ the same lifetime is hidden here
+    |                    |
+    |                    the lifetime is elided here
+    |
+    = help: the same lifetime is referred to in inconsistent ways, making the signature confusing
+help: use `'_` for type paths
+    |
+106 |     pub fn columns(&self) -> Vec<Column<'_>> {
+    |                                        ++++
+
+warning: `libsql` (lib) generated 4 warnings (run `cargo fix --lib -p libsql` to apply 4 suggestions)
+    Checking cap-std v4.0.3
+    Checking tree-sitter-python v0.25.0
+    Checking tree-sitter-rust v0.24.2
+    Checking ignore v0.4.33
+    Checking runtime-application v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\application)
+    Checking zerocopy v0.8.59
+    Checking either v1.18.0
+    Checking runtime-infrastructure v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\infrastructure)
+    Checking ciborium-io v0.2.2
+    Checking plotters-backend v0.3.7
+    Checking plotters-svg v0.3.7
+    Checking rayon-core v1.13.0
+    Checking itertools v0.13.0
+    Checking half v2.7.1
+    Checking ciborium-ll v0.2.2
+    Checking cast v0.3.0
+    Checking ciborium v0.2.2
+    Checking criterion-plot v0.6.0
+    Checking rayon v1.12.0
+    Checking plotters v0.3.7
+    Checking tinytemplate v1.2.1
+    Checking anes v0.1.6
+    Checking oorandom v11.1.5
+    Checking hashbrown v0.17.1
+    Checking criterion v0.7.0
+    Checking indexmap v2.14.2
+   Compiling anyhow v1.0.104
+    Checking lazy_static v1.5.0
+   Compiling winapi-x86_64-pc-windows-gnu v0.4.0
+    Checking sharded-slab v0.1.7
+    Checking matchers v0.2.0
+    Checking tracing-log v0.2.0
+    Checking nu-ansi-term v0.50.3
+    Checking thread_local v1.1.10
+   Compiling winapi v0.3.9
+   Compiling ident_case v1.0.1
+   Compiling darling_core v0.24.1
+    Checking tracing-subscriber v0.3.23
+   Compiling ref-cast v1.0.27
+   Compiling ref-cast-impl v1.0.27
+   Compiling darling_macro v0.24.1
+   Compiling serde_derive_internals v0.30.0
+    Checking toml_datetime v0.6.11
+    Checking toml_write v0.1.2
+    Checking winnow v0.7.15
+   Compiling schemars_derive v1.2.2
+    Checking toml_edit v0.22.27
+   Compiling darling v0.24.1
+    Checking fs2 v0.4.3
+    Checking chrono v0.4.45
+    Checking dyn-clone v1.0.20
+   Compiling rmcp v3.5.0
+   Compiling rmcp-macros v3.5.0
+    Checking schemars v1.2.2
+   Compiling pastey v0.2.3
+    Checking base64 v0.23.1
+    Checking local-daemon v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\apps\local-daemon)
+    Checking mcp-gateway v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\apps\mcp-gateway)
+    Finished `dev` profile [unoptimized] target(s) in 3m 59s

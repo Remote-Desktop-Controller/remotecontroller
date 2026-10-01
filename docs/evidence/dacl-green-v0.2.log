@@ -1,0 +1,8 @@
+   Compiling runtime-infrastructure v0.2.0 (C:\Users\Notebook\Documents\Remote Desktop Controller\crates\infrastructure)
+    Finished `test` profile [unoptimized] target(s) in 25.05s
+     Running unittests src\lib.rs (target\debug\deps\runtime_infrastructure-45c4ab8de550127d.exe)
+
+running 1 test
+test files::integrity_tests::legacy_unprotected_dacl_survives_without_added_parent_aces ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.03s
