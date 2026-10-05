@@ -1,0 +1,32 @@
+[package]
+name = "device-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+runtime-protocol.workspace = true
+runtime-transport.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+url = "2"
+sha2 = "0.10"
+fs2 = "0.4"
+base64 = "0.22"
+
+[dev-dependencies]
+tempfile.workspace = true
+axum = "0.8"
+remote-service = { path = "../remote-service" }
+
+[[bin]]
+name = "device-agent"
+path = "src/main.rs"

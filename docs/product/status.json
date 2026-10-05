@@ -1,0 +1,118 @@
+{
+  "updated_date": "2026-10-05",
+  "baseline_commit": "ba5ee3a",
+  "branch": "codex/remote-product",
+  "score_definition": "Planejamento ponderado por marcos aceitos; não mede tempo restante. Implementação, validação local, hospedada e publicação são eixos separados.",
+  "technical_readiness_percent": 99,
+  "public_product_validated": false,
+  "tasks": [
+    {
+      "id": "T00",
+      "title": "Base local, integridade, instalação e baseline",
+      "weight": 40,
+      "status": "verified",
+      "evidence": [
+        "docs/product/validation.md",
+        "apps/local-daemon/tests/lifecycle.rs",
+        "apps/local-daemon/tests/fullstack.rs"
+      ]
+    },
+    {
+      "id": "T01",
+      "title": "Serviço remoto e relay MCP HTTPS",
+      "weight": 15,
+      "status": "verified",
+      "evidence": [
+        "apps/remote-service/tests/flows.rs",
+        "docs/product/validation.md",
+        "https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/37305576185/job/111748324134"
+      ]
+    },
+    {
+      "id": "T02",
+      "title": "Contas, OAuth, isolamento e pareamento",
+      "weight": 10,
+      "status": "verified",
+      "evidence": [
+        "apps/remote-service/tests/flows.rs",
+        "tools/test-service-ui.mjs",
+        "docs/product/validation.md"
+      ]
+    },
+    {
+      "id": "T03",
+      "title": "Agente remoto, reconexão e execução persistente",
+      "weight": 10,
+      "status": "verified",
+      "evidence": [
+        "apps/device-agent/tests/remote_flow.rs",
+        "apps/device-agent/tests/runner_regressions.rs",
+        "apps/device-agent/src/daemon.rs",
+        "docs/product/validation.md"
+      ]
+    },
+    {
+      "id": "T04",
+      "title": "Sessões duráveis, histórico e logs consultáveis",
+      "weight": 8,
+      "status": "verified",
+      "evidence": [
+        "crates/infrastructure/tests/sessions.rs",
+        "docs/product/validation.md"
+      ]
+    },
+    {
+      "id": "T05",
+      "title": "Arquivos completos e terminal interativo",
+      "weight": 7,
+      "status": "verified",
+      "evidence": [
+        "apps/local-daemon/tests/terminal.rs",
+        "crates/infrastructure/tests/mutations.rs",
+        "docs/security.md",
+        "docs/product/validation.md"
+      ]
+    },
+    {
+      "id": "T06",
+      "title": "Onboarding, deployment e distribuição preparados",
+      "weight": 5,
+      "status": "verified",
+      "evidence": [
+        "tools/setup-windows.ps1",
+        "tools/package-product.ps1",
+        "plugin/plugin.json",
+        "docs/product/validation.md"
+      ]
+    },
+    {
+      "id": "T07",
+      "title": "Revisão e validação integral automática",
+      "weight": 4,
+      "status": "verified",
+      "evidence": [
+        "docs/product/validation.md",
+        "docs/product/completion-audit.md",
+        "docs/product/artifacts.json",
+        "https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/37309996209",
+        "https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/37313011274"
+      ]
+    },
+    {
+      "id": "T08",
+      "title": "Ações manuais do proprietário e validação pública",
+      "weight": 1,
+      "status": "pending_manual",
+      "evidence": [
+        "docs/product/manual-owner.md"
+      ]
+    }
+  ],
+  "rulings": [
+    "Pesos são convenção explícita de planejamento; os 40 pontos iniciais exigem baseline novo.",
+    "Meta técnica 99 não equivale a produto público validado; gates hospedados não serão declarados sem evidências.",
+    "T08 é a última tarefa e não pode absorver código faltante ou defeitos do agente."
+  ],
+  "current_phase": "owner_handoff",
+  "automatic_gates_pending": []
+}

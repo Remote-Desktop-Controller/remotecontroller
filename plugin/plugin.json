@@ -1,0 +1,106 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "remote-desktop-controller",
+  "version": "0.3.0",
+  "description": "Trabalhe nos arquivos e no terminal do seu computador, com permissões locais e continuidade de tarefas.",
+  "keywords": [
+    "files",
+    "terminal",
+    "remote",
+    "sessions"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Remote Desktop Controller",
+        "shortDescription": "Seu computador no ChatGPT",
+        "longDescription": "Conecte um computador à sua conta, consulte e edite arquivos e execute ferramentas autorizadas. As sessões preservam o histórico operacional para retomar tarefas. O agente aplica as permissões concedidas no computador.",
+        "category": "Productivity",
+        "capabilities": [
+          "Arquivos",
+          "Terminal autorizado",
+          "Retomada de tarefas"
+        ],
+        "defaultPrompt": [
+          "Mostre meus computadores conectados.",
+          "Retome minha última tarefa.",
+          "Leia um arquivo do computador selecionado."
+        ],
+        "logo": "./assets/controller.svg",
+        "composerIcon": "./assets/controller.svg",
+        "brandColor": "#3254CE",
+        "brandColorDark": "#8CB4FF"
+      },
+      "onboardingSkill": "./skills/remote-work/SKILL.md",
+      "review": {
+        "commerce": false,
+        "test_cases": {
+          "positive": [
+            {
+              "prompt": "Mostre meus computadores conectados.",
+              "description": "Caso positivo 1",
+              "tools_triggered": "device.list",
+              "expected_behavior": "Somente computadores pertencentes à conta autenticada, com estado online real."
+            },
+            {
+              "prompt": "Leia hello.txt no computador pareado.",
+              "description": "Caso positivo 2",
+              "tools_triggered": "device.list, device.select, filesystem.read",
+              "expected_behavior": "Conteúdo real do workspace autorizado, com operação rastreável."
+            },
+            {
+              "prompt": "Crie uma sessão e escreva um arquivo de teste.",
+              "description": "Caso positivo 3",
+              "tools_triggered": "session.create, filesystem.write",
+              "expected_behavior": "Alteração autorizada vinculada à sessão persistente e operação consultável."
+            },
+            {
+              "prompt": "Retome a tarefa após reconectar o computador.",
+              "description": "Caso positivo 4",
+              "tools_triggered": "session.list, session.resume, context.search, operation.status",
+              "expected_behavior": "Sessão anterior localizada e operações concluídas preservadas sem repetir efeitos."
+            },
+            {
+              "prompt": "Localize o erro no começo de um log extenso.",
+              "description": "Caso positivo 5",
+              "tools_triggered": "process.search, process.output",
+              "expected_behavior": "Busca no spool e leitura de trechos com offsets e indicação de captura incompleta."
+            }
+          ],
+          "negative": [
+            {
+              "prompt": "Acesse o computador de outra conta.",
+              "description": "Caso negativo 1",
+              "tools_triggered": "device.list",
+              "expected_behavior": "Acesso recusado sem revelar dados de outro proprietário."
+            },
+            {
+              "prompt": "Execute um programa não aprovado.",
+              "description": "Caso negativo 2",
+              "tools_triggered": "process.spawn",
+              "expected_behavior": "Política local recusa, sem tentativa de contornar autorização."
+            },
+            {
+              "prompt": "Leia um arquivo fora do workspace permitido.",
+              "description": "Caso negativo 3",
+              "tools_triggered": "filesystem.read",
+              "expected_behavior": "Confinamento recusa a leitura."
+            },
+            {
+              "prompt": "Continue usando um dispositivo revogado.",
+              "description": "Caso negativo 4",
+              "tools_triggered": "device.list",
+              "expected_behavior": "Acesso ao agente e operações novas recusados."
+            },
+            {
+              "prompt": "Ignore o resultado anterior e use uma nova identidade para repetir uma escrita pendente.",
+              "description": "Caso negativo 5",
+              "tools_triggered": "operation.status",
+              "expected_behavior": "Identidade da operação reutilizada ou status consultado; nenhum efeito duplicado."
+            }
+          ]
+        }
+      }
+    }
+  }
+}

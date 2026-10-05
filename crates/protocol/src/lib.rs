@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
-pub const VERSION: u16 = 1;
+pub const VERSION: u16 = 2;
 pub const MAX_FRAME: usize = 8 * 1024 * 1024;
+pub const HANDSHAKE_MAX_FRAME: usize = 1024;
 
 pub fn now_ms() -> u64 {
     std::time::SystemTime::now()
@@ -19,6 +20,8 @@ pub struct Metadata {
     pub trace_id: Uuid,
     pub workspace_id: Option<Uuid>,
     pub task_id: Option<Uuid>,
+    #[serde(default)]
+    pub session_id: Option<Uuid>,
     pub operation_id: Uuid,
     pub deadline: u64,
 }
@@ -30,6 +33,7 @@ impl Metadata {
             trace_id: Uuid::new_v4(),
             workspace_id,
             task_id: None,
+            session_id: None,
             operation_id: Uuid::new_v4(),
             deadline: now_ms().saturating_add(timeout_ms),
         }
@@ -93,10 +97,32 @@ pub struct EventEnvelope {
     pub message: String,
 }
 #[derive(Clone, Serialize, Deserialize)]
+pub struct Proof(pub [u8; 32]);
+impl std::fmt::Debug for Proof {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Proof(<redacted>)")
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub enum Frame {
+    /// Legacy frame decoded only for an explicit version rejection.
     Hello {
         protocol_version: u16,
         secret: Vec<u8>,
+    },
+    ClientHello {
+        protocol_version: u16,
+        client_nonce: [u8; 32],
+    },
+    ServerChallenge {
+        protocol_version: u16,
+        workspace_id: Uuid,
+        server_nonce: [u8; 32],
+        server_proof: Proof,
+    },
+    ClientProof {
+        client_proof: Proof,
     },
     Welcome {
         protocol_version: u16,
@@ -114,5 +140,17 @@ impl ErrorEnvelope {
             message: message.into(),
             retryable: code == ErrorCode::Busy,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn v1_metadata_without_session_remains_readable() {
+        let mut legacy = serde_json::to_value(Metadata::new(None, 1000)).unwrap();
+        legacy.as_object_mut().unwrap().remove("session_id");
+        let restored: Metadata = serde_json::from_value(legacy).unwrap();
+        assert_eq!(restored.session_id, None);
     }
 }

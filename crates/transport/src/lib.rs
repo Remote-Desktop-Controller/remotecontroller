@@ -1,8 +1,9 @@
 //! Local IPC and private configuration adapters, shared by both binaries.
 use runtime_protocol::*;
 use std::{io, path::Path, time::Duration};
-use subtle::ConstantTimeEq;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
+mod handshake;
+mod secret;
 
 #[derive(Debug, thiserror::Error)]
 pub enum IpcError {
@@ -18,6 +19,10 @@ pub enum IpcError {
     Peer(ErrorEnvelope),
     #[error("unexpected IPC frame")]
     Unexpected,
+    #[error(
+        "IPC server authentication failed; stop older daemons and update daemon, gateway and agent together"
+    )]
+    ServerAuthentication,
 }
 pub type Result<T> = std::result::Result<T, IpcError>;
 
@@ -32,8 +37,14 @@ pub async fn send<W: AsyncWrite + Unpin>(stream: &mut W, frame: &Frame) -> Resul
     Ok(())
 }
 pub async fn receive<R: AsyncRead + Unpin>(stream: &mut R) -> Result<Frame> {
+    receive_limited(stream, MAX_FRAME).await
+}
+pub async fn receive_limited<R: AsyncRead + Unpin>(
+    stream: &mut R,
+    maximum: usize,
+) -> Result<Frame> {
     let len = stream.read_u32().await? as usize;
-    if len == 0 || len > MAX_FRAME {
+    if len == 0 || len > maximum.min(MAX_FRAME) {
         return Err(IpcError::FrameLimit);
     }
     let mut data = vec![0; len];
@@ -45,45 +56,63 @@ pub async fn authenticate<S: AsyncRead + AsyncWrite + Unpin>(
     secret: &[u8],
     workspace_id: uuid::Uuid,
 ) -> Result<()> {
-    let hello = tokio::time::timeout(Duration::from_secs(5), receive(stream))
-        .await
-        .map_err(|_| IpcError::Deadline)??;
-    let failure = match hello {
-        Frame::Hello {
-            protocol_version,
-            secret: supplied,
-        } => {
-            if protocol_version != VERSION {
-                Some(ErrorEnvelope::new(
+    tokio::time::timeout(Duration::from_secs(5), async {
+        let client_nonce = match receive_limited(stream, HANDSHAKE_MAX_FRAME).await? {
+            Frame::ClientHello {
+                protocol_version: VERSION,
+                client_nonce,
+            } => client_nonce,
+            Frame::ClientHello { .. } | Frame::Hello { .. } => {
+                let error = ErrorEnvelope::new(
                     ErrorCode::VersionMismatch,
-                    "unsupported IPC version",
-                ))
-            } else if secret.len() < 32 || !bool::from(secret.ct_eq(&supplied)) {
-                Some(ErrorEnvelope::new(
-                    ErrorCode::Unauthorized,
-                    "IPC authentication failed",
-                ))
-            } else {
-                None
+                    "IPC v2 required; update daemon, gateway and agent together",
+                );
+                send(stream, &Frame::Error(error.clone())).await?;
+                return Err(IpcError::Peer(error));
             }
+            _ => return Err(IpcError::Unexpected),
+        };
+        let server_nonce = handshake::nonce()?;
+        let server_proof =
+            handshake::proof(secret, true, workspace_id, &client_nonce, &server_nonce)?;
+        send(
+            stream,
+            &Frame::ServerChallenge {
+                protocol_version: VERSION,
+                workspace_id,
+                server_nonce,
+                server_proof,
+            },
+        )
+        .await?;
+        let valid = match receive_limited(stream, HANDSHAKE_MAX_FRAME).await? {
+            Frame::ClientProof { client_proof } => handshake::verify(
+                secret,
+                false,
+                workspace_id,
+                &client_nonce,
+                &server_nonce,
+                &client_proof,
+            )
+            .is_ok(),
+            _ => false,
+        };
+        if !valid {
+            let error = ErrorEnvelope::new(ErrorCode::Unauthorized, "IPC client proof rejected");
+            send(stream, &Frame::Error(error.clone())).await?;
+            return Err(IpcError::Peer(error));
         }
-        _ => Some(ErrorEnvelope::new(
-            ErrorCode::Unauthorized,
-            "handshake required",
-        )),
-    };
-    if let Some(err) = failure {
-        send(stream, &Frame::Error(err.clone())).await?;
-        return Err(IpcError::Peer(err));
-    }
-    send(
-        stream,
-        &Frame::Welcome {
-            protocol_version: VERSION,
-            workspace_id,
-        },
-    )
+        send(
+            stream,
+            &Frame::Welcome {
+                protocol_version: VERSION,
+                workspace_id,
+            },
+        )
+        .await
+    })
     .await
+    .map_err(|_| IpcError::Deadline)?
 }
 
 pub use runtime_ports::IpcTransportPort as Stream;
@@ -175,11 +204,14 @@ async fn connect(endpoint: &str) -> Result<LocalStream> {
 #[derive(Clone)]
 pub struct Client {
     endpoint: String,
-    secret: Vec<u8>,
+    secret: std::sync::Arc<zeroize::Zeroizing<Vec<u8>>>,
 }
 impl Client {
     pub fn new(endpoint: String, secret: Vec<u8>) -> Self {
-        Self { endpoint, secret }
+        Self {
+            endpoint,
+            secret: std::sync::Arc::new(zeroize::Zeroizing::new(secret)),
+        }
     }
     pub async fn request(
         &self,
@@ -208,22 +240,12 @@ impl Client {
         progress: &mut impl FnMut(EventEnvelope),
     ) -> Result<ResponseEnvelope> {
         let mut stream = connect(&self.endpoint).await?;
-        send(
-            &mut stream,
-            &Frame::Hello {
-                protocol_version: VERSION,
-                secret: self.secret.clone(),
-            },
+        tokio::time::timeout(
+            Duration::from_secs(5),
+            handshake::client(&mut stream, &self.secret, request.meta.workspace_id),
         )
-        .await?;
-        match receive(&mut stream).await? {
-            Frame::Welcome {
-                protocol_version: VERSION,
-                ..
-            } => {}
-            Frame::Error(e) => return Err(IpcError::Peer(e)),
-            _ => return Err(IpcError::Unexpected),
-        }
+        .await
+        .map_err(|_| IpcError::Deadline)??;
         send(&mut stream, &Frame::Request(request.clone())).await?;
         loop {
             match receive(&mut stream).await? {
@@ -255,20 +277,10 @@ pub fn private_directory(path: &Path) -> io::Result<()> {
     Ok(())
 }
 pub fn read_secret(path: &Path) -> io::Result<Vec<u8>> {
-    if std::fs::symlink_metadata(path)?.file_type().is_symlink() {
-        return Err(io::Error::new(
-            io::ErrorKind::PermissionDenied,
-            "secret cannot be a link",
-        ));
-    }
-    let secret = std::fs::read(path)?;
-    if secret.len() != 32 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "secret must contain 32 bytes",
-        ));
-    }
-    Ok(secret)
+    secret::read(path)
+}
+pub fn ensure_secret(path: &Path) -> io::Result<Vec<u8>> {
+    secret::ensure(path)
 }
 /// Protect an existing operator-owned local file (backups and audit logs).
 pub fn private_file(path: &Path) -> io::Result<()> {

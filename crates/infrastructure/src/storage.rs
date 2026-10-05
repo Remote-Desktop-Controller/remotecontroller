@@ -14,6 +14,8 @@ use std::{
     time::Duration,
 };
 use tokio::sync::Semaphore;
+mod sessions;
+pub use sessions::HistorySearch;
 
 pub(crate) fn storage_error(e: impl std::fmt::Display) -> PortError {
     PortError::Storage(e.to_string())
@@ -69,6 +71,38 @@ impl LocalStore {
                 )
                 .await
                 .map_err(storage_error)?;
+                let mut migrations = tx
+                    .query("SELECT version FROM schema_migrations WHERE version=2", ())
+                    .await
+                    .map_err(storage_error)?;
+                if migrations.next().await.map_err(storage_error)?.is_none() {
+                    tx.execute_batch(include_str!("../../../migrations/002_sessions.sql"))
+                        .await
+                        .map_err(storage_error)?;
+                    tx.execute(
+                        "INSERT INTO schema_migrations VALUES(2,?1)",
+                        [runtime_protocol::now_ms() as i64],
+                    )
+                    .await
+                    .map_err(storage_error)?;
+                }
+                let mut migrations = tx
+                    .query("SELECT version FROM schema_migrations WHERE version=3", ())
+                    .await
+                    .map_err(storage_error)?;
+                if migrations.next().await.map_err(storage_error)?.is_none() {
+                    tx.execute_batch(include_str!(
+                        "../../../migrations/003_mutations_terminal.sql"
+                    ))
+                    .await
+                    .map_err(storage_error)?;
+                    tx.execute(
+                        "INSERT INTO schema_migrations VALUES(3,?1)",
+                        [runtime_protocol::now_ms() as i64],
+                    )
+                    .await
+                    .map_err(storage_error)?;
+                }
                 tx.commit().await.map_err(storage_error)
             })
             .await?;
@@ -264,11 +298,26 @@ async fn add_event(
 #[async_trait]
 impl OperationRepository for LocalStore {
     async fn claim(&self, op: &Operation) -> Result<bool> {
+        self.claim_in_session(op, None).await
+    }
+    async fn claim_in_session(
+        &self,
+        op: &Operation,
+        session: Option<ExecutionSessionId>,
+    ) -> Result<bool> {
         let op = op.clone();
         self.run(move |c| async move {
             let tx = c.transaction_with_behavior(libsql::TransactionBehavior::Immediate).await.map_err(storage_error)?;
-            let changes = tx.execute("INSERT OR IGNORE INTO operations(id,workspace_id,task_id,trace_id,tool,input,status,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,'Queued',?7,?7)",
-                params![op.id.to_string(),op.workspace_id.to_string(),op.task_id.map(|id| id.to_string()),op.trace_id.to_string(),op.tool.clone(),op.input.clone(),op.created_at as i64]).await.map_err(storage_error)?;
+            // Duplicate admission is checked first so a closed session still permits retries.
+            let mut existing=tx.query("SELECT id FROM operations WHERE id=?1",[op.id.to_string()]).await.map_err(storage_error)?;
+            if existing.next().await.map_err(storage_error)?.is_some(){tx.rollback().await.map_err(storage_error)?;return Ok(false);}
+            if let Some(session)=session {
+                let mut rows=tx.query("SELECT status FROM sessions WHERE id=?1 AND workspace_id=?2",params![session.to_string(),op.workspace_id.to_string()]).await.map_err(storage_error)?;
+                let row=rows.next().await.map_err(storage_error)?.ok_or(PortError::NotFound)?;
+                if row.get::<String>(0).map_err(storage_error)?!="open" {return Err(PortError::Policy("session is closed; resume before admitting new operations".into()));}
+            }
+            let changes = tx.execute("INSERT OR IGNORE INTO operations(id,workspace_id,task_id,trace_id,tool,input,status,created_at,updated_at,session_id) VALUES(?1,?2,?3,?4,?5,?6,'Queued',?7,?7,?8)",
+                params![op.id.to_string(),op.workspace_id.to_string(),op.task_id.map(|id| id.to_string()),op.trace_id.to_string(),op.tool.clone(),op.input.clone(),op.created_at as i64,session.map(|s|s.to_string())]).await.map_err(storage_error)?;
             if changes == 0 { tx.rollback().await.map_err(storage_error)?; return Ok(false); }
             tx.execute("INSERT INTO tool_calls VALUES(?1,?2,?3,?4,?5)", params![ToolCallId::new().to_string(),op.workspace_id.to_string(),op.id.to_string(),op.tool.clone(),op.created_at as i64]).await.map_err(storage_error)?;
             let mut previous = tx.query("SELECT id FROM events WHERE workspace_id=?1 ORDER BY seq DESC LIMIT 1", [op.workspace_id.to_string()]).await.map_err(storage_error)?;
@@ -431,6 +480,19 @@ fn event_row(row: &libsql::Row) -> Result<Event> {
 }
 #[async_trait]
 impl EventRepository for LocalStore {
+    async fn session_events(
+        &self,
+        workspace: WorkspaceId,
+        session: ExecutionSessionId,
+        task: Option<TaskId>,
+        limit: usize,
+    ) -> Result<Vec<Event>> {
+        self.session(workspace, session).await?;
+        self.run(move|c|async move{
+            let mut rows=c.query("SELECT e.id,e.workspace_id,e.operation_id,e.type,e.summary,X'',e.created_at FROM events e JOIN operations op ON op.id=e.operation_id WHERE e.workspace_id=?1 AND op.session_id=?2 AND (?3 IS NULL OR op.task_id=?3) ORDER BY e.seq DESC LIMIT ?4",params![workspace.to_string(),session.to_string(),task.map(|t|t.to_string()),limit.min(1000) as i64]).await.map_err(storage_error)?;
+            let mut events=Vec::new();while let Some(row)=rows.next().await.map_err(storage_error)?{events.push(event_row(&row)?);}Ok(events)
+        }).await
+    }
     async fn task_events(
         &self,
         workspace: WorkspaceId,
@@ -491,7 +553,7 @@ impl EventRepository for LocalStore {
         .await
     }
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub(crate) struct SnapshotDto {
     path: String,
     content: Option<Vec<u8>>,
@@ -500,12 +562,12 @@ pub(crate) struct SnapshotDto {
     #[serde(default)]
     restore_precondition: Option<FilePreconditionDto>,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 enum FilePreconditionDto {
     Missing,
     Sha256([u8; 32]),
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 struct FileMetadataDto {
     #[serde(with = "snapshot_time")]
     accessed: std::time::SystemTime,
@@ -515,7 +577,7 @@ struct FileMetadataDto {
     unix: Option<UnixFileMetadataDto>,
     windows: Option<WindowsFileMetadataDto>,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 struct UnixFileMetadataDto {
     mode: u32,
     uid: u32,
@@ -523,7 +585,7 @@ struct UnixFileMetadataDto {
     extended_attributes: Vec<(Vec<u8>, Vec<u8>)>,
     acl: Option<Vec<u8>>,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 struct WindowsFileMetadataDto {
     #[serde(with = "snapshot_time")]
     created: std::time::SystemTime,

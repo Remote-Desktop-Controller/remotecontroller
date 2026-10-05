@@ -245,10 +245,18 @@ fn installed_connect_bootstraps_real_daemon_and_mcp() {
     #[cfg(windows)]
     {
         loop {
-            let status: serde_json::Value = serde_json::from_slice(
-                &std::fs::read(profile.join("uninstall-status.json")).unwrap(),
-            )
-            .unwrap();
+            let bytes = match std::fs::read(profile.join("uninstall-status.json")) {
+                Ok(bytes) => bytes,
+                // The worker locks this file while atomically publishing the
+                // final status. Observe again within the existing deadline.
+                Err(error) if error.raw_os_error() == Some(32) => {
+                    assert!(std::time::Instant::now() < deadline, "{error}");
+                    std::thread::sleep(Duration::from_millis(50));
+                    continue;
+                }
+                Err(error) => panic!("uninstall status unreadable: {error}"),
+            };
+            let status: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
             if status["success"].as_bool() == Some(true) {
                 break;
             }

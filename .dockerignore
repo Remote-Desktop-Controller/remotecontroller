@@ -1,0 +1,11 @@
+.git
+.bootstrap
+target
+dist
+runtime-state
+**/*.db
+**/*.db-wal
+**/*.db-shm
+deployment/.env
+docs/evidence
+docs/product/*.log

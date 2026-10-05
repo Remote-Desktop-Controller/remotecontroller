@@ -1,0 +1,45 @@
+services:
+  service:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    restart: unless-stopped
+    environment:
+      REMOTE_SERVICE_PUBLIC_URL: https://${RDC_DOMAIN:?Defina RDC_DOMAIN no .env}
+      REMOTE_SERVICE_REDIRECT_URIS: ${RDC_REDIRECT_URIS:-}
+      RUST_LOG: info
+    volumes:
+      - service-data:/data
+    expose:
+      - "8787"
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    mem_limit: 512m
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  https:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      RDC_DOMAIN: ${RDC_DOMAIN:?Defina RDC_DOMAIN no .env}
+      RDC_TLS_EMAIL: ${RDC_TLS_EMAIL:?Defina o contato do certificado HTTPS}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [service]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+volumes:
+  service-data:
+  caddy-data:
+  caddy-config:

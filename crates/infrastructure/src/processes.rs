@@ -19,7 +19,7 @@ use tokio::{
     sync::{Mutex, RwLock},
 };
 use tokio_util::sync::CancellationToken;
-mod process_spool;
+pub(crate) mod process_spool;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -71,6 +71,114 @@ pub struct ProcessManager {
     guardian: Option<PathBuf>,
 }
 impl ProcessManager {
+    pub(crate) fn spool_budget(&self) -> process_spool::SpoolBudget {
+        self.spool.clone()
+    }
+    /// Byte-exact output ranges. Hex explicitly permits offsets inside UTF-8 codepoints.
+    pub async fn output(
+        &self,
+        workspace: WorkspaceId,
+        id: ProcessId,
+        stderr: bool,
+        offset: u64,
+        max_bytes: usize,
+    ) -> Result<Value> {
+        let status = self.status(workspace, id, None).await?;
+        let spool = self.spool.clone();
+        let capacity = max_bytes.clamp(1, 128 * 1024);
+        let range = tokio::task::spawn_blocking(move || {
+            spool.read_range(&id.to_string(), stderr, offset, capacity)
+        })
+        .await
+        .map_err(storage_error)?
+        .map_err(crate::files::io_error)?;
+        let stored = if stderr {
+            range.metadata.stderr_stored
+        } else {
+            range.metadata.stdout_stored
+        };
+        let generated = if stderr {
+            range.metadata.stderr_bytes
+        } else {
+            range.metadata.stdout_bytes
+        };
+        let active = status["status"] == "Running" || status["status"] == "Starting";
+        let incomplete = range.metadata.capture_incomplete || status["capture_incomplete"] == true;
+        let next = range.next_offset.or(if active {
+            Some(offset.saturating_add(range.output.len() as u64).min(stored))
+        } else {
+            None
+        });
+        Ok(
+            json!({"process_id":id.to_string(),"stream":if stderr{"stderr"}else{"stdout"},"status":status["status"],"offset":range.offset,"returned_bytes":range.output.len(),"encoding":"hex","data":process_spool::hex(&range.output),"text_encoding":"utf-8-lossy","text":String::from_utf8_lossy(&range.output),"next_offset":next,"stored_bytes":stored,"generated_bytes":generated,"truncated":range.metadata.truncated || range.next_offset.is_some(),"capture_incomplete":incomplete,"incomplete":incomplete || active,"capture_state":if active{"capturing"}else if incomplete{"incomplete"}else{"complete"},"raw_ref":format!("process-spool/{id}/{}",if stderr{"stderr"}else{"stdout"})}),
+        )
+    }
+    pub async fn search(
+        &self,
+        workspace: WorkspaceId,
+        id: ProcessId,
+        input: &Value,
+    ) -> Result<Value> {
+        let query = input["query"]
+            .as_str()
+            .ok_or_else(|| PortError::Tool("required string: query".into()))?
+            .to_owned();
+        if query.is_empty() || query.len() > 4096 {
+            return Err(PortError::Policy(
+                "process query must contain 1..4096 UTF-8 bytes".into(),
+            ));
+        }
+        let status = self.status(workspace, id, None).await?;
+        let stderr = input["stream"] == "stderr";
+        let options = process_spool::SearchOptions {
+            offset: input["offset"].as_u64().unwrap_or(0),
+            scan_bytes: (input["max_scan_bytes"].as_u64().unwrap_or(1024 * 1024) as usize)
+                .clamp(1, 8 * 1024 * 1024),
+            context_bytes: (input["context_bytes"].as_u64().unwrap_or(256) as usize).min(4096),
+            limit: (input["limit"].as_u64().unwrap_or(20) as usize).clamp(1, 100),
+            budget_bytes: (input["budget_bytes"].as_u64().unwrap_or(32768) as usize)
+                .min(128 * 1024),
+        };
+        let spool = self.spool.clone();
+        let mut result = tokio::task::spawn_blocking(move || {
+            spool.search(&id.to_string(), stderr, query.as_bytes(), options)
+        })
+        .await
+        .map_err(storage_error)?
+        .map_err(crate::files::io_error)?;
+        let active = status["status"] == "Running" || status["status"] == "Starting";
+        let incomplete =
+            result["capture_incomplete"] == true || status["capture_incomplete"] == true;
+        if active && result["next_offset"].is_null() {
+            // Revisit the final query-length suffix: an in-flight match may cross capture chunks.
+            result["next_offset"] = json!(
+                result["stored_bytes"].as_u64().unwrap_or(0).saturating_sub(
+                    input["query"]
+                        .as_str()
+                        .unwrap_or("")
+                        .len()
+                        .saturating_sub(1) as u64
+                )
+            );
+        }
+        result["process_id"] = json!(id.to_string());
+        result["stream"] = json!(if stderr { "stderr" } else { "stdout" });
+        result["status"] = status["status"].clone();
+        result["capture_incomplete"] = json!(incomplete);
+        result["incomplete"] = json!(incomplete || active);
+        result["capture_state"] = json!(if active {
+            "capturing"
+        } else if incomplete {
+            "incomplete"
+        } else {
+            "complete"
+        });
+        result["raw_ref"] = json!(format!(
+            "process-spool/{id}/{}",
+            if stderr { "stderr" } else { "stdout" }
+        ));
+        Ok(result)
+    }
     pub fn new(
         files: WorkspaceFiles,
         store: Arc<LocalStore>,
@@ -549,4 +657,4 @@ impl ProcessPort for ProcessManager {
     }
 }
 #[cfg(windows)]
-mod platform;
+pub(crate) mod platform;

@@ -11,6 +11,8 @@ use std::{
 };
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
+mod mutations;
+pub(crate) use mutations::Mutation;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default, deny_unknown_fields)]

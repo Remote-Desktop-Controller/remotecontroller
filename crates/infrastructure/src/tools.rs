@@ -25,6 +25,7 @@ pub struct Services {
     pub store: Arc<LocalStore>,
     pub context: Arc<ContextEngine<LocalStore>>,
     pub processes: Arc<ProcessManager>,
+    pub terminal: Option<Arc<crate::terminal::TerminalManager>>,
     pub analysis: CodeAnalysis,
     poisoned: AtomicBool,
 }
@@ -41,8 +42,16 @@ impl Services {
             store,
             context,
             processes,
+            terminal: None,
             poisoned: AtomicBool::new(false),
         })
+    }
+    pub fn with_terminal(
+        mut self: Arc<Self>,
+        terminal: Arc<crate::terminal::TerminalManager>,
+    ) -> Result<Arc<Self>> {
+        Arc::get_mut(&mut self).ok_or(PortError::Conflict)?.terminal = Some(terminal);
+        Ok(self)
     }
     pub fn registry(self: &Arc<Self>) -> Result<Registry> {
         let mut registry = Registry::new();
@@ -55,10 +64,20 @@ impl Services {
             "filesystem.write",
             "filesystem.patch",
             "filesystem.batch_edit",
+            "filesystem.mkdir",
+            "filesystem.move",
+            "filesystem.remove",
+            "terminal.open",
+            "terminal.read",
+            "terminal.write",
+            "terminal.resize",
+            "terminal.close",
             "process.spawn",
             "process.status",
             "process.stdout",
             "process.stderr",
+            "process.output",
+            "process.search",
             "process.kill",
             "git.status",
             "git.diff",
@@ -68,6 +87,13 @@ impl Services {
             "context.causal",
             "context.compile",
             "context.event",
+            "context.search",
+            "session.create",
+            "session.list",
+            "session.resume",
+            "session.close",
+            "session.note",
+            "session.notes",
             "operation.status",
             "operation.cancel",
             "checkpoint.create",
@@ -83,6 +109,10 @@ impl Services {
         Ok(registry)
     }
     pub async fn recover(&self, workspace: WorkspaceId) -> Result<usize> {
+        crate::fs_mutations::recover(&self.files, &self.store, workspace).await?;
+        if let Some(terminal) = &self.terminal {
+            terminal.recover(workspace).await?;
+        }
         let cps = self.store.pending_checkpoints(workspace).await?;
         for cp in &cps {
             self.files.restore(cp.files.clone()).await?;
@@ -416,6 +446,36 @@ where
 pub fn operation_json(op: &Operation) -> Value {
     json!({"operation_id":op.id.to_string(),"workspace_id":op.workspace_id.to_string(),"task_id":op.task_id.map(|id|id.to_string()),"trace_id":op.trace_id.to_string(),"tool":op.tool,"status":format!("{:?}",op.status),"result":op.result.as_ref().and_then(|r|serde_json::from_slice::<Value>(&r.output).ok()),"error":op.result.as_ref().and_then(|r|r.error.clone())})
 }
+fn session_json(session: &ExecutionSession) -> Value {
+    json!({"session_id":session.id.to_string(),"workspace_id":session.workspace_id.to_string(),"label":session.label,"status":if session.closed{"closed"}else{"open"},"created_at":session.created_at,"updated_at":session.updated_at})
+}
+fn cursor(input: &Value) -> Result<Option<u64>> {
+    input["cursor"]
+        .as_str()
+        .map(|s| {
+            s.parse::<u64>()
+                .map_err(|_| PortError::Tool("invalid cursor".into()))
+        })
+        .transpose()
+}
+async fn selected_session(
+    store: &LocalStore,
+    ctx: &ToolContext,
+    input: &Value,
+) -> Result<Option<ExecutionSessionId>> {
+    let bound = store
+        .operation_session(ctx.workspace_id, ctx.operation_id)
+        .await?;
+    let requested = input["session_id"]
+        .as_str()
+        .map(str::parse)
+        .transpose()
+        .map_err(storage_error)?;
+    if bound.is_some() && requested.is_some() && bound != requested {
+        return Err(PortError::NotFound);
+    }
+    Ok(bound.or(requested))
+}
 #[async_trait]
 impl Tool for Builtin {
     fn metadata(&self) -> ToolMetadata {
@@ -423,7 +483,12 @@ impl Tool for Builtin {
         let (capabilities, workload, risk) = if name.starts_with("filesystem.")
             && matches!(
                 name,
-                "filesystem.write" | "filesystem.patch" | "filesystem.batch_edit"
+                "filesystem.write"
+                    | "filesystem.patch"
+                    | "filesystem.batch_edit"
+                    | "filesystem.mkdir"
+                    | "filesystem.move"
+                    | "filesystem.remove"
             )
             || name.starts_with("checkpoint.")
         {
@@ -431,6 +496,16 @@ impl Tool for Builtin {
                 vec![Capability::WriteWorkspace],
                 Workload::FileWrite,
                 "write",
+            )
+        } else if name.starts_with("terminal.") && name != "terminal.read" {
+            (
+                vec![
+                    Capability::AllowInteractiveTerminal,
+                    Capability::OutsideWorkspaceAccess,
+                    Capability::NetworkAccess,
+                ],
+                Workload::Database,
+                "high",
             )
         } else if name == "process.spawn" {
             (
@@ -460,6 +535,26 @@ impl Tool for Builtin {
             )
         };
         let (properties, required) = match name {
+            "terminal.open" => (
+                json!({"cwd":{"type":"string"},"rows":{"type":"integer","minimum":1,"maximum":1000},"cols":{"type":"integer","minimum":1,"maximum":1000}}),
+                vec![],
+            ),
+            "terminal.write" => (
+                json!({"terminal_id":{"type":"string","format":"uuid"},"text":{"type":"string"}}),
+                vec!["terminal_id", "text"],
+            ),
+            "terminal.read" => (
+                json!({"terminal_id":{"type":"string","format":"uuid"},"offset":{"type":"integer","minimum":0,"maximum":9223372036854775807i64},"max_bytes":{"type":"integer","minimum":1,"maximum":131072}}),
+                vec!["terminal_id"],
+            ),
+            "terminal.resize" => (
+                json!({"terminal_id":{"type":"string","format":"uuid"},"rows":{"type":"integer","minimum":1,"maximum":1000},"cols":{"type":"integer","minimum":1,"maximum":1000}}),
+                vec!["terminal_id", "rows", "cols"],
+            ),
+            "terminal.close" => (
+                json!({"terminal_id":{"type":"string","format":"uuid"}}),
+                vec!["terminal_id"],
+            ),
             "filesystem.read" | "filesystem.stat" => {
                 (json!({"path":{"type":"string"}}), vec!["path"])
             }
@@ -474,6 +569,13 @@ impl Tool for Builtin {
             "filesystem.write" => (
                 json!({"path":{"type":"string"},"content":{"type":"string"},"expected_sha256":{"type":"string"}}),
                 vec!["path", "content"],
+            ),
+            "filesystem.mkdir" | "filesystem.remove" => {
+                (json!({"path":{"type":"string"}}), vec!["path"])
+            }
+            "filesystem.move" => (
+                json!({"source":{"type":"string"},"destination":{"type":"string"}}),
+                vec!["source", "destination"],
             ),
             "filesystem.patch" => (
                 json!({"path":{"type":"string"},"find":{"type":"string"},"replace":{"type":"string"}}),
@@ -491,6 +593,35 @@ impl Tool for Builtin {
                 json!({"process_id":{"type":"string","format":"uuid"}}),
                 vec!["process_id"],
             ),
+            "process.output" => (
+                json!({"process_id":{"type":"string","format":"uuid"},"stream":{"type":"string","enum":["stdout","stderr"]},"offset":{"type":"integer","minimum":0,"maximum":9223372036854775807i64},"max_bytes":{"type":"integer","minimum":1,"maximum":131072}}),
+                vec!["process_id"],
+            ),
+            "process.search" => (
+                json!({"process_id":{"type":"string","format":"uuid"},"stream":{"type":"string","enum":["stdout","stderr"]},"query":{"type":"string"},"offset":{"type":"integer","minimum":0,"maximum":9223372036854775807i64},"max_scan_bytes":{"type":"integer","minimum":1,"maximum":8388608},"context_bytes":{"type":"integer","minimum":0,"maximum":4096},"limit":{"type":"integer","minimum":1,"maximum":100},"budget_bytes":{"type":"integer","minimum":0,"maximum":131072}}),
+                vec!["process_id", "query"],
+            ),
+            "session.create" => (json!({"label":{"type":"string"}}), vec![]),
+            "session.list" => (
+                json!({"cursor":{"type":"string"},"limit":{"type":"integer","minimum":1,"maximum":100}}),
+                vec![],
+            ),
+            "session.resume" | "session.close" => (
+                json!({"session_id":{"type":"string","format":"uuid"}}),
+                vec!["session_id"],
+            ),
+            "session.note" => (
+                json!({"session_id":{"type":"string","format":"uuid"},"text":{"type":"string","minLength":1,"maxLength":4096}}),
+                vec!["session_id", "text"],
+            ),
+            "session.notes" => (
+                json!({"session_id":{"type":"string","format":"uuid"},"cursor":{"type":"string"},"limit":{"type":"integer","minimum":1,"maximum":100},"budget_bytes":{"type":"integer","minimum":0,"maximum":131072}}),
+                vec!["session_id"],
+            ),
+            "context.search" => (
+                json!({"session_id":{"type":"string","format":"uuid"},"query":{"type":"string"},"cursor":{"type":"string"},"limit":{"type":"integer","minimum":1,"maximum":1000},"budget_bytes":{"type":"integer","minimum":0,"maximum":131072}}),
+                vec![],
+            ),
             "context.event" => (
                 json!({"event_id":{"type":"string","format":"uuid"}}),
                 vec!["event_id"],
@@ -500,7 +631,7 @@ impl Tool for Builtin {
                 vec!["operation_id"],
             ),
             "context.causal" | "context.compile" => (
-                json!({"operation_id":{"type":"string","format":"uuid"},"task_id":{"type":"string","format":"uuid"},"query":{"type":"string"},"budget_bytes":{"type":"integer","minimum":0,"maximum":131072}}),
+                json!({"operation_id":{"type":"string","format":"uuid"},"session_id":{"type":"string","format":"uuid"},"task_id":{"type":"string","format":"uuid"},"query":{"type":"string"},"budget_bytes":{"type":"integer","minimum":0,"maximum":131072}}),
                 vec![],
             ),
             "context.recent" => (
@@ -545,6 +676,165 @@ impl Tool for Builtin {
         }
         let s = &self.services;
         match self.name.as_str() {
+            "terminal.open" => {
+                s.terminal
+                    .as_ref()
+                    .ok_or(PortError::NotFound)?
+                    .open(&input, &ctx)
+                    .await
+            }
+            "terminal.write" => {
+                s.terminal
+                    .as_ref()
+                    .ok_or(PortError::NotFound)?
+                    .write(ctx.workspace_id, &input, &ctx)
+                    .await
+            }
+            "terminal.read" => {
+                s.terminal
+                    .as_ref()
+                    .ok_or(PortError::NotFound)?
+                    .read(ctx.workspace_id, &input)
+                    .await
+            }
+            "terminal.resize" => {
+                s.terminal
+                    .as_ref()
+                    .ok_or(PortError::NotFound)?
+                    .resize(ctx.workspace_id, &input)
+                    .await
+            }
+            "terminal.close" => {
+                s.terminal
+                    .as_ref()
+                    .ok_or(PortError::NotFound)?
+                    .close(ctx.workspace_id, &input)
+                    .await
+            }
+            "filesystem.mkdir" | "filesystem.move" => {
+                let result =
+                    crate::fs_mutations::execute(&s.files, &s.store, &ctx, &self.name, &input)
+                        .await;
+                if result.is_err() {
+                    let workspace = ctx.workspace_id;
+                    let pending=s.store.run(move|c|async move{let mut rows=c.query("SELECT COUNT(*) FROM filesystem_journal WHERE workspace_id=?1 AND status='prepared'",[workspace.to_string()]).await.map_err(storage_error)?;Ok(rows.next().await.map_err(storage_error)?.ok_or(PortError::NotFound)?.get::<i64>(0).map_err(storage_error)?>0)}).await.unwrap_or(true);
+                    if pending {
+                        s.poisoned.store(true, Ordering::Release);
+                    }
+                }
+                result
+            }
+            "filesystem.remove" => {
+                s.apply(
+                    vec![Edit {
+                        path: text(&input, "path")?.into(),
+                        content: None,
+                        expected_sha256: None,
+                    }],
+                    &ctx,
+                )
+                .await
+            }
+            "session.create" => {
+                let stable_id: ExecutionSessionId = ctx
+                    .operation_id
+                    .to_string()
+                    .parse()
+                    .map_err(storage_error)?;
+                Ok(session_json(
+                    &s.store
+                        .create_session(
+                            ctx.workspace_id,
+                            stable_id,
+                            input["label"].as_str().unwrap_or(""),
+                        )
+                        .await?,
+                ))
+            }
+            "session.list" => {
+                let (sessions, next) = s
+                    .store
+                    .list_sessions(
+                        ctx.workspace_id,
+                        cursor(&input)?,
+                        input["limit"].as_u64().unwrap_or(20) as usize,
+                    )
+                    .await?;
+                Ok(
+                    json!({"sessions":sessions.iter().map(session_json).collect::<Vec<_>>(),"next_cursor":next.map(|n|n.to_string())}),
+                )
+            }
+            "session.note" => {
+                let session = selected_session(&s.store, &ctx, &input)
+                    .await?
+                    .ok_or(PortError::NotFound)?;
+                let state = s.store.session(ctx.workspace_id, session).await?;
+                if state.closed {
+                    return Err(PortError::Policy(
+                        "session closed; resume it before adding notes".into(),
+                    ));
+                }
+                let text = text(&input, "text")?;
+                if text.is_empty() || text.len() > 4096 {
+                    return Err(PortError::Policy(
+                        "session note must contain 1..4096 UTF-8 bytes".into(),
+                    ));
+                }
+                let event = Event {
+                    id: ctx
+                        .operation_id
+                        .to_string()
+                        .parse()
+                        .map_err(storage_error)?,
+                    workspace_id: ctx.workspace_id,
+                    operation_id: ctx.operation_id,
+                    kind: "decision".into(),
+                    summary: text.into(),
+                    raw: serde_json::to_vec(&input).map_err(storage_error)?,
+                    created_at: runtime_protocol::now_ms(),
+                };
+                s.store.append(&event, None, EdgeKind::Produced).await?;
+                Ok(
+                    json!({"session_id":session.to_string(),"event_id":event.id.to_string(),"raw_ref":format!("context.event:{}",event.id)}),
+                )
+            }
+            "session.notes" => {
+                let session = selected_session(&s.store, &ctx, &input)
+                    .await?
+                    .ok_or(PortError::NotFound)?;
+                s.store
+                    .session_notes(
+                        ctx.workspace_id,
+                        session,
+                        cursor(&input)?,
+                        input["limit"].as_u64().unwrap_or(20) as usize,
+                        input["budget_bytes"].as_u64().unwrap_or(32768) as usize,
+                    )
+                    .await
+            }
+            "session.resume" | "session.close" => {
+                let session = s
+                    .store
+                    .set_session_closed(
+                        ctx.workspace_id,
+                        id(&input, "session_id")?,
+                        self.name == "session.close",
+                    )
+                    .await?;
+                Ok(session_json(&session))
+            }
+            "context.search" => {
+                s.store
+                    .search_events(crate::storage::HistorySearch {
+                        workspace: ctx.workspace_id,
+                        session: selected_session(&s.store, &ctx, &input).await?,
+                        query: input["query"].as_str().unwrap_or("").to_owned(),
+                        cursor: cursor(&input)?,
+                        limit: input["limit"].as_u64().unwrap_or(100) as usize,
+                        budget_bytes: input["budget_bytes"].as_u64().unwrap_or(32768) as usize,
+                    })
+                    .await
+            }
             "workspace.info" => {
                 let ws = s.store.get_workspace(ctx.workspace_id).await?;
                 Ok(
@@ -684,6 +974,22 @@ impl Tool for Builtin {
                     )
                     .await
             }
+            "process.output" => {
+                s.processes
+                    .output(
+                        ctx.workspace_id,
+                        id(&input, "process_id")?,
+                        input["stream"] == "stderr",
+                        input["offset"].as_u64().unwrap_or(0),
+                        input["max_bytes"].as_u64().unwrap_or(65536) as usize,
+                    )
+                    .await
+            }
+            "process.search" => {
+                s.processes
+                    .search(ctx.workspace_id, id(&input, "process_id")?, &input)
+                    .await
+            }
             "process.kill" => {
                 s.processes
                     .kill(ctx.workspace_id, id(&input, "process_id")?)
@@ -706,18 +1012,28 @@ impl Tool for Builtin {
                     .store
                     .raw_event(ctx.workspace_id, id(&input, "event_id")?)
                     .await?;
+                if let Some(session) = selected_session(&s.store, &ctx, &input).await?
+                    && s.store
+                        .operation_session(ctx.workspace_id, event.operation_id)
+                        .await?
+                        != Some(session)
+                {
+                    return Err(PortError::NotFound);
+                }
                 Ok(
                     json!({"event_id":event.id.to_string(),"operation_id":event.operation_id.to_string(),"summary":event.summary,"payload":serde_json::from_slice::<Value>(&event.raw).map_err(|e|PortError::Storage(e.to_string()))?}),
                 )
             }
             "context.recent" => {
-                let events = s
-                    .store
-                    .recent(
-                        ctx.workspace_id,
-                        input["limit"].as_u64().unwrap_or(20) as usize,
-                    )
-                    .await?;
+                let limit = input["limit"].as_u64().unwrap_or(20) as usize;
+                let events = if let Some(session) = selected_session(&s.store, &ctx, &input).await?
+                {
+                    s.store
+                        .session_events(ctx.workspace_id, session, None, limit)
+                        .await?
+                } else {
+                    s.store.recent(ctx.workspace_id, limit).await?
+                };
                 Ok(
                     json!({"events":events.into_iter().map(|e|json!({"event_id":e.id.to_string(),"operation_id":e.operation_id.to_string(),"type":e.kind,"summary":e.summary})).collect::<Vec<_>>()}),
                 )
@@ -742,7 +1058,9 @@ impl Tool for Builtin {
                     query: input["query"].as_str().unwrap_or("").to_string(),
                     budget,
                 };
-                Ok(json!({"context":s.context.compile_request(request).await?}))
+                Ok(
+                    json!({"context":s.context.compile_session(request,selected_session(&s.store,&ctx,&input).await?).await?}),
+                )
             }
             "code.inspect" | "code.symbols" => {
                 s.analysis

@@ -1,11 +1,24 @@
 name: native-runtime
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platforms to validate
+        type: choice
+        default: all
+        options: [all, windows]
+concurrency:
+  group: product-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: ${{ github.event_name == 'workflow_dispatch' && inputs.platform == 'windows' && fromJSON('["windows-latest"]') || fromJSON('["ubuntu-latest","windows-latest","macos-latest"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -33,13 +46,58 @@ jobs:
         run: |
           $env:RUNTIME_TEST_BIN_DIR = (Join-Path $pwd 'target/release')
           cargo test --workspace --test fullstack --test lifecycle --test config_security --locked
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo test -p device-agent --test remote_flow --locked
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           exit $LASTEXITCODE
+      - name: Exercise product installation and autostart on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/test-product-package.ps1
       - name: Package verified native executables
         shell: pwsh
-        run: ./tools/package.ps1
+        run: |
+          ./tools/package.ps1
+          ./tools/package-product.ps1
       - uses: actions/upload-artifact@v4
         with:
           name: runtime-${{ matrix.os }}
           path: |
             dist/*.zip
             dist/*.sha256
+
+  container:
+    if: github.event_name != 'workflow_dispatch' || inputs.platform != 'windows'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose and build service
+        run: |
+          export RDC_DOMAIN=rdc.example.test RDC_TLS_EMAIL=owner@example.test RDC_REDIRECT_URIS=https://client.example.test/callback
+          docker compose -f deployment/compose.yaml config --quiet
+          docker build -t rdc-service:test -f deployment/Dockerfile .
+      - name: Exercise non-root service with persisted data
+        run: |
+          docker volume create rdc-smoke-data
+          docker run -d --name rdc-smoke -p 127.0.0.1:8787:8787 -v rdc-smoke-data:/data --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges rdc-service:test --public-url https://rdc.example.test --redirect-uris https://client.example.test/callback
+          for attempt in $(seq 1 30); do curl --fail http://127.0.0.1:8787/healthz && break; sleep 1; done
+          curl --fail http://127.0.0.1:8787/.well-known/oauth-authorization-server
+          curl --fail -H 'content-type: application/json' -d '{"email":"container@example.test","password":"Container-test-password-2026!"}' http://127.0.0.1:8787/api/auth/register
+          docker restart rdc-smoke
+          for attempt in $(seq 1 30); do curl --fail http://127.0.0.1:8787/healthz && break; sleep 1; done
+          curl --fail -H 'content-type: application/json' -d '{"email":"container@example.test","password":"Container-test-password-2026!"}' http://127.0.0.1:8787/api/auth/login
+      - name: Exercise real browser forms against the built service
+        run: |
+          mkdir -p .bootstrap/ui-binary
+          docker cp rdc-smoke:/usr/local/bin/remote-service .bootstrap/ui-binary/remote-service
+          chmod +x .bootstrap/ui-binary/remote-service
+          npm install --prefix .bootstrap/service-ui --no-save @playwright/test@1.63.0
+          .bootstrap/service-ui/node_modules/.bin/playwright install --with-deps chromium
+          node tools/test-service-ui.mjs .bootstrap/ui-binary/remote-service
+      - uses: actions/upload-artifact@v4
+        with:
+          name: product-browser-proof
+          path: docs/product/screenshots/dashboard-*-fixture.png
+      - name: Show container diagnostics
+        if: failure()
+        run: docker logs rdc-smoke || true

@@ -23,4 +23,5 @@ fs2 = "0.4"
 serde.workspace = true
 toml_edit = "0.22"
 [dev-dependencies]
+portable-pty = "0.9"
 tempfile.workspace = true

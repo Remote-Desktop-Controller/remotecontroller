@@ -36,9 +36,47 @@ pub trait TaskRepository: Send + Sync {
     async fn save_task(&self, task: &Task) -> Result<()>;
 }
 #[async_trait]
+pub trait SessionRepository: Send + Sync {
+    /// A stable ID makes session creation safe to recover after a worker crash.
+    async fn create_session(
+        &self,
+        workspace: WorkspaceId,
+        id: ExecutionSessionId,
+        label: &str,
+    ) -> Result<ExecutionSession>;
+    async fn session(
+        &self,
+        workspace: WorkspaceId,
+        id: ExecutionSessionId,
+    ) -> Result<ExecutionSession>;
+    async fn list_sessions(
+        &self,
+        workspace: WorkspaceId,
+        before: Option<u64>,
+        limit: usize,
+    ) -> Result<(Vec<ExecutionSession>, Option<u64>)>;
+    async fn set_session_closed(
+        &self,
+        workspace: WorkspaceId,
+        id: ExecutionSessionId,
+        closed: bool,
+    ) -> Result<ExecutionSession>;
+    async fn operation_session(
+        &self,
+        workspace: WorkspaceId,
+        id: OperationId,
+    ) -> Result<Option<ExecutionSessionId>>;
+}
+#[async_trait]
 pub trait OperationRepository: Send + Sync {
     /// Atomically insert a queued operation. False means the ID already exists.
     async fn claim(&self, op: &Operation) -> Result<bool>;
+    /// Claim and session validation/binding must be atomic with respect to close.
+    async fn claim_in_session(
+        &self,
+        op: &Operation,
+        session: Option<ExecutionSessionId>,
+    ) -> Result<bool>;
     async fn operation(&self, id: OperationId) -> Result<Operation>;
     async fn set_running(&self, id: OperationId) -> Result<()>;
     /// Commit result, final event, graph edges and graph version in one transaction.
@@ -52,6 +90,13 @@ pub trait OperationRepository: Send + Sync {
 }
 #[async_trait]
 pub trait EventRepository: Send + Sync {
+    async fn session_events(
+        &self,
+        workspace: WorkspaceId,
+        session: ExecutionSessionId,
+        task: Option<TaskId>,
+        limit: usize,
+    ) -> Result<Vec<Event>>;
     async fn task_events(
         &self,
         workspace: WorkspaceId,
@@ -76,12 +121,18 @@ pub trait CheckpointRepository: Send + Sync {
     async fn pending_checkpoints(&self, workspace: WorkspaceId) -> Result<Vec<Checkpoint>>;
 }
 pub trait Storage:
-    WorkspaceRepository + TaskRepository + OperationRepository + EventRepository + CheckpointRepository
+    WorkspaceRepository
+    + TaskRepository
+    + SessionRepository
+    + OperationRepository
+    + EventRepository
+    + CheckpointRepository
 {
 }
 impl<
     T: WorkspaceRepository
         + TaskRepository
+        + SessionRepository
         + OperationRepository
         + EventRepository
         + CheckpointRepository,

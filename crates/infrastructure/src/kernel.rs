@@ -5,6 +5,7 @@ use crate::{
     files::WorkspaceFiles,
     processes::ProcessManager,
     storage::LocalStore,
+    terminal::TerminalManager,
     tools::{Services, operation_json},
 };
 use runtime_application::Executor;
@@ -72,7 +73,15 @@ impl Kernel {
             processes
         };
         let processes = Arc::new(processes);
+        let terminal = Arc::new(TerminalManager::new(
+            files.clone(),
+            store.clone(),
+            processes.spool_budget(),
+            config.terminal.clone(),
+            config.guardian_path.clone(),
+        ));
         let services = Services::new(files, store.clone(), context, processes);
+        let services = services.with_terminal(terminal)?;
         services.recover(workspace.id).await?;
         let executor = Executor::new(
             store,
@@ -214,10 +223,23 @@ impl Kernel {
                 let deadline = meta
                     .deadline
                     .min(now_ms().saturating_add(self.config.operation_timeout_ms));
+                let session_id = meta.session_id.or_else(|| {
+                    if op.tool == "session.note" {
+                        input["session_id"].as_str().and_then(|id| id.parse().ok())
+                    } else {
+                        None
+                    }
+                });
                 Ok(operation_json(
                     &self
                         .executor
-                        .execute(op, deadline, Arc::new(SystemClock), progress)
+                        .execute_in_session(
+                            op,
+                            session_id.map(parse_id).transpose()?,
+                            deadline,
+                            Arc::new(SystemClock),
+                            progress,
+                        )
                         .await?,
                 ))
             }
