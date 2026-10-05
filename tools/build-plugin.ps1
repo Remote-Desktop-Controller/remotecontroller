@@ -5,12 +5,14 @@ param(
     [Parameter(Mandatory)][uri]$SupportUrl,
     [Parameter(Mandatory)][uri]$PrivacyPolicyUrl,
     [Parameter(Mandatory)][uri]$TermsOfServiceUrl,
+    [uri]$DemoRecordingUrl,
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '../dist/plugin')
 )
 $ErrorActionPreference = 'Stop'
 foreach ($taskUrl in @($ServiceUrl,$WebsiteUrl,$SupportUrl,$PrivacyPolicyUrl,$TermsOfServiceUrl)) {
     if ($taskUrl.Scheme -ne 'https' -or $taskUrl.UserInfo -or $taskUrl.Fragment) { throw 'URLs públicas devem usar HTTPS e não conter credenciais/fragmentos' }
 }
+if ($DemoRecordingUrl -and ($DemoRecordingUrl.Scheme -ne 'https' -or $DemoRecordingUrl.UserInfo -or $DemoRecordingUrl.Fragment)) { throw 'DemoRecordingUrl deve usar HTTPS sem credenciais/fragmentos' }
 if ($ServiceUrl.AbsolutePath -ne '/' -or $ServiceUrl.Query) { throw 'ServiceUrl precisa ser apenas a origem HTTPS' }
 $taskRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $taskStage = Join-Path $OutputDirectory ('stage-' + [guid]::NewGuid().ToString('N'))
@@ -19,6 +21,9 @@ Copy-Item -LiteralPath (Join-Path $taskRoot 'plugin/skills') -Destination $taskS
 Copy-Item -LiteralPath (Join-Path $taskRoot 'plugin/assets') -Destination $taskStage -Recurse
 $taskManifest = Get-Content -LiteralPath (Join-Path $taskRoot 'plugin/plugin.json') -Raw | ConvertFrom-Json
 $taskInterface = $taskManifest.extensions.'com.openai'.interface
+if ($DemoRecordingUrl) {
+    $taskManifest.extensions.'com.openai'.review | Add-Member -NotePropertyName demo_recording_url -NotePropertyValue $DemoRecordingUrl.AbsoluteUri -Force
+}
 foreach ($taskField in @{developerName=$DeveloperName;websiteURL=$WebsiteUrl.AbsoluteUri;supportURL=$SupportUrl.AbsoluteUri;privacyPolicyURL=$PrivacyPolicyUrl.AbsoluteUri;termsOfServiceURL=$TermsOfServiceUrl.AbsoluteUri}.GetEnumerator()) {
     $taskInterface | Add-Member -NotePropertyName $taskField.Key -NotePropertyValue $taskField.Value -Force
 }

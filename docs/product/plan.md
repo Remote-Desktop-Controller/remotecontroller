@@ -46,16 +46,16 @@ Arquivos: crates/infrastructure/src/terminal*, files*, tools*; novos testes.
 
 ## Task 06 — onboarding, execução persistente e distribuição
 Arquivos: apps/device-agent, tools, packaging, plugin, deployment.
-- [ ] Fluxo instalar/parear/iniciar/parar/revogar e autostart reversível.
-- [ ] Container/persistência/HTTPS, scripts de implantação e health checks.
-- [ ] Plugin com manifesto/skills e artefatos de revisão compatíveis.
-- [ ] Pacotes, checksums, UI e documentação verificados.
+- [x] Fluxo instalar/parear/iniciar/parar/revogar e autostart reversível.
+- [x] Container/persistência/HTTPS, scripts de implantação e health checks.
+- [x] Plugin com manifesto/skills e artefatos de revisão compatíveis.
+- [x] Pacotes, checksums, UI e documentação verificados.
 
 ## Task 07 — revisão, integração e gates finais
-- [ ] Revisão independente proporcional ao risco; corrigir findings reais.
-- [ ] fmt/check/Clippy/build/test/benchmark focado; CI tri-OS.
-- [ ] Cenários reais de duas contas, devices, retry, revoke, restart.
-- [ ] Registrar resultados, limitações e percentual técnico ponderado.
+- [x] Revisão independente proporcional ao risco; corrigir findings reais.
+- [x] fmt/check/Clippy/build/test/benchmark focado; CI tri-OS.
+- [x] Cenários reais de duas contas, devices, retry, revoke, restart.
+- [x] Registrar resultados, limitações e percentual técnico ponderado.
 
 ## Task 08 — trabalho manual do proprietário (sempre por último)
 - [ ] Executar somente ações que exigem conta, credencial ou titularidade indisponível.
@@ -71,4 +71,6 @@ Arquivos: apps/device-agent, tools, packaging, plugin, deployment.
 
 ## Evidência corrente
 
-Implementação e regressões locais estão em validation.md; CI 37305576185 já aprovou container e todos os gates Linux. Checkboxes de release/distribuição final permanecem pendentes até os binários restantes terminarem. O histórico de requisitos/limitações é preservado no spec e security.md.
+Implementação e regressões locais estão em validation.md; CI 37305576185 já aprovou container e todos os gates Linux. Checkboxes de release/distribuição foram fechados após os gates finais registrados abaixo. O histórico de requisitos/limitações é preservado no spec e security.md.
+
+Gates finais completos: Windows 37313011274 e Linux/macOS/container 37309996209. Artefatos finais e manual do proprietário prontos; status.json = 99 técnicos / público false.

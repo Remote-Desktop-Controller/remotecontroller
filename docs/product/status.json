@@ -3,7 +3,7 @@
   "baseline_commit": "ba5ee3a",
   "branch": "codex/remote-product",
   "score_definition": "Planejamento ponderado por marcos aceitos; não mede tempo restante. Implementação, validação local, hospedada e publicação são eixos separados.",
-  "technical_readiness_percent": 95,
+  "technical_readiness_percent": 99,
   "public_product_validated": false,
   "tasks": [
     {
@@ -89,10 +89,13 @@
       "id": "T07",
       "title": "Revisão e validação integral automática",
       "weight": 4,
-      "status": "in_progress",
+      "status": "verified",
       "evidence": [
-        "docs/product/review.md",
-        "docs/product/ipc-transport-green.log"
+        "docs/product/validation.md",
+        "docs/product/completion-audit.md",
+        "docs/product/artifacts.json",
+        "https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/37309996209",
+        "https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/37313011274"
       ]
     },
     {
@@ -100,7 +103,9 @@
       "title": "Ações manuais do proprietário e validação pública",
       "weight": 1,
       "status": "pending_manual",
-      "evidence": []
+      "evidence": [
+        "docs/product/manual-owner.md"
+      ]
     }
   ],
   "rulings": [
@@ -108,9 +113,6 @@
     "Meta técnica 99 não equivale a produto público validado; gates hospedados não serão declarados sem evidências.",
     "T08 é a última tarefa e não pode absorver código faltante ou defeitos do agente."
   ],
-  "current_phase": "integration_and_distribution",
-  "automatic_gates_pending": [
-    "windows_final_ci",
-    "final_artifact_hashes"
-  ]
+  "current_phase": "owner_handoff",
+  "automatic_gates_pending": []
 }

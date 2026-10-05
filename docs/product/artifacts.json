@@ -1,0 +1,36 @@
+[
+  {
+    "platform": "linux",
+    "architecture": "x64",
+    "version": "0.3.0",
+    "path": "C:\\Users\\Notebook\\.codex\\worktrees\\remote-product\\Remote Desktop Controller\\dist\\ci\\linux\\remote-desktop-controller-linux-x64-0.3.0.zip",
+    "sha256": "5f3747ab97d21c08e99c6f5849522e5ed789f8f8281c545f0696b47afe46571c",
+    "verified_files": 12
+  },
+  {
+    "platform": "macos",
+    "architecture": "arm64",
+    "version": "0.3.0",
+    "path": "C:\\Users\\Notebook\\.codex\\worktrees\\remote-product\\Remote Desktop Controller\\dist\\ci\\macos\\remote-desktop-controller-macos-arm64-0.3.0.zip",
+    "sha256": "2f9f8e52a67fce3a5da21f924e30d6d924d587c832c8a9b85d2c2c5631989adc",
+    "verified_files": 12
+  },
+  {
+    "platform": "windows",
+    "architecture": "x64",
+    "version": "0.3.0",
+    "path": "C:\\Users\\Notebook\\.codex\\worktrees\\remote-product\\Remote Desktop Controller\\dist\\ci\\windows\\remote-desktop-controller-windows-x64-0.3.0.zip",
+    "sha256": "408442299085ec8c0744d6c31b830e00258f00de5178de48d2c46c9ea19d0da6",
+    "verified_files": 12
+  },
+  {
+    "platform": "windows",
+    "architecture": "x64",
+    "version": "0.3.0",
+    "path": "C:\\Users\\Notebook\\.codex\\worktrees\\remote-product\\Remote Desktop Controller\\dist\\ready\\remote-desktop-controller-windows-x64-0.3.0.zip",
+    "sha256": "fe246504321b9ef57710f942c375d64c5b5b4f84fd9de35fb80ea3ba955500fd",
+    "verified_files": 12,
+    "build": "local-gnu",
+    "purpose": "owner-handoff-with-final-manual"
+  }
+]

@@ -44,6 +44,34 @@ Registre por fim hostname, checksum/versão efetivamente usados, data dos testes
 
 ## Registrar a prova para a revisão
 
-Quando a conexão real estiver funcionando, grave um vídeo curto mostrando login/consentimento, escolha do PC, leitura/edição de um arquivo descartável, retomada de sessão e revogação. Use uma conta/pasta de revisão separadas, com dados de teste e permissões mínimas. Hospede a gravação em URL acessível ao revisor e configure `extensions.com.openai.review.demo_recording_url` no pacote; os cinco casos positivos e cinco negativos já estão preparados. Não envie senha, cookies ou tokens no vídeo/ZIP. A [submissão oficial](https://developers.openai.com/plugins/deploy/submission) exige a demonstração para revisão de MCP.
+Quando a conexão real estiver funcionando, grave um vídeo curto mostrando login/consentimento, escolha do PC, leitura/edição de um arquivo descartável, retomada de sessão e revogação. Use uma conta/pasta de revisão separadas, com dados de teste e permissões mínimas. Hospede a gravação em URL acessível ao revisor e passe essa URL como `-DemoRecordingUrl` para tools/build-plugin.ps1; os cinco casos positivos e cinco negativos já estão preparados. Não envie senha, cookies ou tokens no vídeo/ZIP. A [submissão oficial](https://developers.openai.com/plugins/deploy/submission) exige a demonstração para revisão de MCP.
 
 Assinatura Windows, se exigida pela sua distribuição: use seu certificado real no computador de assinatura. Copie os quatro binários para uma pasta de saída separada, assine com a ferramenta do seu emissor ou `Set-AuthenticodeSignature` e confira `Get-AuthenticodeSignature` antes de gerar novamente o pacote. A documentação [Microsoft](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-authenticodesignature) descreve carregamento do certificado e SHA256; o timestamp desse cmdlet usa HTTP e não suporta HTTPS pela API subjacente, portanto siga o emissor ou use SignTool apropriado. Certificado/senha permanecem locais. Depois rode package-product.ps1 com BinaryDirectory apontando para os binários assinados e OutputDirectory novo; os hashes anteriores deixam de representar esses arquivos.
+
+## Comandos do proprietário, em ordem
+
+No host Linux autorizado, depois de configurar DNS e Docker Compose:
+
+```sh
+git clone --branch codex/remote-product --single-branch https://github.com/Remote-Desktop-Controller/remotecontroller.git
+cd remotecontroller
+cp deployment/.env.example deployment/.env
+# Edite .env: RDC_DOMAIN e RDC_TLS_EMAIL reais; callback pode começar vazio.
+docker compose --env-file deployment/.env -f deployment/compose.yaml up -d --build
+curl --fail https://SEU_DOMINIO/healthz
+```
+
+Copie o callback exato da conexão ChatGPT para RDC_REDIRECT_URIS em deployment/.env e repita o comando compose. No PC, extraia o ZIP Windows verificado, crie uma pasta descartável de teste e execute o setup dentro do pacote:
+
+```powershell
+.\setup-windows.ps1 -VerifyOnly
+.\setup-windows.ps1 -ServerUrl 'https://SEU_DOMINIO' -Workspace 'C:\Projetos\TesteRDC' -Name 'Meu PC' -AllowWrite -EnableAutostart -StartAgent
+```
+
+Aprove o código na conta do produto, conclua OAuth no ChatGPT e execute os casos do passo 3. Para gerar o ZIP de submissão, no checkout deste projeto com PowerShell 7, substitua todos os exemplos pelos valores reais:
+
+```powershell
+.\tools\build-plugin.ps1 -ServiceUrl 'https://SEU_DOMINIO' -DeveloperName 'NOME REAL DO PUBLICADOR' -WebsiteUrl 'https://SITE_REAL' -SupportUrl 'https://SITE_REAL/suporte' -PrivacyPolicyUrl 'https://SITE_REAL/privacidade' -TermsOfServiceUrl 'https://SITE_REAL/termos' -DemoRecordingUrl 'https://URL_REAL_DA_GRAVACAO'
+```
+
+Envie a confirmação com domínio, versão/checksum usado, resultado do teste web/móvel e revisão/publicação. Não envie senhas, cookies, certificados privados ou tokens.

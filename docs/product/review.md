@@ -4,7 +4,7 @@ Data: 2026-10-04. Base declarada: ba5ee3a. Revisão da working tree, incluindo a
 
 ## Estado após integração pelo root (2026-10-05)
 
-R1/R2 corrigidos e cinco regressões HTTP/IPC passaram; R3 corrigido e regressão de duas sessões passou. R4 foi delimitado como exigência de escritores cooperativos em Unix, conforme security.md; a corrida não é apresentada como eliminada. Clippy estrito e suíte completa Windows passaram. CI tri-OS e release ainda estão em andamento. O veredicto abaixo registra a revisão original, anterior às correções.
+R1/R2 corrigidos e cinco regressões HTTP/IPC passaram; R3 corrigido e regressão de duas sessões passou. R4 foi delimitado como exigência de escritores cooperativos em Unix, conforme security.md; a corrida não é apresentada como eliminada. Clippy estrito e suíte completa Windows passaram. CI Linux/macOS/container 37309996209 e Windows 37313011274 passaram; release instalado e pacotes/hashes verificados. Produto público/conta ChatGPT seguem T08. O veredicto abaixo registra a revisão original, anterior às correções.
 
 ## Veredicto original
 
@@ -91,3 +91,5 @@ Corrigir R1/R2/R3 e resolver ou delimitar com precisão R4, produzir testes foca
 ## R4 — delimitação do modelo Unix
 
 A API POSIX de rename no-replace recebe nome e não aceita condição atômica de inode. A documentação de segurança foi corrigida para exigir escritores cooperativos durante mkdir/move/recovery, incluindo editor/sync acidental. O pós-check detecta após o efeito, não impede mover um substituto. Pode haver conflito pendente que exige reconciliação local; a limitação continua sendo risco de engenharia, não trabalho manual de publicação. Windows permanece com operação por handle/identidade. Não houve reprodução adversarial Unix neste host.
+
+Fechamento: R5 (form Origin) corrigido e validado no Chromium real; R6 (observação de status Windows) corrigido sem alteração do critério/deadline. Todos os gates automáticos aprovados; pronto para entrega autônoma 99 técnicos, conforme completion-audit.md. Os limites Unix/terminal/conta e a validação pública pendente continuam explícitos.

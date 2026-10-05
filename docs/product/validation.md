@@ -33,3 +33,15 @@ R5 validado após correção: Chromium real enviou Origin da própria página e 
 O template do plugin ganhou ícone vetorial quadrado 512x512, campos logo/composerIcon e casos de revisão dentro de extensions.com.openai.review.test_cases. Build com URLs example.test descartáveis passou no schema oficial Agent Plugins 1.0.0; assets referenciados existem e os cinco casos positivos/cinco negativos têm prompt, descrição, ferramentas e resultado esperado. Nome/políticas/URLs reais e vídeo de demonstração da conta real permanecem T08.
 
 A rodada 37309996209 passou Linux/macOS e container com navegador real. Windows falhou no observador do teste de uninstall: leu uninstall-status.json durante o lock exclusivo do worker e recebeu ERROR_SHARING_VIOLATION (32). O observador agora repete somente esse erro dentro do mesmo deadline de 15s, conserva rejeição de success=false e falha para demais erros. O teste focado usando release instalado passou. A próxima execução será somente Windows, pois runtime/ferramentas não mudaram desde os gates Linux/macOS/container desta rodada; a diferença é teste Windows e metadados de distribuição.
+
+R6: a falha do observador Windows foi corrigida e o teste de release instalado passou em lifecycle-observer-fix.log. Não foi alterado o worker nem relaxado o critério de sucesso/deadline. A execução final Windows está em 37313011274. O serviço/ferramentas são idênticos à fonte validada Linux/macOS/container em 37309996209 (git diff de src/Cargo/migrations/deployment vazio).
+
+O construtor do plugin aceita DemoRecordingUrl para preencher a gravação real sem edição manual de JSON. O smoke com URL example.test passou e não representa publicação.
+
+## Gates finais aprovados
+
+2026-10-05: Windows 37313011274 terminou success, incluindo fmt/check/Clippy, suíte, libSQL ownership, oito benchmarks, storage/release, executáveis instalados via MCP, agente remoto release, instalação/autostart do produto e pacote. Linux/macOS e container/browser terminaram success em 37309996209. Runtime src/Cargo/migrations/deployment iguais entre essas revisões; somente o observador Windows e metadados de distribuição foram ajustados.
+
+Os três ZIPs de CI foram baixados para dist/ci e verificados por SHA256 externo e 12 hashes internos. artifacts.json registra paths/arquiteturas/hashes. O ZIP Windows local com manual atualizado está em dist/delivery; SHA256 214873da2a53d894729f247072411bf5cee806d3a01bb5d2da71da22e9e78c12. Esse build GNU foi instalado/testado neste PC; CI Windows usa o toolchain nativo do runner. Os componentes têm versão 0.3.0 e IPC2.
+
+Marco técnico: 99/100. T08 é a única tarefa restante e inclui domínio/host, callback real, identidade/políticas, teste ChatGPT web/móvel, gravação/revisão/publicação e assinatura quando exigida. Produto público validado: false. Esses passos não foram executados por falta de titularidade/conta/credenciais, conforme o escopo manual aprovado.
