@@ -905,6 +905,7 @@ async fn browser_html_forms_register_login_and_logout_with_real_cookies() {
         )
         .await
         .unwrap();
+    assert_eq!(page.headers()["referrer-policy"], "strict-origin");
     let login_cookie = page.headers()["set-cookie"]
         .to_str()
         .unwrap()

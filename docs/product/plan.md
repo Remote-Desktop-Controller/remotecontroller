@@ -18,31 +18,31 @@
 - [x] Conferir base, documentação e autorizações.
 - [x] Criar worktree gerenciado e branch `codex/remote-product`.
 - [x] Registrar spec, contratos HTTP e critérios.
-- [ ] Rodar baseline e registrar gates do código original.
+- [x] Rodar baseline e registrar gates do código original.
 
 ## Task 02 — serviço, contas, OAuth, pareamento e MCP
 Arquivos: apps/remote-service/**, docs/product/service-report.md; root integra Cargo.toml.
-- [ ] Testes de PKCE, tokens, pairing, isolation e HTTP.
-- [ ] Implementar persistência, API, UI de conta/dispositivos e MCP.
-- [ ] Validar fluxos e revisar contrato/security; reportar evidências.
+- [x] Testes de PKCE, tokens, pairing, isolation e HTTP.
+- [x] Implementar persistência, API, UI de conta/dispositivos e MCP.
+- [x] Validar fluxos e revisar contrato/security; reportar evidências.
 
 ## Task 03 — sessões, logs e recuperação local
 Arquivos: crates/domain, ports, application, protocol, infrastructure; migrations/002_*; docs/product/runtime-report.md.
-- [ ] Testes de migration/restart/isolation/log offsets/search.
-- [ ] Implementar sessões, propagação, spool consultável e busca histórica.
-- [ ] Validar focused tests e preservar gates existentes.
+- [x] Testes de migration/restart/isolation/log offsets/search.
+- [x] Implementar sessões, propagação, spool consultável e busca histórica.
+- [x] Validar focused tests e preservar gates existentes.
 
 ## Task 04 — agente remoto e conexão ao runtime
 Arquivos: apps/device-agent/**, apps/mcp-gateway/src/main.rs.
-- [ ] Testar pareamento/poll/retry/operation identity e credenciais privadas.
-- [ ] Implementar CLI simples, reconexão, heartbeat, IPC e diagnóstico.
-- [ ] Testar agente real + daemon + relay sobre HTTP loopback.
+- [x] Testar pareamento/poll/retry/operation identity e credenciais privadas.
+- [x] Implementar CLI simples, reconexão, heartbeat, IPC e diagnóstico.
+- [x] Testar agente real + daemon + relay sobre HTTP loopback.
 
 ## Task 05 — completar arquivos e terminal
 Arquivos: crates/infrastructure/src/terminal*, files*, tools*; novos testes.
-- [ ] Implementar funções ausentes com confinamento e auditoria.
-- [ ] Implementar stdin e PTY/ConPTY com concessão local explícita.
-- [ ] Validar conflitos, cancelamento, quotas, restart e isolamento.
+- [x] Implementar funções ausentes com confinamento e auditoria.
+- [x] Implementar stdin e PTY/ConPTY com concessão local explícita.
+- [x] Validar conflitos, cancelamento, quotas, restart e isolamento.
 
 ## Task 06 — onboarding, execução persistente e distribuição
 Arquivos: apps/device-agent, tools, packaging, plugin, deployment.
@@ -68,3 +68,7 @@ Arquivos: apps/device-agent, tools, packaging, plugin, deployment.
 - Autorização ampla do usuário substitui gates de perguntas adicionais sobre decisões reversíveis. Custos/credenciais/titularidade continuam explícitos ao final.
 - Workers independentes editam superfícies separadas. Manifesto/lock e builds são centralizados para evitar concorrência e desperdício.
 - Relatórios mantêm referências ao código/testes; não contar scaffold como entrega concluída.
+
+## Evidência corrente
+
+Implementação e regressões locais estão em validation.md; CI 37305576185 já aprovou container e todos os gates Linux. Checkboxes de release/distribuição final permanecem pendentes até os binários restantes terminarem. O histórico de requisitos/limitações é preservado no spec e security.md.

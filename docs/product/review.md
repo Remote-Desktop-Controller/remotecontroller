@@ -2,7 +2,11 @@
 
 Data: 2026-10-04. Base declarada: ba5ee3a. Revisão da working tree, incluindo arquivos novos ainda untracked. Revisão inicial estática e leitura de evidência já produzida, sem alterações de produção. Após a revisão, o root autorizou somente o patch de R3 e sua regressão; status abaixo. Nenhum Cargo foi executado pelo revisor.
 
-## Veredicto
+## Estado após integração pelo root (2026-10-05)
+
+R1/R2 corrigidos e cinco regressões HTTP/IPC passaram; R3 corrigido e regressão de duas sessões passou. R4 foi delimitado como exigência de escritores cooperativos em Unix, conforme security.md; a corrida não é apresentada como eliminada. Clippy estrito e suíte completa Windows passaram. CI tri-OS e release ainda estão em andamento. O veredicto abaixo registra a revisão original, anterior às correções.
+
+## Veredicto original
 
 **Requer correções antes de declarar prontidão técnica do produto remoto.** Não foi identificado P0 nem uma fuga concreta entre contas/dispositivos na superfície examinada. Há dois P1 de disponibilidade/controle no agente e dois P2 de escopo da memória e concorrência externa no filesystem Unix. Os cenários abaixo são deduzidos diretamente do fluxo de código; não se apresentam como testes executados nesta revisão.
 

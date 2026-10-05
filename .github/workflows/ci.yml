@@ -79,6 +79,18 @@ jobs:
           docker restart rdc-smoke
           for attempt in $(seq 1 30); do curl --fail http://127.0.0.1:8787/healthz && break; sleep 1; done
           curl --fail -H 'content-type: application/json' -d '{"email":"container@example.test","password":"Container-test-password-2026!"}' http://127.0.0.1:8787/api/auth/login
+      - name: Exercise real browser forms against the built service
+        run: |
+          mkdir -p .bootstrap/ui-binary
+          docker cp rdc-smoke:/usr/local/bin/remote-service .bootstrap/ui-binary/remote-service
+          chmod +x .bootstrap/ui-binary/remote-service
+          npm install --prefix .bootstrap/service-ui --no-save @playwright/test@1.63.0
+          .bootstrap/service-ui/node_modules/.bin/playwright install --with-deps chromium
+          node tools/test-service-ui.mjs .bootstrap/ui-binary/remote-service
+      - uses: actions/upload-artifact@v4
+        with:
+          name: product-browser-proof
+          path: docs/product/screenshots/dashboard-*-fixture.png
       - name: Show container diagnostics
         if: failure()
         run: docker logs rdc-smoke || true

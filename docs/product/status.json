@@ -1,71 +1,76 @@
 {
-  "updated_date": "2026-10-04",
+  "updated_date": "2026-10-05",
   "baseline_commit": "ba5ee3a",
   "branch": "codex/remote-product",
   "score_definition": "Planejamento ponderado por marcos aceitos; não mede tempo restante. Implementação, validação local, hospedada e publicação são eixos separados.",
-  "technical_readiness_percent": null,
+  "technical_readiness_percent": 90,
   "public_product_validated": false,
   "tasks": [
     {
       "id": "T00",
       "title": "Base local, integridade, instalação e baseline",
       "weight": 40,
-      "status": "validating",
+      "status": "verified",
       "evidence": [
-        "docs/readiness/progress.md",
-        "docs/product/baseline.log"
+        "docs/product/validation.md",
+        "apps/local-daemon/tests/lifecycle.rs",
+        "apps/local-daemon/tests/fullstack.rs"
       ]
     },
     {
       "id": "T01",
       "title": "Serviço remoto e relay MCP HTTPS",
       "weight": 15,
-      "status": "validating",
+      "status": "verified",
       "evidence": [
         "apps/remote-service/tests/flows.rs",
-        "docs/product/service-relay-green.log"
+        "docs/product/validation.md",
+        "https://github.com/Remote-Desktop-Controller/remotecontroller/actions/runs/37305576185/job/111748324134"
       ]
     },
     {
       "id": "T02",
       "title": "Contas, OAuth, isolamento e pareamento",
       "weight": 10,
-      "status": "validating",
+      "status": "verified",
       "evidence": [
         "apps/remote-service/tests/flows.rs",
-        "docs/product/service-report.md"
+        "tools/test-service-ui.mjs",
+        "docs/product/validation.md"
       ]
     },
     {
       "id": "T03",
       "title": "Agente remoto, reconexão e execução persistente",
       "weight": 10,
-      "status": "validating",
+      "status": "verified",
       "evidence": [
         "apps/device-agent/tests/remote_flow.rs",
-        "docs/product/remote-flow-tests.log",
-        "docs/product/review.md"
+        "apps/device-agent/tests/runner_regressions.rs",
+        "apps/device-agent/src/daemon.rs",
+        "docs/product/validation.md"
       ]
     },
     {
       "id": "T04",
       "title": "Sessões duráveis, histórico e logs consultáveis",
       "weight": 8,
-      "status": "validating",
+      "status": "verified",
       "evidence": [
-        "docs/product/runtime-files-sessions-green.log",
-        "docs/product/session-notes-restart-green.log"
+        "crates/infrastructure/tests/sessions.rs",
+        "docs/product/validation.md"
       ]
     },
     {
       "id": "T05",
       "title": "Arquivos completos e terminal interativo",
       "weight": 7,
-      "status": "validating",
+      "status": "verified",
       "evidence": [
-        "docs/product/terminal-cleanup.log",
-        "docs/product/mutations-integration-green.log",
-        "docs/product/review.md"
+        "apps/local-daemon/tests/terminal.rs",
+        "crates/infrastructure/tests/mutations.rs",
+        "docs/security.md",
+        "docs/product/validation.md"
       ]
     },
     {
@@ -104,12 +109,7 @@
   ],
   "current_phase": "integration_and_distribution",
   "automatic_gates_pending": [
-    "full_workspace_tests",
-    "clippy",
-    "release_build",
-    "installed_lifecycle",
-    "remote_flow_ipc_v2",
-    "tri_os_ci",
-    "container_smoke"
+    "final_source_ci",
+    "final_release_packages"
   ]
 }

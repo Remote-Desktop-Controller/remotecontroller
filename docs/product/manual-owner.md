@@ -6,7 +6,7 @@ Este documento cobre somente acesso/titularidade de contas, domínio, HTTPS, cal
 
 Escolha a conta/host autorizado e domínio sob sua titularidade. Aponte DNS para o host e permita portas 80/443. Prepare no diretório deployment um `.env` privado com `RDC_DOMAIN`, `RDC_TLS_EMAIL` e, no passo seguinte, `RDC_REDIRECT_URIS`. Não envie credenciais de hospedagem no chat ou no Git. O serviço interno 8787 permanece privado.
 
-O repositório já prepara Dockerfile, compose e Caddy. No host provisionado, use `docker compose -f deployment/compose.yaml up -d --build`. Caddy emite HTTPS para o domínio e o volume service-data preserva banco de contas/relay. Autorize backup do volume e retenção real antes de abrir acesso público. Não apague esse volume ao atualizar.
+O repositório já prepara Dockerfile, compose e Caddy. No host provisionado, use `docker compose --env-file deployment/.env -f deployment/compose.yaml up -d --build`. Caddy emite HTTPS para o domínio e o volume service-data preserva banco de contas/relay. Autorize backup do volume e retenção real antes de abrir acesso público. Não apague esse volume ao atualizar.
 
 Com hostname configurado, confira `https://SEU_DOMINIO/healthz`, `/.well-known/oauth-authorization-server` e `/.well-known/oauth-protected-resource/mcp`. O recurso deve ser exatamente `https://SEU_DOMINIO/mcp`; uma chamada sem token a /mcp deve exigir autenticação. Certificado válido e acesso externo são requisitos de deploy, não comprovação de uso no ChatGPT.
 
@@ -16,7 +16,7 @@ Na conta ChatGPT que fará o teste, habilite Developer mode em Settings → Secu
 
 Copie o redirect URI exibido na página de gestão dessa conexão e registre o valor **exato** em `RDC_REDIRECT_URIS`. A implementação usa DCR e PKCE, sem CIMD; não escolha autenticação CIMD para este serviço. Não invente callback nem use wildcard. O callback pode ser específico da conexão; confirme a URL apresentada antes do teste e atualize o serviço com ela. [Autenticação oficial](https://developers.openai.com/plugins/build/auth).
 
-O compose aceita callback vazio na primeira execução. Inicie o serviço HTTPS e crie a conexão de teste para obter o valor; a autorização OAuth é recusada enquanto o callback não entrar na allowlist. Atualize `.env` e recrie o serviço (`docker compose -f deployment/compose.yaml up -d --build`) antes de refazer a autorização. Complete login e consentimento na conta do produto; o host receberá access token por OAuth.
+O compose aceita callback vazio na primeira execução. Inicie o serviço HTTPS e crie a conexão de teste para obter o valor; a autorização OAuth é recusada enquanto o callback não entrar na allowlist. Atualize `.env` e recrie o serviço (`docker compose --env-file deployment/.env -f deployment/compose.yaml up -d --build`) antes de refazer a autorização. Complete login e consentimento na conta do produto; o host receberá access token por OAuth.
 
 ## 3. Parear e provar uso real
 

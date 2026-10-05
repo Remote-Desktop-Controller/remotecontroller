@@ -293,7 +293,8 @@ async fn boundary(State(state): State<AppState>, request: Request, next: Next) -
     let headers = response.headers_mut();
     headers.insert(header::CACHE_CONTROL, "no-store".parse().unwrap());
     headers.insert("x-content-type-options", "nosniff".parse().unwrap());
-    headers.insert("referrer-policy", "no-referrer".parse().unwrap());
+    // no-referrer makes browser POST navigations send Origin:null. Keep origin-only privacy while preserving same-origin form verification.
+    headers.insert("referrer-policy", "strict-origin".parse().unwrap());
     headers.entry("content-security-policy").or_insert("default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'".parse().unwrap());
     response
 }
