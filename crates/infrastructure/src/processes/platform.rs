@@ -12,7 +12,7 @@ use windows_sys::Win32::{
         },
     },
 };
-pub(super) struct Job(usize);
+pub(crate) struct Job(usize);
 impl Job {
     pub(super) fn resume_suspended(pid: u32) -> io::Result<()> {
         // The target was created suspended, so its initial thread cannot spawn a
@@ -55,7 +55,7 @@ impl Job {
             Ok(())
         }
     }
-    pub(super) fn attach(pid: u32) -> io::Result<Self> {
+    pub(crate) fn attach(pid: u32) -> io::Result<Self> {
         // SAFETY: Windows owns these handles; they are closed exactly once.
         unsafe {
             let handle = CreateJobObjectW(std::ptr::null(), std::ptr::null());
@@ -87,7 +87,7 @@ impl Job {
             Ok(job)
         }
     }
-    pub(super) fn terminate(&self) {
+    pub(crate) fn terminate(&self) {
         // SAFETY: handle remains live for this object's lifetime.
         unsafe {
             TerminateJobObject(self.0 as HANDLE, 1);

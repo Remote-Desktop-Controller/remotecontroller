@@ -1,0 +1,115 @@
+{
+  "updated_date": "2026-10-04",
+  "baseline_commit": "ba5ee3a",
+  "branch": "codex/remote-product",
+  "score_definition": "Planejamento ponderado por marcos aceitos; não mede tempo restante. Implementação, validação local, hospedada e publicação são eixos separados.",
+  "technical_readiness_percent": null,
+  "public_product_validated": false,
+  "tasks": [
+    {
+      "id": "T00",
+      "title": "Base local, integridade, instalação e baseline",
+      "weight": 40,
+      "status": "validating",
+      "evidence": [
+        "docs/readiness/progress.md",
+        "docs/product/baseline.log"
+      ]
+    },
+    {
+      "id": "T01",
+      "title": "Serviço remoto e relay MCP HTTPS",
+      "weight": 15,
+      "status": "validating",
+      "evidence": [
+        "apps/remote-service/tests/flows.rs",
+        "docs/product/service-relay-green.log"
+      ]
+    },
+    {
+      "id": "T02",
+      "title": "Contas, OAuth, isolamento e pareamento",
+      "weight": 10,
+      "status": "validating",
+      "evidence": [
+        "apps/remote-service/tests/flows.rs",
+        "docs/product/service-report.md"
+      ]
+    },
+    {
+      "id": "T03",
+      "title": "Agente remoto, reconexão e execução persistente",
+      "weight": 10,
+      "status": "validating",
+      "evidence": [
+        "apps/device-agent/tests/remote_flow.rs",
+        "docs/product/remote-flow-tests.log",
+        "docs/product/review.md"
+      ]
+    },
+    {
+      "id": "T04",
+      "title": "Sessões duráveis, histórico e logs consultáveis",
+      "weight": 8,
+      "status": "validating",
+      "evidence": [
+        "docs/product/runtime-files-sessions-green.log",
+        "docs/product/session-notes-restart-green.log"
+      ]
+    },
+    {
+      "id": "T05",
+      "title": "Arquivos completos e terminal interativo",
+      "weight": 7,
+      "status": "validating",
+      "evidence": [
+        "docs/product/terminal-cleanup.log",
+        "docs/product/mutations-integration-green.log",
+        "docs/product/review.md"
+      ]
+    },
+    {
+      "id": "T06",
+      "title": "Onboarding, deployment e distribuição preparados",
+      "weight": 5,
+      "status": "in_progress",
+      "evidence": [
+        "deployment/compose.yaml",
+        "tools/build-plugin.ps1",
+        "plugin/plugin.json"
+      ]
+    },
+    {
+      "id": "T07",
+      "title": "Revisão e validação integral automática",
+      "weight": 4,
+      "status": "in_progress",
+      "evidence": [
+        "docs/product/review.md",
+        "docs/product/ipc-transport-green.log"
+      ]
+    },
+    {
+      "id": "T08",
+      "title": "Ações manuais do proprietário e validação pública",
+      "weight": 1,
+      "status": "pending_manual",
+      "evidence": []
+    }
+  ],
+  "rulings": [
+    "Pesos são convenção explícita de planejamento; os 40 pontos iniciais exigem baseline novo.",
+    "Meta técnica 99 não equivale a produto público validado; gates hospedados não serão declarados sem evidências.",
+    "T08 é a última tarefa e não pode absorver código faltante ou defeitos do agente."
+  ],
+  "current_phase": "integration_and_distribution",
+  "automatic_gates_pending": [
+    "full_workspace_tests",
+    "clippy",
+    "release_build",
+    "installed_lifecycle",
+    "remote_flow_ipc_v2",
+    "tri_os_ci",
+    "container_smoke"
+  ]
+}

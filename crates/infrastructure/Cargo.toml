@@ -22,12 +22,13 @@ moka = { version = "0.12", features = ["future"] }
 cap-std = "4"
 ignore = "0.4"
 sha2 = "0.10"
+portable-pty = "0.9"
 tree-sitter = "0.25"
 tree-sitter-rust = "0.24"
 tree-sitter-python = "0.25"
 git2 = { version = "0.21", default-features = false }
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61", features = ["Win32_System_JobObjects", "Win32_Foundation", "Win32_System_Threading", "Win32_Security", "Win32_System_Diagnostics_ToolHelp"] }
+windows-sys = { version = "0.61", features = ["Win32_System_JobObjects", "Win32_Foundation", "Win32_System_Threading", "Win32_Security", "Win32_System_Diagnostics_ToolHelp", "Win32_Storage_FileSystem"] }
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 [dev-dependencies]

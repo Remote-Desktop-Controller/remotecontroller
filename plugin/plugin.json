@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "remote-desktop-controller",
+  "version": "0.3.0",
+  "description": "Trabalhe nos arquivos e no terminal do seu computador, com permissões locais e continuidade de tarefas.",
+  "keywords": ["files", "terminal", "remote", "sessions"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Remote Desktop Controller",
+        "shortDescription": "Seu computador no ChatGPT",
+        "longDescription": "Conecte um computador à sua conta, consulte e edite arquivos e execute ferramentas autorizadas. As sessões preservam o histórico operacional para retomar tarefas. O agente aplica as permissões concedidas no computador.",
+        "category": "Productivity",
+        "capabilities": ["Arquivos", "Terminal autorizado", "Retomada de tarefas"],
+        "defaultPrompt": ["Mostre meus computadores conectados.", "Retome minha última tarefa.", "Leia um arquivo do computador selecionado."]
+      },
+      "onboardingSkill": "./skills/remote-work/SKILL.md"
+    }
+  }
+}

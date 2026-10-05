@@ -7,6 +7,7 @@ pub struct RuntimeConfig {
     pub scheduler: SchedulerConfig,
     pub files: FileLimits,
     pub allowed_programs: Vec<ProgramRule>,
+    pub terminal: crate::terminal::TerminalConfig,
     pub process_buffer_bytes: usize,
     pub process_spool_bytes: u64,
     pub process_spool_total_bytes: u64,
@@ -24,6 +25,7 @@ impl Default for RuntimeConfig {
             scheduler: SchedulerConfig::default(),
             files: FileLimits::default(),
             allowed_programs: vec![],
+            terminal: crate::terminal::TerminalConfig::default(),
             process_buffer_bytes: 64 * 1024,
             process_spool_bytes: 16 * 1024 * 1024,
             process_spool_total_bytes: 256 * 1024 * 1024,
@@ -76,6 +78,7 @@ impl From<SchedulerConfig> for SchedulerLimits {
 }
 impl RuntimeConfig {
     pub fn validate(&self) -> runtime_ports::Result<()> {
+        self.terminal.validate()?;
         if self.ipc_connections == 0
             || self.process_spool_bytes == 0
             || self.process_spool_bytes > 1024 * 1024 * 1024

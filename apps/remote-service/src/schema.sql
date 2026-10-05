@@ -1,0 +1,14 @@
+PRAGMA journal_mode=WAL;
+PRAGMA synchronous=FULL;
+PRAGMA foreign_keys=ON;
+CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS clients(id TEXT PRIMARY KEY, name TEXT NOT NULL, redirects TEXT NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS authorization_codes(code_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), client_id TEXT NOT NULL REFERENCES clients(id), redirect_uri TEXT NOT NULL, challenge TEXT NOT NULL, resource TEXT NOT NULL, scope TEXT NOT NULL, expires_at INTEGER NOT NULL, consumed INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS grants(id TEXT PRIMARY KEY, family TEXT NOT NULL, user_id TEXT NOT NULL REFERENCES users(id), client_id TEXT NOT NULL REFERENCES clients(id), access_hash TEXT UNIQUE NOT NULL, refresh_hash TEXT UNIQUE NOT NULL, resource TEXT NOT NULL, scope TEXT NOT NULL, expires_at INTEGER NOT NULL, refresh_expires_at INTEGER NOT NULL, revoked INTEGER NOT NULL DEFAULT 0, rotated INTEGER NOT NULL DEFAULT 0, selected_device TEXT);
+CREATE INDEX IF NOT EXISTS grants_family ON grants(family);
+CREATE TABLE IF NOT EXISTS pairings(id TEXT PRIMARY KEY, code_hash TEXT UNIQUE NOT NULL, poll_hash TEXT NOT NULL, name TEXT NOT NULL, workspace_id TEXT NOT NULL, tools TEXT NOT NULL, expires_at INTEGER NOT NULL, user_id TEXT REFERENCES users(id), device_id TEXT, delivered INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS devices(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), token_hash TEXT UNIQUE NOT NULL, name TEXT NOT NULL, workspace_id TEXT NOT NULL, tools TEXT NOT NULL, heartbeat_at INTEGER NOT NULL DEFAULT 0, revoked INTEGER NOT NULL DEFAULT 0);
+CREATE INDEX IF NOT EXISTS devices_owner ON devices(user_id);
+CREATE TABLE IF NOT EXISTS relay(id TEXT PRIMARY KEY, device_id TEXT NOT NULL REFERENCES devices(id), user_id TEXT NOT NULL REFERENCES users(id), grant_family TEXT NOT NULL, operation_id TEXT NOT NULL, dedupe_key TEXT NOT NULL, envelope TEXT NOT NULL, result TEXT, created_at INTEGER NOT NULL, deadline INTEGER NOT NULL, lease_until INTEGER NOT NULL DEFAULT 0, UNIQUE(device_id, operation_id), UNIQUE(device_id, dedupe_key));
+CREATE INDEX IF NOT EXISTS relay_poll ON relay(device_id, result, lease_until);

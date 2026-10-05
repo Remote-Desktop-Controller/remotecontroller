@@ -33,6 +33,7 @@ ids!(
     ArtifactId,
     CheckpointId,
     ProcessId,
+    TerminalId,
     TraceId
 );
 
@@ -84,6 +85,7 @@ pub enum Capability {
     GitWrite,
     NetworkAccess,
     PrivilegedShell,
+    AllowInteractiveTerminal,
     OutsideWorkspaceAccess,
 }
 #[derive(Clone, Debug)]
@@ -131,6 +133,10 @@ pub struct Task {
 pub struct ExecutionSession {
     pub id: ExecutionSessionId,
     pub workspace_id: WorkspaceId,
+    pub label: String,
+    pub closed: bool,
+    pub created_at: u64,
+    pub updated_at: u64,
 }
 #[derive(Clone, Debug)]
 pub struct Operation {

@@ -1,36 +1,16 @@
-# IPC v1
+# IPC v2
 
-Transporte local: Named Pipes no Windows, UDS no Unix. Não há TCP. O primeiro
-frame é `Hello {protocol_version,secret}`. O servidor compara o segredo em tempo
-constante e responde `Welcome {protocol_version,workspace_id}` ou erro. Versão
-incompatível é rejeitada antes da execução.
+Named Pipes no Windows e UDS no Unix. Frames MessagePack têm prefixo u32 big-endian; dados até 8 MiB, handshake até 1 KiB, rejeitados antes de alocar. A troca inteira de autenticação tem deadline de cinco segundos.
 
-Cada frame tem **u32 big-endian de tamanho + MessagePack**. Tamanho máximo:
-8 MiB; tamanho zero ou superior ao limite é rejeitado antes da alocação do body.
-São DTOs Serde tipados; JSON existe somente nos argumentos/resultados MCP e nas
-representações locais estruturadas. Não há cadeia JSON/String/JSON no transporte.
+1. ClientHello: versão 2 e nonce aleatório de 32 bytes.
+2. ServerChallenge: workspace, nonce aleatório e HMAC-SHA256 do transcript com domínio `rdc-ipc/v2/server`.
+3. Cliente verifica a prova do servidor antes de enviar ClientProof, HMAC com domínio separado `rdc-ipc/v2/client`.
+4. Servidor verifica e envia Welcome consistente com o workspace autenticado.
 
-| Envelope | Dados |
-|---|---|
-| Metadata | protocol_version, request_id, trace_id, workspace_id, task_id, operation_id, deadline |
-| Request | Catalog, Heartbeat, Execute, Cancel, GetOperation |
-| Response | Metadata e Result<Value,ErrorEnvelope> |
-| Event | Metadata, completed, total, message |
-| Error | code tipado, message, retryable |
+O segredo privado de 32 bytes vem do CSPRNG do sistema, nunca atravessa o transporte, não aparece em Debug/tracing e não é regenerado silenciosamente. Provas incluem versão, workspace e ambos os nonces; comparação é constante. Legacy Hello recebe VersionMismatch: atualize daemon, gateway e agente juntos. Não há downgrade.
 
-Deadline é Unix epoch em milissegundos; clocks dos dois processos são da mesma
-máquina. IDs são UUIDs no wire e newtypes no domínio. Execute exige workspace_id.
-O request_id correlaciona resposta; operation_id identifica efeito idempotente.
+Metadata inclui protocol_version, request_id, trace_id, workspace_id, task_id, session_id, operation_id e deadline (epoch ms). Request suporta Catalog, Heartbeat, Execute, Cancel, GetOperation; Response contém metadata e Result tipado. request_id correlaciona; operation_id identifica efeito idempotente; session_id filtra continuidade. Deadline usa o relógio compartilhado da máquina.
 
-Uma conexão trata handshake + um request + zero ou mais eventos + resposta.
-Chamadas concorrentes usam conexões independentes. O client reconecta com o mesmo
-envelope até quatro tentativas em falhas de I/O, dentro do deadline.
-Cancel/GetOperation e Heartbeat podem usar outra conexão enquanto uma tool roda.
+Uma conexão trata autenticação, um pedido, eventos advisory limitados e resposta. Chamadas concorrentes usam conexões independentes. Falhas de I/O permitem repetir o mesmo envelope dentro do deadline; falhas de autenticação/versão não são retentadas como indisponibilidade. Desconexão não desfaz efeito persistido: consulte operation.status antes de repetir uma mutação com outra identidade.
 
-Handshake e recepção inicial têm limite de 5 s. Progress é advisory, limitado e
-coalescível; mensagens excedentes podem ser descartadas. Writes para cliente
-lento têm timeout. A operação persiste independentemente da conexão, logo
-desconectar durante lote não aborta seu journal. O host consulta status/retry.
-
-Erros distinguem versão, autenticação, política, busy, conflito, cancelamento,
-timeout, armazenamento e execução. Nunca transmitir segredo em tracing.
+Banco/secret/socket ficam fora do workspace. Unix exige proprietário e permissões privadas; Windows rejeita reparse point no secret e usa DACL protegida. Instaladores distribuem componentes da mesma versão.

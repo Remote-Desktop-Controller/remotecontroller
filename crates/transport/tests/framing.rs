@@ -1,4 +1,4 @@
-use runtime_protocol::{Frame, MAX_FRAME};
+use runtime_protocol::{Frame, MAX_FRAME, VERSION};
 use runtime_transport::{receive, send};
 use tokio::io::AsyncWriteExt;
 
@@ -7,9 +7,9 @@ async fn framed_message_round_trip() {
     let (mut a, mut b) = tokio::io::duplex(4096);
     send(
         &mut a,
-        &Frame::Hello {
-            protocol_version: 1,
-            secret: vec![17; 32],
+        &Frame::ClientHello {
+            protocol_version: VERSION,
+            client_nonce: [17; 32],
         },
     )
     .await
@@ -17,8 +17,8 @@ async fn framed_message_round_trip() {
     let frame = receive(&mut b).await.unwrap();
     assert!(matches!(
         frame,
-        Frame::Hello {
-            protocol_version: 1,
+        Frame::ClientHello {
+            protocol_version: VERSION,
             ..
         }
     ));

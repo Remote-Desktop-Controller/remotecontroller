@@ -5,3 +5,5 @@
 *.db
 *.db-wal
 *.db-shm
+/deployment/.env
+/docs/product/*.log

@@ -6,8 +6,8 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use runtime_domain::ExecutionPolicy;
 use runtime_infrastructure::{config::RuntimeConfig, kernel::Kernel, server::serve};
-use runtime_transport::{Listener, private_directory, read_secret};
-use std::{io::Write, path::PathBuf};
+use runtime_transport::{Listener, ensure_secret, private_directory};
+use std::path::PathBuf;
 use tokio_util::sync::CancellationToken;
 #[derive(Parser)]
 #[command(
@@ -27,6 +27,8 @@ struct Args {
     endpoint: Option<String>,
     #[arg(long, global = true)]
     config: Option<PathBuf>,
+    #[arg(skip)]
+    config_explicit: bool,
     #[arg(long, global = true)]
     allow_write: bool,
     #[arg(
@@ -35,6 +37,12 @@ struct Args {
         help = "Trust only the exact program/args rules in config; children are not a filesystem sandbox"
     )]
     allow_process: bool,
+    #[arg(
+        long,
+        global = true,
+        help = "Trust the locally pinned interactive terminal shell with this user's privileges"
+    )]
+    allow_terminal: bool,
     #[arg(
         long,
         global = true,
@@ -54,14 +62,20 @@ struct Args {
 async fn main() -> Result<()> {
     let mut raw = std::env::args_os();
     raw.next();
+    let helper = raw.next();
+    if helper.as_deref() == Some(std::ffi::OsStr::new("--terminal-guardian")) {
+        std::process::exit(runtime_infrastructure::terminal_guardian::run(
+            raw.collect(),
+        )?);
+    }
     #[cfg(windows)]
-    if raw.next().as_deref() == Some(std::ffi::OsStr::new("--finish-uninstall")) {
+    if helper.as_deref() == Some(std::ffi::OsStr::new("--finish-uninstall")) {
         let profile = PathBuf::from(raw.next().context("uninstall worker profile missing")?);
         install::finish_uninstall(&profile)?;
         return Ok(());
     }
     #[cfg(unix)]
-    if raw.next().as_deref() == Some(std::ffi::OsStr::new("--process-guardian")) {
+    if helper.as_deref() == Some(std::ffi::OsStr::new("--process-guardian")) {
         std::process::exit(runtime_infrastructure::guardian::run(raw.collect()).await?);
     }
     let mut args = Args::parse();
@@ -91,24 +105,7 @@ async fn main() -> Result<()> {
         .open(state.join("daemon.lock"))?;
     fs2::FileExt::try_lock_exclusive(&lock).context("another daemon owns this state directory")?;
     let token_file = state.join("ipc.secret");
-    let secret = if token_file.exists() {
-        read_secret(&token_file)?
-    } else {
-        let mut secret = uuid::Uuid::new_v4().as_bytes().to_vec();
-        secret.extend_from_slice(uuid::Uuid::new_v4().as_bytes());
-        let mut f = std::fs::OpenOptions::new()
-            .create_new(true)
-            .write(true)
-            .open(&token_file)?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            f.set_permissions(std::fs::Permissions::from_mode(0o600))?;
-        }
-        f.write_all(&secret)?;
-        f.sync_all()?;
-        secret
-    };
+    let secret = ensure_secret(&token_file)?;
     let endpoint = args
         .endpoint
         .clone()
@@ -118,7 +115,6 @@ async fn main() -> Result<()> {
         Some(path) if path.exists() => serde_json::from_slice(&tokio::fs::read(path).await?)?,
         _ => RuntimeConfig::default(),
     };
-    #[cfg(unix)]
     let config = {
         let mut config = config;
         config.guardian_path = Some(std::env::current_exe()?);

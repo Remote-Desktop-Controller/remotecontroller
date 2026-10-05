@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "remote-desktop-controller": {
+      "type": "streamable-http",
+      "url": "https://configure-o-dominio-no-build.example/mcp"
+    }
+  }
+}

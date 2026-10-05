@@ -160,10 +160,22 @@ impl<S: Storage + 'static> Executor<S> {
         clock: Arc<dyn ClockPort>,
         progress: Arc<dyn ProgressPort>,
     ) -> Result<Operation> {
+        self.execute_in_session(op, None, deadline, clock, progress)
+            .await
+    }
+    pub async fn execute_in_session(
+        self: &Arc<Self>,
+        op: Operation,
+        session: Option<ExecutionSessionId>,
+        deadline: u64,
+        clock: Arc<dyn ClockPort>,
+        progress: Arc<dyn ProgressPort>,
+    ) -> Result<Operation> {
         self.store.get_workspace(op.workspace_id).await?;
         match self.store.operation(op.id).await {
             Ok(previous) => {
                 self.validate_retry(&op, &previous)?;
+                self.validate_session_retry(&op, session).await?;
                 return self.wait(op.workspace_id, op.id, deadline, &*clock).await;
             }
             Err(PortError::NotFound) => {}
@@ -185,9 +197,10 @@ impl<S: Storage + 'static> Executor<S> {
                 })
                 .await?;
         }
-        if !self.store.claim(&op).await? {
+        if !self.store.claim_in_session(&op, session).await? {
             drop(permit);
             self.validate_retry(&op, &self.store.operation(op.id).await?)?;
+            self.validate_session_retry(&op, session).await?;
             return self.wait(op.workspace_id, op.id, deadline, &*clock).await;
         }
         let cancellation = CancellationToken::new();
@@ -224,6 +237,16 @@ impl<S: Storage + 'static> Executor<S> {
         } else {
             Ok(())
         }
+    }
+    async fn validate_session_retry(
+        &self,
+        op: &Operation,
+        session: Option<ExecutionSessionId>,
+    ) -> Result<()> {
+        if self.store.operation_session(op.workspace_id, op.id).await? != session {
+            return Err(PortError::Conflict);
+        }
+        Ok(())
     }
     async fn wait(
         &self,

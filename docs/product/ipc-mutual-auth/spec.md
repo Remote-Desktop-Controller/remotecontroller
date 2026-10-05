@@ -281,7 +281,7 @@ Usam `tokio::io::duplex`, sem processo.
 | K3 | `read_secret_rejects_group_or_world_readable` (`#[cfg(unix)]`) | Modo `0644` ⇒ `PermissionDenied`. |
 | K4 | `read_secret_rejects_foreign_owner` (`#[cfg(unix)]`, `#[ignore]` fora do CI Linux com `sudo`/fixture) | Dono ≠ euid ⇒ erro. |
 | K5 | `secret_creation_is_atomic_and_private` | Gerador: arquivo final tem 32 bytes, modo 0600 no Unix; `ipc.secret.tmp` não sobra; teste de crash simulado (tmp pré-existente) é limpo no próximo start. |
-| K6 | `generated_secrets_are_distinct_and_not_uuid_shaped` | 1.000 segredos únicos; nenhum tem os nibbles de versão/variante UUID nas posições 6 e 8. |
+| K6 | `generated_secrets_are_distinct_and_not_uuid_shaped` | Segredos distintos gerados por getrandom; os bits não são forçados ao formato UUID. Coincidências aleatórias com nibbles UUID são possíveis e não constituem falha. |
 | K7 | `invalid_existing_secret_is_not_regenerated` | `ipc.secret` com 5 bytes ⇒ daemon recusa iniciar; arquivo intacto. |
 
 ### 7.4 Integração — servidor real (`crates/infrastructure/tests/ipc.rs`)
@@ -348,3 +348,7 @@ Usam `RUNTIME_TEST_BIN_DIR` (binários **release** do CI) como os testes atuais.
 ---
 
 *Spec self-review: sem TBD; labels, tamanhos e ordem de campos fixados e verificados contra os vetores KAT; assinaturas públicas preservadas; escopo restrito a IPC local + S3/S4/S5/S6.*
+
+## Ajustes da implementação
+
+O nome Rust legado permanece Frame::Hello para decodificar peers v1 e devolver VersionMismatch; não há downgrade nem uso da chave recebida. Os nomes de teste desta proposta são critérios conceituais; o relatório final mapeia os testes efetivamente executados. K6 foi corrigido: exigir ausência absoluta de bits UUID em aleatoriedade seria um teste probabilístico incorreto.

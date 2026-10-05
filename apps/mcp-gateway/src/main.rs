@@ -122,6 +122,17 @@ impl ServerHandler for Gateway {
         context: RequestContext<RoleServer>,
     ) -> std::result::Result<CallToolResponse, ErrorData> {
         let mut meta = Metadata::new(Some(self.workspace), self.timeout_ms + 30_000);
+        if let Some(id) = context
+            .meta
+            .0
+            .get("runtimeSessionId")
+            .and_then(serde_json::Value::as_str)
+        {
+            meta.session_id = Some(
+                id.parse()
+                    .map_err(|_| ErrorData::invalid_params("invalid runtimeSessionId", None))?,
+            );
+        }
         // Hosts can explicitly retain the same identity across independent MCP retries.
         if let Some(id) = context
             .meta

@@ -45,7 +45,26 @@ impl<S: Storage> ContextEngine<S> {
             metrics: CacheMetrics::default(),
         }
     }
-    pub async fn compile_request(&self, mut request: ContextRequest) -> Result<String> {
+    pub async fn compile_request(&self, request: ContextRequest) -> Result<String> {
+        self.compile_session(request, None).await
+    }
+    pub async fn compile_session(
+        &self,
+        mut request: ContextRequest,
+        session: Option<ExecutionSessionId>,
+    ) -> Result<String> {
+        if let Some(session) = session {
+            self.store.session(request.workspace, session).await?;
+            if let Some(operation) = request.operation
+                && self
+                    .store
+                    .operation_session(request.workspace, operation)
+                    .await?
+                    != Some(session)
+            {
+                return Err(PortError::NotFound);
+            }
+        }
         request.budget = request.budget.min(128 * 1024);
         // Reject oversized options instead of aliasing different queries in the cache.
         if request.query.len() > 4096 {
@@ -62,7 +81,7 @@ impl<S: Storage> ContextEngine<S> {
         for _ in 0..5 {
             let ws = self.store.get_workspace(request.workspace).await?;
             let key = format!(
-                "ctx:{}:{}:{:?}:{:?}:{}:{:?}",
+                "ctx:{}:{}:{:?}:{:?}:{}:{:?}:{session:?}",
                 request.workspace,
                 ws.graph_version,
                 request.operation,
@@ -75,7 +94,11 @@ impl<S: Storage> ContextEngine<S> {
                 c
             } else {
                 self.metrics.misses.fetch_add(1, Ordering::Relaxed);
-                let mut events = if let Some(task) = request.task_id {
+                let mut events = if let Some(session) = session {
+                    self.store
+                        .session_events(request.workspace, session, request.task_id, 256)
+                        .await?
+                } else if let Some(task) = request.task_id {
                     self.store.task_events(request.workspace, task, 256).await?
                 } else {
                     self.store.recent(request.workspace, 256).await?
@@ -90,6 +113,22 @@ impl<S: Storage> ContextEngine<S> {
                             events.push(e);
                         }
                     }
+                }
+                if let Some(session) = session {
+                    let mut allowed = HashMap::new();
+                    for event in &events {
+                        if let std::collections::hash_map::Entry::Vacant(entry) =
+                            allowed.entry(event.operation_id)
+                        {
+                            entry.insert(
+                                self.store
+                                    .operation_session(request.workspace, event.operation_id)
+                                    .await?
+                                    == Some(session),
+                            );
+                        }
+                    }
+                    events.retain(|event| allowed[&event.operation_id]);
                 }
                 let mut operations = HashMap::new();
                 for event in &events {

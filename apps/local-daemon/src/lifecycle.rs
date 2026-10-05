@@ -42,6 +42,10 @@ pub enum Action {
         #[command(subcommand)]
         action: Policy,
     },
+    Terminal {
+        #[command(subcommand)]
+        action: TerminalPolicy,
+    },
     Backup {
         destination: PathBuf,
     },
@@ -78,7 +82,29 @@ pub enum Policy {
         args: Vec<String>,
     },
 }
+#[derive(Subcommand)]
+pub enum TerminalPolicy {
+    Approve {
+        #[arg(long)]
+        program: PathBuf,
+        #[arg(
+            long,
+            required = true,
+            help = "Trust this interactive shell with the current user's full local privileges"
+        )]
+        trust_unconfined: bool,
+        #[arg(last = true)]
+        args: Vec<String>,
+    },
+    Revoke,
+}
 pub fn resolve(args: &mut Args) -> Result<()> {
+    args.config_explicit = args.config.is_some();
+    if args.workspace.is_none() {
+        args.workspace = Some(std::env::current_dir()?);
+    }
+    let lexical_root = lexical_absolute(args.workspace.as_ref().unwrap())?;
+    let root = args.workspace.as_ref().unwrap().canonicalize()?;
     let profile = match &args.profile {
         Some(p) => p.clone(),
         None if args.state_dir.is_some() => args.state_dir.clone().unwrap(),
@@ -88,24 +114,20 @@ pub fn resolve(args: &mut Args) -> Result<()> {
             PathBuf::from(home).join(".local-runtime")
         }
     };
-    private_directory(&profile)?;
-    args.profile = Some(profile.canonicalize()?);
-    if args.workspace.is_none() {
-        args.workspace = Some(std::env::current_dir()?);
-    }
-    let lexical_root = lexical_absolute(args.workspace.as_ref().unwrap())?;
-    let root = args.workspace.as_ref().unwrap().canonicalize()?;
+    validate_private_location(&profile, &lexical_root, &root, "profile")?;
     args.workspace = Some(root.clone());
     if args.state_dir.is_none() {
         let key = format!("{:x}", Sha256::digest(root.to_string_lossy().as_bytes()));
-        args.state_dir = Some(
-            args.profile
-                .as_ref()
-                .unwrap()
-                .join("states")
-                .join(&key[..24]),
-        );
+        args.state_dir = Some(profile.join("states").join(&key[..24]));
     }
+    validate_private_location(
+        args.state_dir.as_ref().unwrap(),
+        &lexical_root,
+        &root,
+        "state",
+    )?;
+    private_directory(&profile)?;
+    args.profile = Some(profile.canonicalize()?);
     private_directory(args.state_dir.as_ref().unwrap())?;
     ensure!(
         !args
@@ -127,6 +149,28 @@ pub fn resolve(args: &mut Args) -> Result<()> {
             && !config_crosses_workspace(config, &root)?
             && !resolved_config_location(config)?.starts_with(&root),
         "configuration must be outside workspace"
+    );
+    if args.config_explicit && !config.is_file() && !matches!(args.command, Some(Action::Init)) {
+        anyhow::bail!(
+            "--config {} not found (expected an existing policy file)",
+            config.display()
+        );
+    }
+    Ok(())
+}
+fn validate_private_location(
+    path: &Path,
+    lexical_root: &Path,
+    root: &Path,
+    label: &str,
+) -> Result<()> {
+    let lexical = lexical_absolute(path)?;
+    ensure!(
+        !within_lexical_root(&lexical, lexical_root)
+            && !within_lexical_root(&lexical, &lexical_absolute(root)?)
+            && !config_crosses_workspace(path, root)?
+            && !resolved_config_location(path)?.starts_with(root),
+        "{label} must be outside workspace"
     );
     Ok(())
 }
@@ -232,6 +276,9 @@ pub fn capabilities(args: &Args) -> Vec<Capability> {
     if args.allow_process {
         c.extend([Capability::SpawnProcess, Capability::KillProcess]);
     }
+    if args.allow_terminal {
+        c.push(Capability::AllowInteractiveTerminal);
+    }
     if args.allow_process_outside_workspace {
         c.push(Capability::OutsideWorkspaceAccess);
     }
@@ -322,6 +369,51 @@ pub async fn dispatch(args: &Args) -> Result<bool> {
         }
         Action::RegisterHost { host, config_file } => {
             crate::host::register(host, config_file, args)?
+        }
+        Action::Terminal {
+            action:
+                TerminalPolicy::Approve {
+                    program,
+                    args: argv,
+                    trust_unconfined,
+                },
+        } => {
+            ensure!(
+                *trust_unconfined,
+                "explicit unconfined terminal trust required"
+            );
+            ensure!(
+                program.is_absolute(),
+                "absolute terminal program path required"
+            );
+            let program = program.canonicalize()?;
+            let fingerprint = ProgramRule::fingerprint(&program)?;
+            let mut c = config(args)?;
+            c.terminal.enabled = true;
+            c.terminal.program = Some(program);
+            c.terminal.args = argv.clone();
+            c.terminal.fingerprint = Some(fingerprint);
+            c.validate()?;
+            crate::host::replace_with_backup(
+                args.config.as_ref().unwrap(),
+                &serde_json::to_vec_pretty(&c)?,
+            )?;
+            eprintln!(
+                "Terminal aprovado localmente com SHA-256. Reinicie o daemon com --allow-terminal --allow-process-outside-workspace --allow-process-network para aplicar."
+            );
+        }
+        Action::Terminal {
+            action: TerminalPolicy::Revoke,
+        } => {
+            let mut c = config(args)?;
+            c.terminal.enabled = false;
+            crate::host::replace_with_backup(
+                args.config.as_ref().unwrap(),
+                &serde_json::to_vec_pretty(&c)?,
+            )?;
+            eprintln!(
+                "Terminal desativado na configuração. Pare e reinicie o daemon para encerrar as sessões e aplicar."
+            );
         }
         Action::Policy {
             action:
@@ -508,15 +600,19 @@ pub fn add_args(cmd: &mut Command, args: &Args) {
         .arg("--workspace")
         .arg(args.workspace.as_ref().unwrap())
         .arg("--state-dir")
-        .arg(args.state_dir.as_ref().unwrap())
-        .arg("--config")
-        .arg(args.config.as_ref().unwrap());
+        .arg(args.state_dir.as_ref().unwrap());
+    // Preserve the difference between an explicit policy and a default path
+    // which has not been created during first installation.
+    if args.config_explicit || args.config.as_ref().is_some_and(|path| path.is_file()) {
+        cmd.arg("--config").arg(args.config.as_ref().unwrap());
+    }
     if let Some(e) = &args.endpoint {
         cmd.arg("--endpoint").arg(e);
     }
     for (enabled, flag) in [
         (args.allow_write, "--allow-write"),
         (args.allow_process, "--allow-process"),
+        (args.allow_terminal, "--allow-terminal"),
         (
             args.allow_process_outside_workspace,
             "--allow-process-outside-workspace",

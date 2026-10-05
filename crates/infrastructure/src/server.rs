@@ -28,6 +28,9 @@ pub async fn serve(
         });
         while clients.try_join_next().is_some() {}
     }
+    if let Some(terminal) = &kernel.services.terminal {
+        terminal.shutdown().await;
+    }
     kernel.executor.shutdown().await;
     clients.abort_all();
     while clients.join_next().await.is_some() {}

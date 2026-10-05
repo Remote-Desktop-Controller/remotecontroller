@@ -1,13 +1,14 @@
 [workspace]
-members = ["crates/domain", "crates/ports", "crates/application", "crates/protocol", "crates/transport", "crates/infrastructure", "apps/local-daemon", "apps/mcp-gateway"]
+members = ["crates/domain", "crates/ports", "crates/application", "crates/protocol", "crates/transport", "crates/infrastructure", "apps/local-daemon", "apps/mcp-gateway", "apps/device-agent", "apps/remote-service"]
 resolver = "2"
-exclude = ["vendor/libsql"]
+exclude = ["vendor/libsql", "vendor/portable-pty"]
 
 [patch.crates-io]
 libsql = { path = "vendor/libsql" }
+portable-pty = { path = "vendor/portable-pty" }
 
 [workspace.package]
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT"
