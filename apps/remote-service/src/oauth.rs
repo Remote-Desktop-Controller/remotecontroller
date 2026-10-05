@@ -13,7 +13,7 @@ pub(crate) const SCOPES: &str = "devices:read tools:read tools:execute";
 pub(crate) async fn metadata(State(state): State<AppState>) -> Json<Value> {
     let base = &state.config.public_url;
     Json(
-        json!({"issuer":base,"authorization_endpoint":format!("{base}/oauth/authorize"),"token_endpoint":format!("{base}/oauth/token"),"registration_endpoint":format!("{base}/oauth/register"),"revocation_endpoint":format!("{base}/oauth/revoke"),"response_types_supported":["code"],"grant_types_supported":["authorization_code","refresh_token"],"token_endpoint_auth_methods_supported":["none"],"code_challenge_methods_supported":["S256"],"scopes_supported":SCOPES.split(' ').collect::<Vec<_>>(),"client_id_metadata_document_supported":false}),
+        json!({"issuer":base,"authorization_response_iss_parameter_supported":true,"authorization_endpoint":format!("{base}/oauth/authorize"),"token_endpoint":format!("{base}/oauth/token"),"registration_endpoint":format!("{base}/oauth/register"),"revocation_endpoint":format!("{base}/oauth/revoke"),"response_types_supported":["code"],"grant_types_supported":["authorization_code","refresh_token"],"token_endpoint_auth_methods_supported":["none"],"code_challenge_methods_supported":["S256"],"scopes_supported":SCOPES.split(' ').collect::<Vec<_>>(),"client_id_metadata_document_supported":false}),
     )
 }
 pub(crate) async fn resource_metadata(State(state): State<AppState>) -> Json<Value> {
@@ -222,6 +222,11 @@ pub(crate) async fn consent(
         .await?;
     let mut redirect = url::Url::parse(&input.authorization.redirect_uri)
         .map_err(|_| ApiError::bad("Retorno inválido"))?;
+    // RFC 9207 applies to both success and redirected error responses. Use
+    // precisely the issuer advertised by both discovery documents.
+    redirect
+        .query_pairs_mut()
+        .append_pair("iss", &state.config.public_url);
     if input.decision != "allow" {
         redirect
             .query_pairs_mut()

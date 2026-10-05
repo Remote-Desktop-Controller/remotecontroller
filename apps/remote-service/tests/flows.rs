@@ -493,6 +493,12 @@ async fn oauth_pkce_wrong_resource_code_replay_and_refresh_replay_are_rejected()
         StatusCode::BAD_REQUEST
     );
     fields[5].1 = "http://127.0.0.1:8787/mcp";
+    fields[4].1 = "https://client.example/callback/";
+    assert_eq!(
+        form(&app, "/oauth/token", &fields, None).await.0,
+        StatusCode::BAD_REQUEST
+    );
+    fields[4].1 = "https://client.example/callback";
     let (status, tokens, _) = form(&app, "/oauth/token", &fields, None).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(
@@ -1006,4 +1012,198 @@ async fn browser_html_forms_register_login_and_logout_with_real_cookies() {
             .unwrap()
             .starts_with("rdc_session=")
     );
+}
+
+async fn issuer_app(redirects: Vec<String>) -> (tempfile::TempDir, Router) {
+    let dir = tempfile::tempdir().unwrap();
+    let config = Config::new("https://issuer.example.test:9443/".into(), false, redirects).unwrap();
+    let app = application(&dir.path().join("service.db"), config)
+        .await
+        .unwrap();
+    (dir, app)
+}
+const CHATGPT_CALLBACK: &str = "https://chatgpt.com/connector_platform_oauth_redirect";
+
+#[tokio::test]
+async fn issuer_metadata_identifies_the_same_server_for_stable_chatgpt_callback() {
+    let (_dir, app) = issuer_app(vec![CHATGPT_CALLBACK.into()]).await;
+    let (status, metadata, _) = send(
+        &app,
+        "GET",
+        "/.well-known/oauth-authorization-server",
+        json!(null),
+        None,
+        None,
+        None,
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(metadata["issuer"], "https://issuer.example.test:9443");
+    assert_eq!(
+        metadata["authorization_response_iss_parameter_supported"],
+        true
+    );
+    assert_eq!(
+        metadata["code_challenge_methods_supported"],
+        json!(["S256"])
+    );
+    assert_eq!(metadata["client_id_metadata_document_supported"], false);
+    for path in [
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+    ] {
+        let (status, resource, _) = send(&app, "GET", path, json!(null), None, None, None).await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(
+            resource["authorization_servers"],
+            json!(["https://issuer.example.test:9443"])
+        );
+        assert_eq!(resource["resource"], "https://issuer.example.test:9443/mcp");
+    }
+}
+
+#[tokio::test]
+async fn stable_callback_dcr_still_requires_explicit_exact_allowlisting() {
+    let (_dir, app) = issuer_app(vec![CHATGPT_CALLBACK.into()]).await;
+    for (redirect, expected) in [
+        (CHATGPT_CALLBACK, StatusCode::CREATED),
+        (
+            "https://chatgpt.com/connector_platform_oauth_redirect/",
+            StatusCode::BAD_REQUEST,
+        ),
+        (
+            "https://chatgpt.com/connector_platform_oauth_redirect?changed=1",
+            StatusCode::BAD_REQUEST,
+        ),
+        (
+            "https://chatgpt.com/connector/oauth/other-connection",
+            StatusCode::BAD_REQUEST,
+        ),
+        (
+            "https://chatgpt.com.evil.example/connector_platform_oauth_redirect",
+            StatusCode::BAD_REQUEST,
+        ),
+        ("https://chatgpt.com/*", StatusCode::BAD_REQUEST),
+    ] {
+        assert_eq!(
+            send(
+                &app,
+                "POST",
+                "/oauth/register",
+                json!({"redirect_uris":[redirect]}),
+                None,
+                None,
+                None
+            )
+            .await
+            .0,
+            expected,
+            "{redirect}"
+        );
+    }
+    let (_empty_dir, empty) = issuer_app(vec![]).await;
+    assert_eq!(
+        send(
+            &empty,
+            "POST",
+            "/oauth/register",
+            json!({"redirect_uris":[CHATGPT_CALLBACK]}),
+            None,
+            None,
+            None
+        )
+        .await
+        .0,
+        StatusCode::BAD_REQUEST
+    );
+}
+
+async fn check_authorization_issuer(decision: &str) {
+    let custom = "https://client.example/callback?tracking=a%2Bb";
+    let (_dir, app) = issuer_app(vec![CHATGPT_CALLBACK.into(), custom.into()]).await;
+    let (cookie, csrf) = account(&app, "issuer@example.test").await;
+    for callback in [CHATGPT_CALLBACK, custom] {
+        let (status, registered, _) = send(
+            &app,
+            "POST",
+            "/oauth/register",
+            json!({"redirect_uris":[callback]}),
+            None,
+            None,
+            None,
+        )
+        .await;
+        assert_eq!(status, StatusCode::CREATED);
+        let client = registered["client_id"].as_str().unwrap();
+        let mut fields = vec![
+            ("client_id", client),
+            ("redirect_uri", callback),
+            ("response_type", "code"),
+            (
+                "code_challenge",
+                "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+            ),
+            ("code_challenge_method", "S256"),
+            ("resource", "https://issuer.example.test:9443/mcp"),
+            ("state", "state with + & / unicode ç"),
+            ("csrf", csrf.as_str()),
+            ("decision", decision),
+        ];
+        for (index, invalid) in [
+            (4, "plain"),
+            (4, ""),
+            (5, "https://other.example/mcp"),
+            (1, "https://evil.example/callback"),
+        ] {
+            let previous = fields[index].1;
+            fields[index].1 = invalid;
+            let (status, _, location) =
+                form(&app, "/oauth/authorize", &fields, Some(&cookie)).await;
+            assert_eq!(status, StatusCode::BAD_REQUEST);
+            assert!(location.is_none(), "Invalid request redirected to a client");
+            fields[index].1 = previous;
+        }
+        let (status, _, location) = form(&app, "/oauth/authorize", &fields, Some(&cookie)).await;
+        assert_eq!(status, StatusCode::SEE_OTHER);
+        let redirect = url::Url::parse(location.as_deref().unwrap()).unwrap();
+        let pairs: Vec<_> = redirect.query_pairs().collect();
+        let issuers: Vec<_> = pairs
+            .iter()
+            .filter(|(key, _)| key == "iss")
+            .map(|(_, value)| value.as_ref())
+            .collect();
+        assert_eq!(issuers, vec!["https://issuer.example.test:9443"]);
+        assert_eq!(
+            pairs.iter().find(|(key, _)| key == "state").unwrap().1,
+            "state with + & / unicode ç"
+        );
+        if callback == custom {
+            assert_eq!(
+                pairs.iter().find(|(key, _)| key == "tracking").unwrap().1,
+                "a+b"
+            );
+        }
+        if decision == "allow" {
+            assert!(
+                pairs
+                    .iter()
+                    .any(|(key, value)| key == "code" && !value.is_empty())
+            );
+            assert!(!pairs.iter().any(|(key, _)| key == "error"));
+        } else {
+            assert_eq!(
+                pairs.iter().find(|(key, _)| key == "error").unwrap().1,
+                "access_denied"
+            );
+            assert!(!pairs.iter().any(|(key, _)| key == "code"));
+        }
+    }
+}
+#[tokio::test]
+async fn authorization_success_includes_exact_issuer() {
+    check_authorization_issuer("allow").await;
+}
+#[tokio::test]
+async fn authorization_access_denied_includes_exact_issuer() {
+    check_authorization_issuer("deny").await;
 }

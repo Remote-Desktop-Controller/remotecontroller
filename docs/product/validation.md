@@ -45,3 +45,7 @@ O construtor do plugin aceita DemoRecordingUrl para preencher a gravação real 
 Os três ZIPs de CI foram baixados para dist/ci e verificados por SHA256 externo e 12 hashes internos. artifacts.json registra paths/arquiteturas/hashes. O ZIP Windows local com manual atualizado está em dist/delivery; SHA256 214873da2a53d894729f247072411bf5cee806d3a01bb5d2da71da22e9e78c12. Esse build GNU foi instalado/testado neste PC; CI Windows usa o toolchain nativo do runner. Os componentes têm versão 0.3.0 e IPC2.
 
 Marco técnico: 99/100. T08 é a única tarefa restante e inclui domínio/host, callback real, identidade/políticas, teste ChatGPT web/móvel, gravação/revisão/publicação e assinatura quando exigida. Produto público validado: false. Esses passos não foram executados por falta de titularidade/conta/credenciais, conforme o escopo manual aprovado.
+
+## Correção de compatibilidade OAuth após teste público (2026-10-05)
+
+RFC 9207 implementada em oauth.rs, com flag e issuer exato no sucesso/erro redirecionado. As regressões falharam antes do patch e passaram depois. Allowlist permanece explícita, PKCE S256/resource/redirect exato preservados e CIMD continua desabilitado. Ver oauth-rfc9207.md para evidências e passos de rebuild/configuração do servidor; deployment e teste real ChatGPT aguardam o proprietário. Os gates locais completos passaram nesta revisão.

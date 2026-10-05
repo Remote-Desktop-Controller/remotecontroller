@@ -64,3 +64,7 @@ Status da execução centralizada inicial: os dois unitários e cinco dos seis t
 Os endpoints e a UI são implementação real, mas este relatório não prova hospedagem HTTPS pública, distribuição assinada, onboarding no catálogo nem invocação pela conta real do ChatGPT. Esses itens precisam de evidência separada. Também não implementa envio de e-mail/redefinição de senha; as contas locais atuais exigem que o usuário guarde a senha. Proteger/backup do banco e titularidade do domínio permanecem responsabilidades da implantação.
 
 Referências oficiais consultadas: [MCP Authorization 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization) e [MCP Streamable HTTP transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports). A implantação escolhe DCR com política de redirect explícita, PKCE e resource binding; não afirma suporte CIMD nem aprovação em catálogo.
+
+## Atualização OAuth RFC 9207 (2026-10-05)
+
+O servidor anuncia authorization_response_iss_parameter_supported=true e inclui iss com state.config.public_url tanto no código quanto na recusa redirecionada. issuer e authorization_servers compartilham o mesmo valor exato. A allowlist continua explícita; configure REMOTE_SERVICE_REDIRECT_URIS (ou RDC_REDIRECT_URIS no compose) com https://chatgpt.com/connector_platform_oauth_redirect para ChatGPT/Codex elegíveis. Lista vazia permanece recusada e CIMD permanece desabilitado. Ver oauth-rfc9207.md para provas e atualização de um deployment existente.

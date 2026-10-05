@@ -14,9 +14,9 @@ Com hostname configurado, confira `https://SEU_DOMINIO/healthz`, `/.well-known/o
 
 Na conta ChatGPT que fará o teste, habilite Developer mode em Settings → Security and login, abra Plugins e adicione a URL HTTPS completa com `/mcp`. Acesso pode depender das permissões da conta/workspace; use o que a plataforma efetivamente disponibiliza. [Quickstart oficial](https://developers.openai.com/plugins/quickstart).
 
-Copie o redirect URI exibido na página de gestão dessa conexão e registre o valor **exato** em `RDC_REDIRECT_URIS`. A implementação usa DCR e PKCE, sem CIMD; não escolha autenticação CIMD para este serviço. Não invente callback nem use wildcard. O callback pode ser específico da conexão; confirme a URL apresentada antes do teste e atualize o serviço com ela. [Autenticação oficial](https://developers.openai.com/plugins/build/auth).
+Com RFC 9207 anunciado por esta versão, ChatGPT/Codex elegíveis usam `https://chatgpt.com/connector_platform_oauth_redirect`. Configure essa URI exata em `RDC_REDIRECT_URIS`, conforme deployment/.env.example. Confirme a URI exibida na página de gestão da conexão; outros callbacks continuam exigindo autorização explícita e exata. A implementação usa DCR e PKCE, sem CIMD; não escolha autenticação CIMD para este serviço. Não invente callback nem use wildcard. Conexões antigas/hosts sem suporte a RFC 9207 podem usar callback específico; recrie a conexão para reler a descoberta atualizada. [Autenticação oficial](https://developers.openai.com/plugins/build/auth).
 
-O compose aceita callback vazio na primeira execução. Inicie o serviço HTTPS e crie a conexão de teste para obter o valor; a autorização OAuth é recusada enquanto o callback não entrar na allowlist. Atualize `.env` e recrie o serviço (`docker compose --env-file deployment/.env -f deployment/compose.yaml up -d --build`) antes de refazer a autorização. Complete login e consentimento na conta do produto; o host receberá access token por OAuth.
+O compose ainda aceita callback vazio para bootstrap, mas o DCR será recusado. O exemplo já contém o callback estável explícito; para atualizar um servidor existente, preencha RDC_REDIRECT_URIS e recompile/recrie o serviço. Atualize `.env` e recrie o serviço (`docker compose --env-file deployment/.env -f deployment/compose.yaml up -d --build`) antes de refazer a autorização. Complete login e consentimento na conta do produto; o host receberá access token por OAuth.
 
 ## 3. Parear e provar uso real
 
@@ -56,7 +56,7 @@ No host Linux autorizado, depois de configurar DNS e Docker Compose:
 git clone --branch codex/remote-product --single-branch https://github.com/Remote-Desktop-Controller/remotecontroller.git
 cd remotecontroller
 cp deployment/.env.example deployment/.env
-# Edite .env: RDC_DOMAIN e RDC_TLS_EMAIL reais; callback pode começar vazio.
+# Edite .env: RDC_DOMAIN e RDC_TLS_EMAIL reais; mantenha o callback estável autorizado.
 docker compose --env-file deployment/.env -f deployment/compose.yaml up -d --build
 curl --fail https://SEU_DOMINIO/healthz
 ```
