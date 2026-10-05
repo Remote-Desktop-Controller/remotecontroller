@@ -3,7 +3,7 @@
   "baseline_commit": "ba5ee3a",
   "branch": "codex/remote-product",
   "score_definition": "Planejamento ponderado por marcos aceitos; não mede tempo restante. Implementação, validação local, hospedada e publicação são eixos separados.",
-  "technical_readiness_percent": 90,
+  "technical_readiness_percent": 95,
   "public_product_validated": false,
   "tasks": [
     {
@@ -77,11 +77,12 @@
       "id": "T06",
       "title": "Onboarding, deployment e distribuição preparados",
       "weight": 5,
-      "status": "in_progress",
+      "status": "verified",
       "evidence": [
-        "deployment/compose.yaml",
-        "tools/build-plugin.ps1",
-        "plugin/plugin.json"
+        "tools/setup-windows.ps1",
+        "tools/package-product.ps1",
+        "plugin/plugin.json",
+        "docs/product/validation.md"
       ]
     },
     {
@@ -109,7 +110,7 @@
   ],
   "current_phase": "integration_and_distribution",
   "automatic_gates_pending": [
-    "final_source_ci",
-    "final_release_packages"
+    "windows_final_ci",
+    "final_artifact_hashes"
   ]
 }

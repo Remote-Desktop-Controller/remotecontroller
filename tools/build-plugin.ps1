@@ -16,6 +16,7 @@ $taskRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $taskStage = Join-Path $OutputDirectory ('stage-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $taskStage -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $taskRoot 'plugin/skills') -Destination $taskStage -Recurse
+Copy-Item -LiteralPath (Join-Path $taskRoot 'plugin/assets') -Destination $taskStage -Recurse
 $taskManifest = Get-Content -LiteralPath (Join-Path $taskRoot 'plugin/plugin.json') -Raw | ConvertFrom-Json
 $taskInterface = $taskManifest.extensions.'com.openai'.interface
 foreach ($taskField in @{developerName=$DeveloperName;websiteURL=$WebsiteUrl.AbsoluteUri;supportURL=$SupportUrl.AbsoluteUri;privacyPolicyURL=$PrivacyPolicyUrl.AbsoluteUri;termsOfServiceURL=$TermsOfServiceUrl.AbsoluteUri}.GetEnumerator()) {
