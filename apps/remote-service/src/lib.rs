@@ -1,4 +1,6 @@
 mod account;
+mod commercial;
+pub use commercial::CommercialConfig;
 mod oauth;
 mod pairing;
 mod relay;
@@ -108,6 +110,7 @@ impl IntoResponse for ApiError {
 
 #[derive(Clone)]
 pub struct Config {
+    pub commercial: Option<CommercialConfig>,
     pub public_url: String,
     pub allow_http_loopback: bool,
     pub redirect_uris: Vec<String>,
@@ -148,6 +151,7 @@ impl Config {
             );
         }
         Ok(Self {
+            commercial: None,
             public_url: url.as_str().trim_end_matches('/').to_owned(),
             allow_http_loopback,
             redirect_uris,
@@ -199,6 +203,7 @@ pub async fn application(path: &Path, config: Config) -> ApiResult<Router> {
         .route("/", get(ui::home))
         .route("/login", get(ui::login).post(account::login_form))
         .route("/register", get(ui::register).post(account::register_form))
+        .route("/auth/commercial/callback", get(commercial::callback))
         .route("/logout", post(account::logout_form))
         .route("/pair", get(ui::home).post(pairing::approve_form))
         .route("/devices/{id}/revoke", post(pairing::revoke_form))
@@ -256,13 +261,15 @@ async fn boundary(State(state): State<AppState>, request: Request, next: Next) -
         return ApiError::forbidden().into_response();
     }
     let path = request.uri().path();
-    if request.method() == axum::http::Method::POST
+    if (request.method() == axum::http::Method::POST
         && (path.starts_with("/api/auth/")
             || path == "/login"
             || path == "/register"
             || path == "/api/pairings"
             || path == "/oauth/register"
-            || path == "/oauth/token")
+            || path == "/oauth/token"))
+        || (state.config.commercial.is_some()
+            && matches!(path, "/login" | "/register" | "/auth/commercial/callback"))
     {
         // Forwarded headers are intentionally ignored; the front proxy should also rate limit.
         let ip = request

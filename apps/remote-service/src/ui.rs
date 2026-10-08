@@ -90,12 +90,22 @@ pub(crate) async fn login(
     State(state): State<AppState>,
     Query(input): Query<LoginQuery>,
 ) -> Response {
+    if state.config.commercial.is_some() {
+        return crate::commercial::login(&state, &input.next)
+            .await
+            .unwrap_or_else(IntoResponse::into_response);
+    }
     login_page(&state, &input.next, false)
 }
 pub(crate) async fn register(
     State(state): State<AppState>,
     Query(input): Query<LoginQuery>,
 ) -> Response {
+    if state.config.commercial.is_some() {
+        return crate::commercial::login(&state, &input.next)
+            .await
+            .unwrap_or_else(IntoResponse::into_response);
+    }
     login_page(&state, &input.next, true)
 }
 pub(crate) async fn home(State(state): State<AppState>, headers: HeaderMap) -> ApiResult<Response> {

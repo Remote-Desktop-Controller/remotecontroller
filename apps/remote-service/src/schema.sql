@@ -12,3 +12,6 @@ CREATE TABLE IF NOT EXISTS devices(id TEXT PRIMARY KEY, user_id TEXT NOT NULL RE
 CREATE INDEX IF NOT EXISTS devices_owner ON devices(user_id);
 CREATE TABLE IF NOT EXISTS relay(id TEXT PRIMARY KEY, device_id TEXT NOT NULL REFERENCES devices(id), user_id TEXT NOT NULL REFERENCES users(id), grant_family TEXT NOT NULL, operation_id TEXT NOT NULL, dedupe_key TEXT NOT NULL, envelope TEXT NOT NULL, result TEXT, created_at INTEGER NOT NULL, deadline INTEGER NOT NULL, lease_until INTEGER NOT NULL DEFAULT 0, UNIQUE(device_id, operation_id), UNIQUE(device_id, dedupe_key));
 CREATE INDEX IF NOT EXISTS relay_poll ON relay(device_id, result, lease_until);
+CREATE TABLE IF NOT EXISTS commercial_accounts(user_id TEXT PRIMARY KEY REFERENCES users(id),subject TEXT NOT NULL UNIQUE);
+CREATE TABLE IF NOT EXISTS commercial_nonces(nonce_hash TEXT PRIMARY KEY,next TEXT NOT NULL,expires_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS commercial_admissions(request_id TEXT PRIMARY KEY REFERENCES relay(id) ON DELETE CASCADE,authorized INTEGER NOT NULL DEFAULT 0 CHECK(authorized IN(0,1)));

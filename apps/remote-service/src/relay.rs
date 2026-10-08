@@ -1,4 +1,4 @@
-use crate::{ApiError, ApiResult, AppState, oauth, pairing, security, store};
+use crate::{ApiError, ApiResult, AppState, commercial, oauth, pairing, security, store};
 use axum::{
     Json,
     extract::State,
@@ -85,6 +85,9 @@ pub(crate) async fn poll(
     state.rate(format!("agent-poll:{}", device.id), 120).await?;
     let start = Instant::now();
     loop {
+        let commercial_expiry =
+            commercial::authorize(&state, &device.owner, uuid::Uuid::new_v4(), false, false)
+                .await?;
         let commands = {
             let connection = state.store.lock().await;
             let tx = connection
@@ -101,7 +104,10 @@ pub(crate) async fn poll(
             if store::integer(&row, 0)? != 0 {
                 return Err(ApiError::unauthorized());
             }
-            let mut rows=tx.query("SELECT id,envelope FROM relay r WHERE device_id=?1 AND user_id=?2 AND result IS NULL AND deadline>?3 AND lease_until<=?4 AND EXISTS(SELECT 1 FROM grants g WHERE g.family=r.grant_family AND g.revoked=0 AND g.expires_at>?4) ORDER BY created_at LIMIT 8",params![device.id.clone(),device.owner.clone(),runtime_protocol::now_ms() as i64,security::now()]).await?;
+            if commercial_expiry.is_some_and(|expiry| expiry <= security::now()) {
+                return Err(ApiError::forbidden());
+            }
+            let mut rows=tx.query("SELECT id,envelope FROM relay r WHERE device_id=?1 AND user_id=?2 AND result IS NULL AND deadline>?3 AND lease_until<=?4 AND (?5=0 OR EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=r.id AND c.authorized=1)) AND EXISTS(SELECT 1 FROM grants g WHERE g.family=r.grant_family AND g.revoked=0 AND g.expires_at>?4) ORDER BY created_at LIMIT 8",params![device.id.clone(),device.owner.clone(),runtime_protocol::now_ms() as i64,security::now(),i64::from(state.config.commercial.is_some())]).await?;
             let mut commands = Vec::new();
             while let Some(row) = rows.next().await? {
                 commands.push((
@@ -152,7 +158,7 @@ pub(crate) async fn result(
     let tx = connection
         .transaction_with_behavior(libsql::TransactionBehavior::Immediate)
         .await?;
-    let mut rows=tx.query("SELECT envelope,result FROM relay WHERE id=?1 AND device_id=?2 AND user_id=?3 AND EXISTS(SELECT 1 FROM devices WHERE id=?2 AND revoked=0)",params![input.request_id.to_string(),device.id,device.owner]).await?;
+    let mut rows=tx.query("SELECT envelope,result FROM relay WHERE id=?1 AND device_id=?2 AND user_id=?3 AND (?4=0 OR (lease_until>0 AND EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=relay.id AND c.authorized=1))) AND EXISTS(SELECT 1 FROM devices WHERE id=?2 AND revoked=0)",params![input.request_id.to_string(),device.id,device.owner,i64::from(state.config.commercial.is_some())]).await?;
     let row = rows.next().await?.ok_or_else(ApiError::not_found)?;
     drop(rows);
     let expected: RequestEnvelope = serde_json::from_str(&store::text(&row, 0)?)?;
@@ -245,6 +251,7 @@ pub(crate) async fn mcp(
     Json(input): Json<Rpc>,
 ) -> ApiResult<Response> {
     let mut grant = oauth::grant(&state, &headers).await?;
+    commercial::authorize(&state, &grant.user_id, uuid::Uuid::new_v4(), false, true).await?;
     // A single paired PC must expose its tools on the host's first discovery request.
     if grant.selected_device.is_none() {
         let connection = state.store.lock().await;
@@ -499,6 +506,21 @@ async fn forward(
     if !local_session_argument {
         object.remove("session_id");
     }
+    if state.config.commercial.is_some() {
+        let schema = &device
+            .tools
+            .iter()
+            .find(|descriptor| descriptor.name == tool)
+            .ok_or_else(ApiError::not_found)?
+            .input_schema;
+        let validator = jsonschema::options()
+            .should_validate_formats(true)
+            .build(schema)
+            .map_err(|_| ApiError::bad("Esquema remoto inválido"))?;
+        if !validator.is_valid(&input) {
+            return Err(ApiError::bad("Argumentos remotos inválidos"));
+        }
+    }
     let payload = Request::Execute {
         tool: tool.to_owned(),
         input,
@@ -519,12 +541,12 @@ async fn forward(
     if serialized.len() > 512 * 1024 {
         return Err(ApiError::bad("Requisição remota excede 512 KiB"));
     }
-    let request_id = {
+    let (request_id, execute, operation) = {
         let connection = state.store.lock().await;
         let tx = connection
             .transaction_with_behavior(libsql::TransactionBehavior::Immediate)
             .await?;
-        let mut live=tx.query("SELECT id FROM devices WHERE id=?1 AND user_id=?2 AND revoked=0 AND EXISTS(SELECT 1 FROM grants WHERE id=?3 AND revoked=0 AND expires_at>?4)",params![device.id.clone(),grant.user_id.clone(),grant.id.clone(),security::now()]).await?;
+        let mut live=tx.query("SELECT id FROM devices WHERE id=?1 AND user_id=?2 AND revoked=0 AND (?5=0 OR heartbeat_at>?4-90) AND EXISTS(SELECT 1 FROM grants WHERE id=?3 AND revoked=0 AND expires_at>?4)",params![device.id.clone(),grant.user_id.clone(),grant.id.clone(),security::now(),i64::from(state.config.commercial.is_some())]).await?;
         if live.next().await?.is_none() {
             return Err(ApiError::unauthorized());
         }
@@ -537,7 +559,7 @@ async fn forward(
         let mut existing=tx.query("SELECT id,envelope FROM relay WHERE device_id=?1 AND user_id=?2 AND (dedupe_key=?3 OR operation_id=?4)",params![device.id.clone(),grant.user_id.clone(),dedupe.clone(),envelope.meta.operation_id.to_string()]).await?;
         let old = existing.next().await?;
         drop(existing);
-        let id = if let Some(row) = old {
+        let (id, execute, operation) = if let Some(row) = old {
             let previous: RequestEnvelope = serde_json::from_str(&store::text(&row, 1)?)?;
             if serde_json::to_value(&previous.payload)? != serde_json::to_value(&envelope.payload)?
                 || previous.meta.session_id != envelope.meta.session_id
@@ -548,7 +570,26 @@ async fn forward(
                     "Identidade reutilizada com comando diferente",
                 ));
             }
-            store::text(&row, 0)?
+            let id = store::text(&row, 0)?;
+            let mut admission = tx
+                .query(
+                    "SELECT authorized FROM commercial_admissions WHERE request_id=?1",
+                    params![id.clone()],
+                )
+                .await?;
+            let authorized = admission
+                .next()
+                .await?
+                .map(|r| store::integer(&r, 0))
+                .transpose()?
+                .unwrap_or(0)
+                != 0;
+            drop(admission);
+            (
+                id,
+                !authorized && previous.meta.deadline > runtime_protocol::now_ms(),
+                previous.meta.operation_id,
+            )
         } else {
             let mut count=tx.query("SELECT COUNT(*),COALESCE(SUM(CASE WHEN result IS NULL AND deadline>?2 THEN 1 ELSE 0 END),0) FROM relay WHERE device_id=?1",params![device.id.clone(),runtime_protocol::now_ms()as i64]).await?;
             let row = count.next().await?.ok_or_else(ApiError::not_found)?;
@@ -560,11 +601,30 @@ async fn forward(
             }
             let id = envelope.meta.request_id.to_string();
             tx.execute("INSERT INTO relay(id,device_id,user_id,grant_family,operation_id,dedupe_key,envelope,created_at,deadline) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",params![id.clone(),device.id.clone(),grant.user_id.clone(),grant.family.clone(),envelope.meta.operation_id.to_string(),dedupe,serialized,security::now(),envelope.meta.deadline as i64]).await?;
-            id
+            if state.config.commercial.is_some() {
+                tx.execute(
+                    "INSERT INTO commercial_admissions(request_id) VALUES(?1)",
+                    params![id.clone()],
+                )
+                .await?;
+            }
+            (id, true, envelope.meta.operation_id)
         };
         tx.commit().await?;
-        id
+        (id, execute, operation)
     };
+    // Local queue reservation is committed before activation; poll cannot deliver it yet.
+    let expiry = commercial::authorize(state, &grant.user_id, operation, execute, false).await?;
+    if state.config.commercial.is_some() {
+        let connection = state.store.lock().await;
+        if expiry.is_none_or(|expiry| expiry <= security::now()) {
+            return Err(ApiError::forbidden());
+        }
+        let changed=connection.execute("UPDATE commercial_admissions SET authorized=1 WHERE request_id=?1 AND EXISTS(SELECT 1 FROM relay r JOIN devices d ON d.id=r.device_id WHERE r.id=?1 AND d.revoked=0 AND EXISTS(SELECT 1 FROM grants g WHERE g.id=?2 AND g.revoked=0 AND g.expires_at>?3))",params![request_id.clone(),grant.id.clone(),security::now()]).await?;
+        if changed == 0 {
+            return Err(ApiError::forbidden());
+        }
+    }
     let start = Instant::now();
     loop {
         let (saved, envelope) = {
@@ -576,6 +636,15 @@ async fn forward(
             )
         };
         if let Some(saved) = saved {
+            let expiry =
+                commercial::authorize(state, &grant.user_id, operation, false, false).await?;
+            if state.config.commercial.is_some() {
+                let connection = state.store.lock().await;
+                if expiry.is_none_or(|expiry| expiry <= security::now()) {
+                    return Err(ApiError::forbidden());
+                }
+                store::first(&connection,"SELECT r.id FROM relay r JOIN devices d ON d.id=r.device_id JOIN grants g ON g.id=?3 WHERE r.id=?1 AND r.user_id=?2 AND d.revoked=0 AND g.revoked=0 AND g.expires_at>?4 AND EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=r.id AND c.authorized=1)",params![request_id.clone(),grant.user_id.clone(),grant.id.clone(),security::now()]).await.map_err(|_|ApiError::forbidden())?;
+            }
             let response: ResponseEnvelope = serde_json::from_str(&saved)?;
             return Ok(match response.payload {
                 Ok(value) => {

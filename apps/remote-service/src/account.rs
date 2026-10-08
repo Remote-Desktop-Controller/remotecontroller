@@ -84,6 +84,9 @@ async fn authenticate(
     input: Credentials,
     register: bool,
 ) -> ApiResult<(String, String)> {
+    if state.config.commercial.is_some() {
+        return Err(ApiError::forbidden());
+    }
     let email = credentials_valid(&input)?;
     state.rate(format!("auth:{email}"), 8).await?;
     let permit = state
