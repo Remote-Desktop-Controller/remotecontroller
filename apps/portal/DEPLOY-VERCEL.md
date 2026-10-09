@@ -2,6 +2,38 @@
 
 Preparação verificada em 09/10/2026. Branch de trabalho: `feat/commercial-portal`. Diretório de upload: **somente `apps/portal`**. O repositório privado continua na organização; não é necessário importar/conectar o GitHub ao projeto Vercel.
 
+## Publicação concluída em 09/10/2026
+
+- Portal público: https://remotecontroller-portal.vercel.app
+- Deployment Production READY: `dpl_ZCivbDcWQpsw1Gzk3RjRE6jYkrsu`, código `84d4504`.
+- Webhook POST público: https://remotecontroller-portal.vercel.app/api/asaas/webhook
+- Production usa Asaas de produção, com `SALES_ENABLED=false` e `REMOTE_SERVICE_AVAILABLE=false`, confirmados por HTTP na aplicação publicada.
+- Nenhuma cobrança real foi criada. O domínio do blog e a produção MCP não foram modificados.
+- Build e typecheck locais/remotos passaram; 58 testes locais passaram. Lint: zero erros, três advertências existentes.
+- Dez páginas verificadas por HTTP 200; navegador descartável validou landing desktop, login/cadastro mobile, ausência de overflow/erros JavaScript e proteção do dashboard.
+- A rota rejeita chamadas sem token com 401. Checagem GET autenticada validou Supabase e a API Asaas por leitura; ela retorna somente indicadores de saúde, sem pagamentos, chaves ou tokens. POST autenticado sem pagamento confirmou o processamento da rota. POST de pagamento inexistente falhou sem conceder direito.
+- Todos os eventos solicitados têm regressões locais: RECEIVED, CONFIRMED, REFUNDED, PARTIALLY_REFUNDED e DELETED. A notificação nunca substitui a consulta à API; Pix CONFIRMED aguarda RECEIVED, e somente uso remoto autorizado inicia o período.
+- Nenhuma variável obrigatória do portal/webhook está ausente. `DELIVERY_DEADLINE`, `SUPPORT_EMAIL`, `LEGAL_OPERATOR_NAME` e `REFUND_POLICY` ainda precisam ser definidos antes de abrir vendas reais.
+
+### Campos exatos do webhook no painel Asaas
+
+| Campo | Preencher |
+| --- | --- |
+| Nome | `Remote Controller - Pagamentos` |
+| URL | `https://remotecontroller-portal.vercel.app/api/asaas/webhook` |
+| Ativo | Sim |
+| Versão da API | v3 |
+| Tipo de envio | Não sequencial (`NON_SEQUENTIALLY`) |
+| Fila | Ativada / não interrompida |
+| Token de autenticação | Copiar o valor de `.vercel/asaas-webhook-token.txt` neste checkout; não copiar o nome da variável nem a chave API Asaas |
+| Eventos | `PAYMENT_RECEIVED`, `PAYMENT_CONFIRMED`, `PAYMENT_REFUNDED`, `PAYMENT_PARTIALLY_REFUNDED`, `PAYMENT_DELETED` |
+
+O token foi criado aleatoriamente, salvo como Secret na Vercel e em arquivo local com ACL restrita ao usuário/SYSTEM, ignorado por Git e upload. Não imprima o valor em logs ou mensagens. O painel envia esse valor no header `asaas-access-token`.
+
+O portal está pronto para receber notificações reais autenticadas. A configuração do webhook no painel Asaas é uma ação manual; esta execução não declarou que ela já foi salva nem realizou pagamento/reembolso real para gerar um evento financeiro.
+
+As seções abaixo preservam o procedimento inicial; a etapa antiga de publicação interrompida foi superada pela validação acima.
+
 ## Projeto já preparado
 
 - Conta autenticada na CLI: `andrefonn`.
