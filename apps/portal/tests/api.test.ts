@@ -60,7 +60,7 @@ describe("commercial HTTP contracts", () => {
   it("reads configured webhook and aggregate database records without exposing secrets or customer data", async () => {
     vi.stubEnv("ASAAS_WEBHOOK_TOKEN", "w".repeat(32));
     vi.stubEnv("ASAAS_API_KEY", "fixture-private-key");
-    f.from.mockImplementation(() => ({ select: (_columns: string, options?: {head?: boolean}) => options?.head ? Promise.resolve({count: 0, error: null}) : {eq: () => ({maybeSingle: async () => ({data: {hits: 2, starts_at: "2026-10-09T10:00:00Z"}, error: null})})} }));
+    f.from.mockImplementation((table: string) => ({ select: (columns: string, options?: {head?: boolean}) => options?.head ? Promise.resolve(table === "portal_operations" && columns === "id" ? {count: null, error: {message: "composite key; no id column"}} : {count: 0, error: null}) : {eq: () => ({maybeSingle: async () => ({data: {hits: 2, starts_at: "2026-10-09T10:00:00Z"}, error: null})})} }));
     vi.stubGlobal("fetch", vi.fn<typeof fetch>(async input => Response.json(String(input).includes("/webhooks?") ? {data: [{id: "private-hook-id", name: "Remote Controller - Pagamentos", url: "https://portal.example/api/asaas/webhook", enabled: true, interrupted: false, apiVersion: 3, sendType: "NON_SEQUENTIALLY", authToken: "w".repeat(32), events: ["PAYMENT_RECEIVED","PAYMENT_CONFIRMED","PAYMENT_REFUNDED","PAYMENT_PARTIALLY_REFUNDED","PAYMENT_DELETED"]}],hasMore:false} : {data:[{id:"private-payment",customer:"private-customer"}]})));
     const result = await route(handlers.webhookHealth)(new Request("https://portal.example/api/asaas/webhook?diagnostics=1", {headers:{"asaas-access-token":"w".repeat(32)}}),{});
     const body = await result.json();

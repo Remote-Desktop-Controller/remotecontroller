@@ -12,7 +12,7 @@ const requiredEvents = [
 // Aggregate reads only. Never return provider records, identifiers or credentials.
 export async function webhookDiagnostics(c: Config, store: Store, provider: Asaas) {
   async function count(table: string) {
-    const result = await store.db.from(table).select("id", { count: "exact", head: true });
+    const result = await store.db.from(table).select("*", { count: "exact", head: true });
     if (result.error || result.count === null) fail(503, "DATABASE", "Contagem não confirmada.");
     return result.count;
   }
