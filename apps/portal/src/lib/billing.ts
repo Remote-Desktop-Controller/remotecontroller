@@ -14,6 +14,47 @@ export class Billing {
     readonly store: Store = new Store(),
     readonly provider: Asaas = new Asaas(getConfig()),
   ) {}
+  async authorize(
+    subject: string,
+    operationId: string,
+    mode: "inspect" | "execute",
+    available: boolean,
+  ) {
+    const verifiedOrders: string[] = [];
+    if (available) {
+      const orders = await this.store.authorizationOrders(subject);
+      // Bound both provider load and latency; every call is GET and outside SQL locks.
+      if (orders.length > 16)
+        fail(503, "RECONCILIATION_REQUIRED", "Pedidos requerem conciliação administrativa.");
+      await Promise.all(
+        orders.map(async (initial) => {
+          if (initial.user_id !== subject)
+            fail(503, "PAYMENT_UNVERIFIED", "Conciliação financeira não confirmada.");
+          const { order, p } = await this.source(initial);
+          await this.apply(order, p);
+          const refunded =
+            p.status === "REFUNDED" ||
+            p.status === "PARTIALLY_REFUNDED" ||
+            p.refunds?.some((r) => r.status === "DONE" && r.value > 0);
+          if (
+            !refunded &&
+            initial.status !== "PENDING_PAYMENT" &&
+            (p.status !== "RECEIVED" || p.deleted)
+          )
+            fail(503, "PAYMENT_UNVERIFIED", "Pagamento ainda não confirmado pela operadora.");
+          if (!refunded && p.status === "RECEIVED" && !p.deleted)
+            verifiedOrders.push(order.id);
+        }),
+      );
+    }
+    return this.store.rpc("portal_authorize", {
+      p_user: subject,
+      p_operation: operationId,
+      p_mode: mode,
+      p_available: available,
+      p_verified_orders: verifiedOrders,
+    });
+  }
   async customer(
     user: { id: string; email: string },
     name: string,
@@ -141,15 +182,16 @@ export class Billing {
     const refunded =
       p.status === "PARTIALLY_REFUNDED" ||
       p.refunds?.some((r) => r.status === "DONE" && r.value > 0);
-    const status = refunded
-      ? "REFUND_PARTIALLY_DONE"
-      : p.status === "RECEIVED"
-        ? "RECEIVED"
-        : p.status === "REFUNDED"
-          ? "REFUNDED"
-          : p.deleted
-            ? "DELETED"
-            : p.status;
+    const status =
+      p.status === "REFUNDED"
+        ? "REFUNDED"
+        : refunded
+          ? "REFUND_PARTIALLY_DONE"
+          : p.status === "RECEIVED"
+            ? "RECEIVED"
+            : p.deleted
+              ? "DELETED"
+              : p.status;
     return this.store.rpc<Order>("portal_payment_apply", {
       p_order: order.id,
       p_event: event ?? `sync:${order.id}:${status}`,

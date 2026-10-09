@@ -4,6 +4,7 @@ const f = vi.hoisted(() => ({
   rate: vi.fn(),
   user: vi.fn(),
   orders: vi.fn(),
+  authorizationOrders: vi.fn(),
   orderPage: vi.fn(),
   findOrder: vi.fn(),
   signOut: vi.fn(),
@@ -23,6 +24,7 @@ vi.mock("../src/lib/store", () => ({
     rpc = f.rpc;
     rate = f.rate;
     orders = f.orders;
+    authorizationOrders = f.authorizationOrders;
     orderPage = f.orderPage;
     findOrder = f.findOrder;
   },
@@ -51,12 +53,51 @@ beforeEach(() => {
   f.user.mockResolvedValue({ id: subject, email: "user@example.com" });
   f.rate.mockResolvedValue(undefined);
   f.orders.mockResolvedValue([]);
+  f.authorizationOrders.mockResolvedValue([]);
 });
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 describe("commercial HTTP contracts", () => {
+  it("does not diagnose an unavailable partial-refund checkbox as required webhook misconfiguration", async () => {
+    vi.stubEnv("ASAAS_WEBHOOK_TOKEN", "w".repeat(32)); vi.stubEnv("ASAAS_API_KEY", "fixture");
+    f.from.mockImplementation(() => ({ select: (_c: string, o?: { head?: boolean }) => o?.head ? Promise.resolve({ count: 0, error: null }) : { eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) } }));
+    vi.stubGlobal("fetch", vi.fn(async input => Response.json(String(input).includes("/webhooks?") ? { data: [{ url: "https://portal.example/api/asaas/webhook", enabled: true, interrupted: false, apiVersion: 3, events: ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_REFUNDED", "PAYMENT_DELETED"] }], hasMore: false } : { data: [] })));
+    const result = await route(handlers.webhookHealth)(new Request("https://portal.example/api/asaas/webhook?diagnostics=1", { headers: { "asaas-access-token": "w".repeat(32) } }), {});
+    expect(result.status).toBe(200);
+    expect((await result.json()).diagnostics.webhooks.matches[0].missingEvents).toEqual([]);
+  });
+  it("canonical partial refund without a webhook is applied before inspect and no refunded order is verified", async () => {
+    vi.stubEnv("REMOTE_SERVICE_AVAILABLE", "true");
+    vi.stubEnv("ASAAS_API_KEY", "fixture");
+    f.authorizationOrders.mockResolvedValue([{ id: operation, user_id: subject, payment_id: "pay_known", customer_id: "cus_known", amount_cents: 2900, status: "ACTIVE" }]);
+    f.rpc.mockResolvedValue({ subject, operation_id: operation, allowed: false, state: "REFUNDED", expires_at: null });
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ id: "pay_known", customer: "cus_known", externalReference: operation, value: 29, billingType: "PIX", status: "RECEIVED", refunds: [{ status: "DONE", value: 1 }] })));
+    const result = await route(handlers.authorize)(post("/api/mcp/authorize", { subject, operation_id: operation, mode: "inspect" }, { authorization: "Bearer " + "s".repeat(32) }), {});
+    expect(result.status).toBe(200);
+    expect(await result.json()).toMatchObject({ allowed: false, state: "REFUNDED" });
+    expect(f.authorizationOrders).toHaveBeenCalledWith(subject);
+    expect(f.rpc.mock.calls.map(([name]) => name)).toEqual(["portal_payment_apply", "portal_authorize"]);
+    expect(f.rpc).toHaveBeenLastCalledWith("portal_authorize", { p_user: subject, p_operation: operation, p_mode: "inspect", p_available: true, p_verified_orders: [] });
+  });
+  it("provider outage during execute returns 503 before any activation RPC", async () => {
+    vi.stubEnv("REMOTE_SERVICE_AVAILABLE", "true");
+    vi.stubEnv("ASAAS_API_KEY", "fixture");
+    f.authorizationOrders.mockResolvedValue([{ id: operation, user_id: subject, payment_id: "pay_known", status: "READY_TO_ACTIVATE" }]);
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 503 })));
+    const result = await route(handlers.authorize)(post("/api/mcp/authorize", { subject, operation_id: operation, mode: "execute" }, { authorization: "Bearer " + "s".repeat(32) }), {});
+    expect(result.status).toBe(503);
+    expect(f.rpc).not.toHaveBeenCalled();
+  });
+  it("excessive reconciliation workload fails closed without provider or activation calls", async () => {
+    vi.stubEnv("REMOTE_SERVICE_AVAILABLE", "true");
+    f.authorizationOrders.mockResolvedValue(Array.from({ length: 17 }, (_, i) => ({ id: String(i), user_id: subject })));
+    const fetcher = vi.fn(); vi.stubGlobal("fetch", fetcher);
+    const result = await route(handlers.authorize)(post("/api/mcp/authorize", { subject, operation_id: operation, mode: "execute" }, { authorization: "Bearer " + "s".repeat(32) }), {});
+    expect(result.status).toBe(503);
+    expect(fetcher).not.toHaveBeenCalled(); expect(f.rpc).not.toHaveBeenCalled();
+  });
   it("reads configured webhook and aggregate database records without exposing secrets or customer data", async () => {
     vi.stubEnv("ASAAS_WEBHOOK_TOKEN", "w".repeat(32));
     vi.stubEnv("ASAAS_API_KEY", "fixture-private-key");
@@ -100,6 +141,7 @@ describe("commercial HTTP contracts", () => {
     { event: "PAYMENT_RECEIVED", status: "RECEIVED", expected: "RECEIVED" },
     { event: "PAYMENT_CONFIRMED", status: "CONFIRMED", expected: "CONFIRMED" },
     { event: "PAYMENT_REFUNDED", status: "REFUNDED", expected: "REFUNDED" },
+    { event: "PAYMENT_REFUNDED", status: "REFUNDED", refunds: [{ status: "DONE", value: 29 }], expected: "REFUNDED" },
     { event: "PAYMENT_PARTIALLY_REFUNDED", status: "RECEIVED", refunds: [{ status: "DONE", value: 1 }], expected: "REFUND_PARTIALLY_DONE" },
     { event: "PAYMENT_PARTIALLY_REFUNDED", status: "PARTIALLY_REFUNDED", expected: "REFUND_PARTIALLY_DONE" },
     { event: "PAYMENT_DELETED", status: "PENDING", deleted: true, expected: "DELETED" },
@@ -193,6 +235,7 @@ describe("commercial HTTP contracts", () => {
       p_operation: operation,
       p_mode: "execute",
       p_available: false,
+      p_verified_orders: [],
     });
   });
   it("connect only mints ticket and never invokes activation", async () => {

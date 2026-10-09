@@ -377,12 +377,7 @@ export async function authorize(r: Request) {
   const s = new Store();
   await s.rate("authorize:" + body.subject, 300);
   return response(
-    await s.rpc("portal_authorize", {
-      p_user: body.subject,
-      p_operation: body.operation_id,
-      p_mode: body.mode,
-      p_available: c.serviceAvailable,
-    }),
+    await new Billing(s).authorize(body.subject, body.operation_id, body.mode, c.serviceAvailable),
   );
 }
 export async function callback(r: Request) {

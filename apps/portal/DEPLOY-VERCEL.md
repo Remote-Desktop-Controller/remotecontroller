@@ -26,7 +26,7 @@ Preparação verificada em 09/10/2026. Branch de trabalho: `feat/commercial-port
 | Tipo de envio | Não sequencial (`NON_SEQUENTIALLY`) |
 | Fila | Ativada / não interrompida |
 | Token de autenticação | Copiar o valor de `.vercel/asaas-webhook-token.txt` neste checkout; não copiar o nome da variável nem a chave API Asaas |
-| Eventos | `PAYMENT_RECEIVED`, `PAYMENT_CONFIRMED`, `PAYMENT_REFUNDED`, `PAYMENT_PARTIALLY_REFUNDED`, `PAYMENT_DELETED` |
+| Eventos | `PAYMENT_RECEIVED`, `PAYMENT_CONFIRMED`, `PAYMENT_REFUNDED`, `PAYMENT_DELETED`; se disponível, também `PAYMENT_PARTIALLY_REFUNDED` |
 
 O token foi criado aleatoriamente, salvo como Secret na Vercel e em arquivo local com ACL restrita ao usuário/SYSTEM, ignorado por Git e upload. Não imprima o valor em logs ou mensagens. O painel envia esse valor no header `asaas-access-token`.
 
@@ -151,3 +151,7 @@ Antes de dinheiro real: configurar prazo máximo de entrega, operador, suporte e
 - A publicação foi interrompida na etapa de variáveis de ambiente; não houve deploy público ou alteração do domínio atual.
 
 Referências oficiais: [deploy CLI](https://vercel.com/docs/cli/deploy), [vínculo local](https://vercel.com/docs/cli/link), [escopo](https://vercel.com/docs/cli/global-options).
+
+## Atualização integrada de 2026-10-09
+
+A autorização passou a reconciliar o pagamento canônico e estornos DONE antes do uso, independentemente da disponibilidade do evento parcial no painel. Aplicar a nova migration `202610090001_verified_authorization.sql` antes de habilitar MCP. Portal publicado com vendas e serviço indisponíveis permanece seguro durante essa etapa. Evidências e requisitos de migração dos usuários legados: `docs/commercial-portal/final-validation.md`.

@@ -6,7 +6,7 @@ import { fail, secureEqual } from "./http";
 
 const requiredEvents = [
   "PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", "PAYMENT_REFUNDED",
-  "PAYMENT_PARTIALLY_REFUNDED", "PAYMENT_DELETED",
+  "PAYMENT_DELETED",
 ];
 
 // Aggregate reads only. Never return provider records, identifiers or credentials.

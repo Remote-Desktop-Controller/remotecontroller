@@ -19,7 +19,7 @@ Validação da configuração, transporte até a Vercel e proteção do banco co
 | Eventos solicitados | Falta `PAYMENT_PARTIALLY_REFUNDED` |
 | Comparação do token cadastrado | Indeterminada: API não devolveu token comparável |
 
-**Ação manual:** acrescentar `PAYMENT_PARTIALLY_REFUNDED` à seleção do webhook, preservando os demais campos. O portal já trata esse evento. Confirmar no painel que o token é o mesmo do arquivo local protegido `.vercel/asaas-webhook-token.txt`; nenhum segredo foi rotacionado ou mostrado nos logs.
+**Atualização de 2026-10-09:** o evento parcial está documentado pelo Asaas, mas não aparece neste painel. Não depender da seleção desse evento: a autorização foi corrigida para consultar o estado canônico e os estornos DONE antes de permitir uso (nova migration necessária; ver docs/commercial-portal/final-validation.md). Confirmar no painel que o token é o mesmo do arquivo local protegido `.vercel/asaas-webhook-token.txt`; nenhum segredo foi rotacionado ou mostrado nos logs.
 
 ## Testes HTTP efetuados pelo operador
 

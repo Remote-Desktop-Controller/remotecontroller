@@ -14,16 +14,16 @@ Domínio futuro: `toemdia.blog.br`. **Não alterar DNS, blog ou projeto Vercel d
 6. Em URL Configuration, depois da primeira publicação defina Site URL como o endereço temporário exato do portal e permita `https://SEU-PROJETO.vercel.app/auth/callback`. Durante desenvolvimento, adicione explicitamente `http://localhost:3000/auth/callback`. Não usar wildcard genérico em produção.
 7. Cadastre e confirme o usuário administrador e copie seu UUID para `ADMIN_USER_IDS`. Usuários não podem promover suas próprias contas pelo navegador.
 
-## 2. Vercel — projeto novo, sem substituir o blog
+## 2. Vercel — CLI no escopo pessoal, sem integração Git
 
-1. Conecte o repositório GitHub `Remote-Desktop-Controller/remotecontroller`.
-2. Crie um **novo projeto** com Root Directory `apps/portal`, framework Next.js, Node.js 22 ou superior.
-3. Use a branch `feat/commercial-portal` para a implantação de teste. Não fazer merge em main só para publicar o portal. Configure a branch de produção deste projeto novo conforme o painel permitir, ou use um deployment preview de acesso público apropriado para o teste.
-4. A Vercel executa `npm ci` e `npm run build` dentro de `apps/portal`; o lockfile do portal deve estar versionado. Rust não é compilado no deploy do portal.
-5. Preencha as variáveis de `apps/portal/.env.example` em Settings → Environment Variables. Aplique aos ambientes utilizados e refaça o deploy após alterações.
-6. Mantenha `SALES_ENABLED=false`, `ASAAS_ENV=sandbox`, `REMOTE_SERVICE_AVAILABLE=false`. A landing pode ser aberta sem credenciais; cadastro/compra dependem da configuração real do Supabase/Asaas.
-7. Após obter o endereço temporário, defina `PORTAL_PUBLIC_URL=https://SEU-PROJETO.vercel.app`, atualize Supabase Site URL/callback e redeploy. Usar o endereço real fornecido pela Vercel, não literalmente o exemplo.
-8. Verifique se Deployment Protection exige login Vercel no webhook. O Asaas precisa alcançar a rota pública; configure o deployment de teste para receber notificações sem login Vercel, mantendo a autenticação por token do endpoint. Não tratar uma página HTML de proteção como resposta do webhook.
+O projeto existente é `remotecontroller-portal`, escopo `andrefonns-projects`. Não conectar o repositório privado da organização nem criar outra conta/projeto. Seguir `apps/portal/DEPLOY-VERCEL.md` para CLI/autenticação e variáveis.
+
+1. Trabalhar na branch `feat/commercial-portal`, dentro de `apps/portal`.
+2. Executar testes, typecheck, lint e build.
+3. Confirmar `SALES_ENABLED=false` e `REMOTE_SERVICE_AVAILABLE=false`.
+4. Publicar com `vercel deploy --prod --yes --scope andrefonns-projects --project remotecontroller-portal --non-interactive --no-color`. O diretório enviado já é o portal, portanto Root Directory do projeto permanece vazio.
+5. Verificar por HTTP público `https://remotecontroller-portal.vercel.app`, autenticação e webhook. Não depender de URL imutável protegida ou chamada autenticada da CLI como prova de acesso público.
+6. Não alterar DNS, blog, segredos nem branch principal. Novas migrations devem ser aplicadas antes de habilitar os caminhos que as exigem; consultar `docs/commercial-portal/final-validation.md`.
 
 ## 3. Asaas — teste sandbox primeiro
 

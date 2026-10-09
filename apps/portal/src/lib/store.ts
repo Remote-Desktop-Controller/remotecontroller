@@ -67,6 +67,29 @@ export class Store {
   async orders(user?: string) {
     return (await this.orderPage({ user, offset: 0, limit: 100 })).orders;
   }
+  async authorizationOrders(user: string): Promise<Order[]> {
+    // Filter before bounding: old/expired history must not hide a live credit.
+    const [live, open] = await Promise.all([
+      this.db.from("portal_orders")
+        .select("*,entitlement:portal_entitlements!inner(activated_at,expires_at,revoked_at)")
+        .eq("user_id", user)
+        .is("entitlement.revoked_at", null)
+        .or(`activated_at.is.null,expires_at.gt.${new Date().toISOString()}`, { referencedTable: "entitlement" })
+        .order("created_at").order("id").limit(17),
+      this.db.from("portal_orders").select(orderFields)
+        .eq("user_id", user).eq("status", "PENDING_PAYMENT")
+        .neq("creation_state", "RESERVED")
+        .order("created_at").order("id").limit(17),
+    ]);
+    if (live.error || open.error) fail(503, "DATABASE", "Conciliação financeira indisponível.");
+    const orders = new Map<string, Order>();
+    for (const row of [...(live.data ?? []), ...(open.data ?? [])] as unknown as RawOrder[]) {
+      const order = normalize(row);
+      orders.set(order.id, order);
+    }
+    if (orders.size > 16) fail(503, "RECONCILIATION_REQUIRED", "Pedidos requerem conciliação administrativa.");
+    return [...orders.values()];
+  }
   async orderPage(options: {
     user?: string;
     refundOnly?: boolean;
