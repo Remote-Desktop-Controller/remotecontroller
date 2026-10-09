@@ -671,6 +671,7 @@ dependencies = [
  "base64 0.22.1",
  "clap",
  "fs2",
+ "libsql",
  "remote-service",
  "reqwest",
  "runtime-protocol",

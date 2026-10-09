@@ -45,9 +45,29 @@ Não há renovação automática: cada cobrança avulsa compra um crédito de ex
 
 ## Evidência executada nesta revisão
 
-- Portal: `npm test` com RDC_E2E_RUST_TEST_BIN apontando o teste Rust compilado da própria branch: **8 arquivos, 80 testes aprovados, zero skips**, 89,98 s. Typecheck aprovado; ESLint zero erros e três advertências preexistentes. Build Next.js/webpack aprovado. `npm audit --omit=dev`: zero vulnerabilidades informadas.
-- E2E integrado: sete cenários aprovados, incluindo serviço Rust real, runner device-agent real, HTTP local, IPC autenticado com executor echo de teste, portal/Store/Billing reais e migrations no PGlite. A identidade passa pelo ticket real do portal/Rust. O grant OAuth e dispositivo operacional são fixtures no libSQL descartável; não se declara um pareamento/OAuth completo real nessa prova.
+- Portal: `npm test` com RDC_E2E_RUST_TEST_BIN apontando o teste Rust compilado da própria branch: **8 arquivos, 80 testes aprovados, zero skips**, 55,02 s (execução final com daemon real). Typecheck aprovado; ESLint zero erros e três advertências preexistentes. Build Next.js/webpack aprovado. `npm audit --omit=dev`: zero vulnerabilidades informadas.
+- E2E integrado: sete cenários aprovados, incluindo serviço Rust real, runner device-agent real, HTTP local, IPC autenticado com local-daemon real executando filesystem.read em arquivo temporário, portal/Store/Billing reais e migrations no PGlite. A identidade passa pelo ticket real do portal/Rust. O grant OAuth e dispositivo operacional são fixtures no libSQL descartável; não se declara um pareamento/OAuth completo real nessa prova.
 - No cenário conjunto, o runner permaneceu ativo antes da ativação; comando remoto retornou o resultado via relay/IPC, e SQL confirmou um direito ativado por exatamente 2.592.000 segundos e uma operação registrada.
 - Testes RED observados antes das correções: autorização financeira sem reconciliação; função sem lista de pedidos verificados; poll ocioso READY_TO_ACTIVATE retornando 403. Regressões correspondentes passaram depois das alterações.
 
-Para repetir a prova conjunta, primeiro compilar `cargo test -p device-agent --test commercial_portal --no-run`; selecionar o executável `target/debug/deps/commercial_portal-*.exe` recém-compilado e definir seu caminho absoluto em RDC_E2E_RUST_TEST_BIN, então executar `npm test` em apps/portal. Sem essa variável, o cenário conjunto fica explicitamente skipped; o teste Rust externo é ignored na suíte padrão e só roda com o harness HTTP/SQL ativo.
+Para repetir a prova conjunta, primeiro compilar os binários com `cargo build -p local-daemon -p device-agent --bins`, depois compilar `cargo test -p device-agent --test commercial_portal --no-run`; selecionar o executável `target/debug/deps/commercial_portal-*.exe` recém-compilado e definir seu caminho absoluto em RDC_E2E_RUST_TEST_BIN, então executar `npm test` em apps/portal. Sem essa variável, o cenário conjunto fica explicitamente skipped; o teste Rust externo é ignored na suíte padrão e só roda com o harness HTTP/SQL ativo.
+
+## Publicação efetiva e smoke público
+
+Código do portal publicado: `3d3b9c9`, deployment `dpl_5Woo2HXqL3TSsDgWivEJmsJzmS3j` READY, alias público https://remotecontroller-portal.vercel.app. Deploy CLI no escopo pessoal, sem Git vinculado, Node24; nenhuma mudança de domínio/segredo/VPS. Leitura específica da API Vercel confirmou os valores brutos SALES_ENABLED=false e REMOTE_SERVICE_AVAILABLE=false, além da origem correta.
+
+Após o deployment, dez páginas responderam 200, account/admin anônimos 401, webhook sem token/incorreto 401, evento controlado sem pagamento 200 (inclusive repetido), alegação de pagamento inexistente 503 (inclusive repetida), diagnóstico autenticado 200 com Asaas/Supabase acessíveis. Contagens financeiras antes/depois: orders 0, entitlements 0, events 0, operations 0. Os eventos foram enviados pelo operador, não pelo Asaas. O diagnóstico confirma webhook ativo, API 3, NON_SEQUENTIALLY e fila ativa e quatro eventos essenciais; comparação do token no provedor continua indeterminada porque a API não o retorna.
+
+Smoke de navegador: landing desktop, login/cadastro mobile, ausência de overflow/erros JavaScript e dashboard protegido passaram; nenhum formulário real submetido. A nova migration não foi aplicada nesta execução: o responsável precisa executá-la no SQL Editor, pois não há sessão administrativa Supabase disponível. Não confundir readiness do webhook com readiness da autorização comercial.
+
+Auditoria completa npm: cinco alertas altos na cadeia de desenvolvimento eslint-config-next → fast-glob/micromatch/braces; a auditoria excluindo dev retornou zero. A sugestão automática é downgrade incompatível da configuração Next; não foi aplicada com --force. Isso permanece como risco de ferramentas de build/lint, sem tratá-lo como vulnerabilidade comprovada no caminho financeiro de runtime.
+
+
+## Verificação Rust e correção do fixture
+
+`cargo test -p remote-service -p device-agent --offline`: 45 testes passaram, zero falhas; um cenário externo ignored exige o harness do portal. Foram construídos binários local-daemon/device-agent da própria branch. `cargo fmt -p remote-service -p device-agent -- --check` passou. Clippy dos dois pacotes/all-targets/no-deps com -D warnings retornou 0; quatro advertências anteriores vieram do libSQL vendorizado.
+
+A primeira execução com daemon real falhou na inicialização (79/80 na suíte portal). O fixture fornecia caminho Windows não canonicalizado; o daemon retornava a raiz canônica e a comparação de identidade recusava corretamente. O fixture foi alinhado ao pareamento real por canonicalize(), sem enfraquecer o runtime. A repetição dirigida passou os sete cenários, zero skips, incluindo leitura física do arquivo temporário pelo daemon real, um direito ativado por 2.592.000 segundos e uma operação registrada.
+
+
+Execução final completa após a correção do fixture: **8 arquivos / 80 testes aprovados / zero falhas / zero skips**, 55,02 s. Nenhum código funcional do portal mudou após o build, typecheck, lint e deploy verificados; as alterações posteriores foram no teste Rust e na documentação. Nota de prontidão comercial: **6/10**. O ciclo integrado foi comprovado localmente e o portal foi publicado com segurança; a nova migration, a identidade dos usuários legados, SMTP/Auth hospedados e o ciclo financeiro originado pelo Asaas ainda precisam de validação operacional antes de abrir vendas.

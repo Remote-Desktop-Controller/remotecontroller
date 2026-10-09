@@ -85,9 +85,37 @@ pub(crate) async fn poll(
     state.rate(format!("agent-poll:{}", device.id), 120).await?;
     let start = Instant::now();
     loop {
-        let commercial_expiry =
+        // Presence is independent of a paid right: a newly paired computer must stay
+        // online until its first authorized operation. Inspect only when there is
+        // deliverable work, immediately before leasing it. Empty long polls never
+        // consume the portal's per-subject quota.
+        let pending = {
+            let connection = state.store.lock().await;
+            let row = store::first(&connection,
+                "SELECT EXISTS(SELECT 1 FROM relay r WHERE device_id=?1 AND user_id=?2 AND result IS NULL AND deadline>?3 AND lease_until<=?4 AND (?5=0 OR EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=r.id AND c.authorized=1)) AND EXISTS(SELECT 1 FROM grants g WHERE g.family=r.grant_family AND g.revoked=0 AND g.expires_at>?4))",
+                params![device.id.clone(),device.owner.clone(),runtime_protocol::now_ms() as i64,security::now(),i64::from(state.config.commercial.is_some())]).await?;
+            store::integer(&row, 0)? != 0
+        };
+        let commercial_expiry = if pending {
             commercial::authorize(&state, &device.owner, uuid::Uuid::new_v4(), false, false)
-                .await?;
+                .await
+                .map_err(|error| {
+                    if error.status == StatusCode::FORBIDDEN {
+                        // 401/403 tell the agent its device token is revoked and
+                        // stop all workers. A missing paid right is recoverable;
+                        // already started workers may still upload their result.
+                        ApiError::new(
+                            StatusCode::PAYMENT_REQUIRED,
+                            "commercial_access_required",
+                            "Acesso comercial indisponível para novas operações",
+                        )
+                    } else {
+                        error
+                    }
+                })?
+        } else {
+            None
+        };
         let commands = {
             let connection = state.store.lock().await;
             let tx = connection
@@ -105,9 +133,15 @@ pub(crate) async fn poll(
                 return Err(ApiError::unauthorized());
             }
             if commercial_expiry.is_some_and(|expiry| expiry <= security::now()) {
-                return Err(ApiError::forbidden());
+                return Err(ApiError::new(
+                    StatusCode::PAYMENT_REQUIRED,
+                    "commercial_access_required",
+                    "Acesso comercial expirou antes da entrega",
+                ));
             }
-            let mut rows=tx.query("SELECT id,envelope FROM relay r WHERE device_id=?1 AND user_id=?2 AND result IS NULL AND deadline>?3 AND lease_until<=?4 AND (?5=0 OR EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=r.id AND c.authorized=1)) AND EXISTS(SELECT 1 FROM grants g WHERE g.family=r.grant_family AND g.revoked=0 AND g.expires_at>?4) ORDER BY created_at LIMIT 8",params![device.id.clone(),device.owner.clone(),runtime_protocol::now_ms() as i64,security::now(),i64::from(state.config.commercial.is_some())]).await?;
+            // Do not lease work that appeared while an empty-poll query was in
+            // flight; that work needs its own fresh commercial inspection.
+            let mut rows=tx.query("SELECT id,envelope FROM relay r WHERE ?6=1 AND device_id=?1 AND user_id=?2 AND result IS NULL AND deadline>?3 AND lease_until<=?4 AND (?5=0 OR EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=r.id AND c.authorized=1)) AND EXISTS(SELECT 1 FROM grants g WHERE g.family=r.grant_family AND g.revoked=0 AND g.expires_at>?4) ORDER BY created_at LIMIT 8",params![device.id.clone(),device.owner.clone(),runtime_protocol::now_ms() as i64,security::now(),i64::from(state.config.commercial.is_some()),i64::from(pending)]).await?;
             let mut commands = Vec::new();
             while let Some(row) = rows.next().await? {
                 commands.push((

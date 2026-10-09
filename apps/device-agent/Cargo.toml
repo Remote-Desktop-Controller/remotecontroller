@@ -26,6 +26,7 @@ base64 = "0.22"
 tempfile.workspace = true
 axum = "0.8"
 remote-service = { path = "../remote-service" }
+libsql = { version = "=0.9.30", default-features = false, features = ["core"] }
 
 [[bin]]
 name = "device-agent"

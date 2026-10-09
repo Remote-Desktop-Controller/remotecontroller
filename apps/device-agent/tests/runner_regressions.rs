@@ -30,6 +30,7 @@ struct Observed {
     normal_active: AtomicUsize,
     normal_started: AtomicUsize,
     polls: AtomicUsize,
+    poll_status: AtomicUsize,
     heartbeats: AtomicUsize,
     phase: AtomicUsize,
     commands: Mutex<Vec<RemoteCommand>>,
@@ -43,8 +44,15 @@ async fn heartbeat(State(state): State<Arc<Observed>>, Json(_): Json<Value>) -> 
     state.heartbeats.fetch_add(1, Ordering::SeqCst);
     Json(json!({"status":"ok"}))
 }
-async fn poll(State(state): State<Arc<Observed>>) -> Json<Value> {
+async fn poll(State(state): State<Arc<Observed>>) -> (StatusCode, Json<Value>) {
     state.polls.fetch_add(1, Ordering::SeqCst);
+    let status = state.poll_status.load(Ordering::SeqCst);
+    if status != 0 {
+        return (
+            StatusCode::from_u16(status as u16).unwrap(),
+            Json(json!({"error":"commercial_access_required"})),
+        );
+    }
     let phase = state.phase.load(Ordering::SeqCst);
     let commands = if phase == 0
         && state
@@ -68,8 +76,11 @@ async fn poll(State(state): State<Arc<Observed>>) -> Json<Value> {
     if commands.is_empty() {
         tokio::time::sleep(Duration::from_millis(15)).await;
     }
-    Json(
-        json!({"commands":commands.iter().map(|c|json!({"request_id":c.request_id,"envelope":c.envelope})).collect::<Vec<_>>()}),
+    (
+        StatusCode::OK,
+        Json(
+            json!({"commands":commands.iter().map(|c|json!({"request_id":c.request_id,"envelope":c.envelope})).collect::<Vec<_>>()}),
+        ),
     )
 }
 async fn result(
@@ -240,6 +251,53 @@ fn preload(fixture: &Fixture, result: &RemoteResult, status: u16) -> Result<()> 
         .lock()
         .unwrap()
         .insert(result.request_id, status);
+    Ok(())
+}
+
+#[tokio::test]
+async fn commercial_expiry_on_poll_keeps_running_worker_and_delivers_its_result() -> Result<()> {
+    let fixture = fixture().await?;
+    let (workspace, _) = runner::catalog(&fixture.ipc).await?;
+    let meta = Metadata::new(Some(workspace), 60_000);
+    let request_id = meta.request_id;
+    *fixture.observed.commands.lock().unwrap() = vec![RemoteCommand {
+        request_id,
+        envelope: RequestEnvelope {
+            meta,
+            payload: Request::Execute {
+                tool: "process.wait".into(),
+                input: json!({}),
+            },
+        },
+    }];
+    let stop = CancellationToken::new();
+    let task = tokio::spawn(runner::run(
+        fixture.profile.clone(),
+        fixture.ipc.clone(),
+        fixture.root.clone(),
+        stop.clone(),
+    ));
+    wait_until(|| fixture.observed.normal_started.load(Ordering::SeqCst) == 1).await?;
+    fixture.observed.poll_status.store(402, Ordering::SeqCst);
+    let polls = fixture.observed.polls.load(Ordering::SeqCst);
+    wait_until(|| fixture.observed.polls.load(Ordering::SeqCst) > polls).await?;
+    assert!(!task.is_finished());
+    assert!(!stop.is_cancelled());
+    assert_eq!(fixture.observed.normal_active.load(Ordering::SeqCst), 1);
+    fixture.observed.normal_release.cancel();
+    wait_until(|| {
+        fixture
+            .observed
+            .control_results
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|r| r.request_id == request_id)
+    })
+    .await?;
+    assert!(!task.is_finished());
+    stop.cancel();
+    task.await??;
     Ok(())
 }
 

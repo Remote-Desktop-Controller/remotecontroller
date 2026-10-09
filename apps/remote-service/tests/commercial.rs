@@ -72,7 +72,7 @@ async fn authorize(
                 .ok();
         }
     } else {
-        portal.inspections.fetch_add(1,Ordering::SeqCst);
+        portal.inspections.fetch_add(1, Ordering::SeqCst);
     }
     let expiry = portal.expiry.load(Ordering::SeqCst);
     if portal.gate_mode.load(Ordering::SeqCst) == (if input["mode"] == "execute" { 1 } else { 2 }) {
@@ -280,6 +280,79 @@ fn commercial_configuration_requires_trusted_origin_and_secret() {
     assert!(CommercialConfig::new("http://127.0.0.1:9000".into(), SECRET.into(), true).is_ok());
 }
 #[tokio::test]
+async fn inactive_idle_agent_stays_connected_without_provider_polling_or_activation() {
+    let mut f = fixture().await;
+    operational(&f).await;
+    f.config.poll_seconds = 1;
+    f.app = application(&f.dir.path().join("service.db"), f.config.clone())
+        .await
+        .unwrap();
+    for expiry in [0, now() - 1] {
+        f.portal.expiry.store(expiry, Ordering::SeqCst);
+        let response = request(
+            &f.app,
+            "GET",
+            "/api/agent/poll",
+            Value::Null,
+            None,
+            Some("agent"),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(json_response(response).await["commands"], json!([]));
+    }
+    assert_eq!(f.portal.inspections.load(Ordering::SeqCst), 0);
+    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 0);
+}
+#[tokio::test]
+async fn expired_pending_delivery_is_recoverable_and_can_resume_after_renewal() {
+    let f = fixture().await;
+    operational(&f).await;
+    assert_eq!(
+        rpc(&f, "test.echo", json!({"text":"hello"})).await.status(),
+        StatusCode::OK
+    );
+    f.portal.expiry.store(now() - 1, Ordering::SeqCst);
+    let denied = request(
+        &f.app,
+        "GET",
+        "/api/agent/poll",
+        Value::Null,
+        None,
+        Some("agent"),
+    )
+    .await;
+    assert_eq!(denied.status(), StatusCode::PAYMENT_REQUIRED);
+    let (_database, conn) = db(&f).await;
+    let row = conn
+        .query("SELECT lease_until FROM relay", ())
+        .await
+        .unwrap()
+        .next()
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(row.get::<i64>(0).unwrap(), 0);
+    f.portal.expiry.store(now() + 2592000, Ordering::SeqCst);
+    let response = request(
+        &f.app,
+        "GET",
+        "/api/agent/poll",
+        Value::Null,
+        None,
+        Some("agent"),
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        json_response(response).await["commands"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+}
+#[tokio::test]
 async fn nonce_cookie_and_ticket_replay_are_bound() {
     let f = fixture().await;
     let (cookie, state) = begin(&f.app).await;
@@ -417,7 +490,7 @@ async fn setup_and_invalid_commands_do_not_activate_first_remote_call_does() {
         )
         .await
         .status(),
-        StatusCode::FORBIDDEN
+        StatusCode::PAYMENT_REQUIRED
     );
     assert_eq!(f.portal.executions.load(Ordering::SeqCst), 1);
 }
@@ -599,7 +672,7 @@ async fn started_command_can_finish_after_expiry_but_gateway_cannot_read_or_deli
         )
         .await
         .status(),
-        StatusCode::FORBIDDEN
+        StatusCode::OK
     );
     assert_eq!(f.portal.executions.load(Ordering::SeqCst), 1);
 }
