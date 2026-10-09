@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getConfig, getPublicConfig } from "./config";
 import { authenticatedUser, administrator, sessionClient } from "./supabase";
 import { Billing } from "./billing";
+import { Asaas } from "./asaas";
 import { Store, type Order } from "./store";
 import {
   fail,
@@ -178,12 +179,33 @@ export async function refundRequest(r: Request, ctx: RouteContext) {
   const u = await userPost(r, "refund-request");
   return response(await new Billing().requestRefund(await orderId(ctx), u.id));
 }
-export async function webhook(r: Request) {
+function authenticatedWebhookConfig(r: Request) {
   const c = getConfig();
   if (!c.webhookToken || c.webhookToken.length < 16)
     fail(503, "CONFIGURATION", "Webhook não configurado.");
   if (!secureEqual(r.headers.get("asaas-access-token"), c.webhookToken))
     fail(401, "WEBHOOK_AUTH", "Webhook não autenticado.");
+  return c;
+}
+export async function webhookHealth(r: Request) {
+  const c = authenticatedWebhookConfig(r);
+  await new Store().rate("webhook-readiness", 10);
+  const result = await new Asaas(c).request<{ data: unknown[] }>(
+    "/payments?limit=1",
+  );
+  if (!Array.isArray(result.data))
+    fail(503, "PROVIDER_RESPONSE", "Resposta da operadora não confirmada.");
+  return response({
+    ready: true,
+    database: "ok",
+    asaas: "ok",
+    sandbox: c.sandbox,
+    salesEnabled: c.salesEnabled,
+    serviceAvailable: c.serviceAvailable,
+  });
+}
+export async function webhook(r: Request) {
+  authenticatedWebhookConfig(r);
   const body = await jsonBody(
     r,
     z

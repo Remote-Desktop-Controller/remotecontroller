@@ -55,6 +55,51 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("commercial HTTP contracts", () => {
+  it("authenticates webhook readiness before database or provider access", async () => {
+    vi.stubEnv("ASAAS_WEBHOOK_TOKEN", "w".repeat(32));
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    const result = await route(handlers.webhookHealth)(new Request("https://portal.example/api/asaas/webhook"), {});
+    expect(result.status).toBe(401);
+    expect(f.rate).not.toHaveBeenCalled();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+  it("checks real provider compatibility with a read-only request and returns no payment data", async () => {
+    vi.stubEnv("ASAAS_WEBHOOK_TOKEN", "w".repeat(32));
+    vi.stubEnv("ASAAS_API_KEY", "fixture-private-key");
+    vi.stubEnv("ASAAS_ENV", "production");
+    vi.stubEnv("SALES_ENABLED", "false");
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json({ data: [{ id: "private-payment", customer: "private-customer" }] }));
+    vi.stubGlobal("fetch", fetcher);
+    const result = await route(handlers.webhookHealth)(new Request("https://portal.example/api/asaas/webhook", { headers: { "asaas-access-token": "w".repeat(32) } }), {});
+    expect(result.status).toBe(200);
+    expect(await result.json()).toEqual({ ready: true, database: "ok", asaas: "ok", sandbox: false, salesEnabled: false, serviceAvailable: false });
+    expect(fetcher.mock.calls).toHaveLength(1);
+    expect(fetcher.mock.calls[0][0]).toBe("https://api.asaas.com/v3/payments?limit=1");
+    expect(fetcher.mock.calls[0][1]?.method).toBe("GET");
+    expect(f.rpc).not.toHaveBeenCalled();
+  });
+  it.each([
+    { event: "PAYMENT_RECEIVED", status: "RECEIVED", expected: "RECEIVED" },
+    { event: "PAYMENT_CONFIRMED", status: "CONFIRMED", expected: "CONFIRMED" },
+    { event: "PAYMENT_REFUNDED", status: "REFUNDED", expected: "REFUNDED" },
+    { event: "PAYMENT_PARTIALLY_REFUNDED", status: "RECEIVED", refunds: [{ status: "DONE", value: 1 }], expected: "REFUND_PARTIALLY_DONE" },
+    { event: "PAYMENT_PARTIALLY_REFUNDED", status: "PARTIALLY_REFUNDED", expected: "REFUND_PARTIALLY_DONE" },
+    { event: "PAYMENT_DELETED", status: "PENDING", deleted: true, expected: "DELETED" },
+    { event: "PAYMENT_RECEIVED", status: "PENDING", expected: "PENDING" },
+  ])("reconciles $event using authoritative API state $status", async ({ event, status, expected, ...flags }) => {
+    vi.stubEnv("ASAAS_WEBHOOK_TOKEN", "w".repeat(32));
+    vi.stubEnv("ASAAS_API_KEY", "fixture");
+    const order = { id: operation, user_id: subject, payment_id: "pay_known", customer_id: "cus_known", amount_cents: 2900 };
+    f.findOrder.mockResolvedValue(order);
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ id: "pay_known", externalReference: operation, customer: "cus_known", value: 29, billingType: "PIX", status, ...flags })));
+    const request = () => post("/api/asaas/webhook", { id: "evt_fixture", event, payment: { id: "pay_known", status: "RECEIVED", value: 999 } }, { "asaas-access-token": "w".repeat(32) });
+    expect((await route(handlers.webhook)(request(), {})).status).toBe(200);
+    expect((await route(handlers.webhook)(request(), {})).status).toBe(200);
+    expect(f.rpc).toHaveBeenCalledWith("portal_payment_apply", { p_order: operation, p_event: "webhook:evt_fixture", p_status: expected });
+    expect(vi.mocked(fetch).mock.calls.every(([, options]) => options?.method === "GET")).toBe(true);
+    expect(f.rpc.mock.calls.every(([name]) => name !== "portal_authorize")).toBe(true);
+  });
   it("rejects cross-origin checkout before authentication or provider I/O", async () => {
     const result = await route(handlers.checkout)(
       post("/api/checkout", {}, { origin: "https://evil.example" }),

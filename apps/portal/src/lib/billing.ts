@@ -138,7 +138,9 @@ export class Billing {
   }
   async apply(order: Order, p: Payment, event?: string) {
     validatePayment(order, p);
-    const refunded = p.refunds?.some((r) => r.status === "DONE" && r.value > 0);
+    const refunded =
+      p.status === "PARTIALLY_REFUNDED" ||
+      p.refunds?.some((r) => r.status === "DONE" && r.value > 0);
     const status = refunded
       ? "REFUND_PARTIALLY_DONE"
       : p.status === "RECEIVED"
