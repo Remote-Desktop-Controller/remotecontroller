@@ -405,28 +405,69 @@ pub(crate) async fn mcp(
     let mut grant = oauth::grant(&state, &headers).await?;
     if !matches!(
         input.params["name"].as_str(),
-        Some("operation.status" | "operation.cancel" | "process.kill" | "terminal.close")
+        Some(
+            "operation.status"
+                | "operation.cancel"
+                | "process.kill"
+                | "terminal.close"
+                | "operation_status"
+                | "operation_cancel"
+                | "process_kill"
+                | "terminal_close"
+        )
     ) {
         commercial::authorize(&state, &grant.user_id, uuid::Uuid::new_v4(), false, true).await?;
     }
-    // A single paired PC must expose its tools on the host's first discovery request.
+    // A paired PC must expose its tools on the host's first discovery request.
+    // Prioritize an online device with tools, or fallback to the most recently active device with tools.
     if grant.selected_device.is_none() {
         let connection = state.store.lock().await;
-        let mut rows = connection
+        let mut active_rows = connection
             .query(
-                "SELECT id FROM devices WHERE user_id=?1 AND revoked=0 ORDER BY id LIMIT 2",
-                params![grant.user_id.clone()],
+                "SELECT id FROM devices WHERE user_id=?1 AND revoked=0 AND tools != '[]' AND tools != '' AND heartbeat_at>?2 ORDER BY heartbeat_at DESC LIMIT 2",
+                params![grant.user_id.clone(), security::now() - 180],
             )
             .await?;
-        // Local libSQL rows reference the current statement position: copy before advancing.
-        let first = rows
+        let active_first = active_rows
             .next()
             .await?
             .map(|row| store::text(&row, 0))
             .transpose()?;
-        let has_second = rows.next().await?.is_some();
-        drop(rows);
-        if !has_second && let Some(id) = first {
+        let active_has_second = active_rows.next().await?.is_some();
+        drop(active_rows);
+
+        let target_device_id = if !active_has_second && active_first.is_some() {
+            active_first
+        } else {
+            let mut recent = connection
+                .query(
+                    "SELECT id FROM devices WHERE user_id=?1 AND revoked=0 AND tools != '[]' AND tools != '' ORDER BY heartbeat_at DESC LIMIT 1",
+                    params![grant.user_id.clone()],
+                )
+                .await?;
+            let with_tools = recent
+                .next()
+                .await?
+                .map(|row| store::text(&row, 0))
+                .transpose()?;
+            if with_tools.is_some() {
+                with_tools
+            } else {
+                let mut any_recent = connection
+                    .query(
+                        "SELECT id FROM devices WHERE user_id=?1 AND revoked=0 ORDER BY heartbeat_at DESC LIMIT 1",
+                        params![grant.user_id.clone()],
+                    )
+                    .await?;
+                any_recent
+                    .next()
+                    .await?
+                    .map(|row| store::text(&row, 0))
+                    .transpose()?
+            }
+        };
+
+        if let Some(id) = target_device_id {
             connection
                 .execute(
                     "UPDATE grants SET selected_device=?1 WHERE id=?2 AND revoked=0",
@@ -487,18 +528,42 @@ pub(crate) async fn mcp(
                 json!({"name":"device.select","description":"Escolhe o computador desta conexão autorizada","inputSchema":{"type":"object","properties":{"device_id":{"type":"string","format":"uuid"}},"required":["device_id"],"additionalProperties":false},"annotations":{"readOnlyHint":true,"destructiveHint":false,"openWorldHint":false}}),
             ];
             let catalogs = if let Some(id) = grant.selected_device.as_deref() {
-                owned_device(&state, &grant.user_id, id)
-                    .await
-                    .map(|device| vec![device.tools])
-                    .unwrap_or_default()
+                let dev = owned_device(&state, &grant.user_id, id).await.ok();
+                if let Some(dev) = dev && !dev.tools.is_empty() {
+                    vec![dev.tools]
+                } else {
+                    let connection = state.store.lock().await;
+                    let mut rows = connection
+                        .query(
+                            "SELECT tools FROM devices WHERE user_id=?1 AND revoked=0 AND tools != '[]' AND tools != '' ORDER BY heartbeat_at DESC LIMIT 20",
+                            params![grant.user_id.clone()],
+                        )
+                        .await?;
+                    let mut catalogs = Vec::new();
+                    while let Some(row) = rows.next().await? {
+                        if let Ok(text) = store::text(&row, 0) {
+                            if let Ok(device_tools) = serde_json::from_str::<Vec<ToolDescriptor>>(&text) {
+                                catalogs.push(device_tools);
+                            }
+                        }
+                    }
+                    catalogs
+                }
             } else {
                 let connection = state.store.lock().await;
-                let mut rows=connection.query("SELECT tools FROM devices WHERE user_id=?1 AND revoked=0 ORDER BY id LIMIT 20",params![grant.user_id.clone()]).await?;
+                let mut rows = connection
+                    .query(
+                        "SELECT tools FROM devices WHERE user_id=?1 AND revoked=0 AND tools != '[]' AND tools != '' ORDER BY heartbeat_at DESC LIMIT 20",
+                        params![grant.user_id.clone()],
+                    )
+                    .await?;
                 let mut catalogs = Vec::new();
                 while let Some(row) = rows.next().await? {
-                    catalogs.push(serde_json::from_str::<Vec<ToolDescriptor>>(&store::text(
-                        &row, 0,
-                    )?)?);
+                    if let Ok(text) = store::text(&row, 0) {
+                        if let Ok(device_tools) = serde_json::from_str::<Vec<ToolDescriptor>>(&text) {
+                            catalogs.push(device_tools);
+                        }
+                    }
                 }
                 catalogs
             };
@@ -537,15 +602,16 @@ pub(crate) async fn mcp(
             if !args.is_object() {
                 return Ok(rpc_error(id, -32602, "Argumentos devem ser objeto").into_response());
             }
+            let normalized_name = name.replace('_', ".");
             match name {
-                "device.list" => {
+                "device.list" | "device_list" => {
                     oauth::require_scope(&state, &grant, "devices:read")?;
                     tool_result(
                         json!({"devices":pairing::devices(&state,&grant.user_id).await?}),
                         false,
                     )
                 }
-                "device.select" => {
+                "device.select" | "device_select" => {
                     oauth::require_scope(&state, &grant, "devices:read")?;
                     let device_id = args["device_id"]
                         .as_str()
@@ -557,7 +623,7 @@ pub(crate) async fn mcp(
                         return Err(ApiError::unauthorized());
                     }
                     tool_result(
-                        json!({"device_id":device.id,"workspace_id":device.workspace.to_string(),"message":"Computador selecionado; consulte tools/list para o catálogo"}),
+                        json!({"device_id":device.id,"workspace_id":device.workspace.to_string(),"message":"Computador selecionado com sucesso"}),
                         false,
                     )
                 }
@@ -577,20 +643,26 @@ pub(crate) async fn mcp(
                         .into_response());
                     };
                     let device = owned_device(&state, &grant.user_id, device_id).await?;
-                    if !device.tools.iter().any(|t| t.name == name) {
+                    let target_tool = device.tools.iter().find(|t| {
+                        t.name == name
+                            || t.name == normalized_name
+                            || t.name.replace('.', "_") == name
+                    });
+                    let Some(matched_tool) = target_tool else {
                         return Ok(rpc_error(
                             id,
                             -32602,
                             "Ferramenta ausente do catálogo deste computador",
                         )
                         .into_response());
-                    }
+                    };
+                    let canonical_name = matched_tool.name.clone();
                     let _permit = state
                         .calls
                         .clone()
                         .try_acquire_owned()
                         .map_err(|_| ApiError::quota())?;
-                    let value = forward(&state, &grant, &device, &input, name, args).await?;
+                    let value = forward(&state, &grant, &device, &input, &canonical_name, args).await?;
                     let error = value.get("error").is_some_and(|v| !v.is_null());
                     tool_result(value, error)
                 }

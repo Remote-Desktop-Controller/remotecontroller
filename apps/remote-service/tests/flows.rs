@@ -1207,3 +1207,165 @@ async fn authorization_success_includes_exact_issuer() {
 async fn authorization_access_denied_includes_exact_issuer() {
     check_authorization_issuer("deny").await;
 }
+
+#[tokio::test]
+async fn mcp_exposes_tools_with_multiple_devices_and_supports_underscore_aliases() {
+    let (dir, app) = setup().await;
+    let (cookie, csrf) = account(&app, "multi-device@example.test").await;
+
+    // Device 1: old device with no tools or stale heartbeat
+    let _device1 = pair(&app, &cookie, &csrf, "Old PC").await;
+
+    // Device 2: current active device with workspace tools
+    let device2 = pair(&app, &cookie, &csrf, "Active PC").await;
+    let database = libsql::Builder::new_local(dir.path().join("service.db"))
+        .build()
+        .await
+        .unwrap();
+    let connection = database.connect().unwrap();
+    let mut rows = connection
+        .query(
+            "SELECT workspace_id FROM devices WHERE id=?1",
+            [device2["device_id"].as_str().unwrap()],
+        )
+        .await
+        .unwrap();
+    let workspace2: String = rows.next().await.unwrap().unwrap().get(0).unwrap();
+    drop(rows);
+
+    let descriptor = json!({
+        "name": "filesystem.read",
+        "version": "1",
+        "description": "Read file content",
+        "capabilities": ["read"],
+        "risk": "read",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}},
+            "required": ["path"]
+        },
+        "output_schema": {"type": "object"}
+    });
+    let list_descriptor = json!({
+        "name": "filesystem.list",
+        "version": "1",
+        "description": "List directory",
+        "capabilities": ["read"],
+        "risk": "read",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string"}},
+            "required": []
+        },
+        "output_schema": {"type": "object"}
+    });
+
+    // Device 2 sends heartbeat with the active tools
+    assert_eq!(
+        send(
+            &app,
+            "POST",
+            "/api/agent/heartbeat",
+            json!({"workspace_id": workspace2, "tools": [descriptor, list_descriptor]}),
+            None,
+            None,
+            device2["device_token"].as_str()
+        )
+        .await
+        .0,
+        StatusCode::OK
+    );
+
+    let (_client, tokens) = oauth_tokens(&app, &cookie, &csrf).await;
+    let token = tokens["access_token"].as_str().unwrap();
+
+    // 1. Initial tools/list call from MCP client
+    let (status, catalog, _) = send(
+        &app,
+        "POST",
+        "/mcp",
+        json!({"jsonrpc": "2.0", "id": 1, "method": "tools/list"}),
+        None,
+        None,
+        Some(token),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{}", catalog);
+    let tools = catalog["result"]["tools"].as_array().expect("tools array");
+
+    let tool_names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
+    println!("MCP Tools exposed: {:?}", tool_names);
+    assert!(
+        tool_names.iter().any(|&n| n == "filesystem.read" || n == "filesystem_read"),
+        "filesystem.read missing from tools list: {:?}",
+        tool_names
+    );
+
+    // 2. Test tool execution with underscore aliases:
+    // a) device_list
+    let (status, res_list, _) = send(
+        &app,
+        "POST",
+        "/mcp",
+        json!({
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/call",
+            "params": {"name": "device_list", "arguments": {}}
+        }),
+        None,
+        None,
+        Some(token),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{}", res_list);
+    assert!(res_list["error"].is_null(), "device_list failed: {:?}", res_list);
+
+    // b) device_select
+    let (status, res_select, _) = send(
+        &app,
+        "POST",
+        "/mcp",
+        json!({
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {
+                "name": "device_select",
+                "arguments": {"device_id": device2["device_id"]}
+            }
+        }),
+        None,
+        None,
+        Some(token),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{}", res_select);
+    assert!(res_select["error"].is_null(), "device_select failed: {:?}", res_select);
+
+    // c) filesystem_read (with underscore)
+    let operation = uuid::Uuid::new_v4();
+    let (status, res_read, _) = send(
+        &app,
+        "POST",
+        "/mcp",
+        json!({
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "tools/call",
+            "params": {
+                "name": "filesystem_read",
+                "arguments": {"path": "test.txt"},
+                "_meta": {"runtimeOperationId": operation}
+            }
+        }),
+        None,
+        None,
+        Some(token),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK, "{}", res_read);
+    assert!(res_read["error"].is_null(), "filesystem_read failed: {:?}", res_read);
+    assert_eq!(res_read["result"]["structuredContent"]["status"], "pending");
+}
+
