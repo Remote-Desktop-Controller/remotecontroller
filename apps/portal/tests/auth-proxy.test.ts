@@ -13,3 +13,27 @@ it("refreshes cookies for both server rendering and the browser without trusting
  expect(res.cookies.get("sb-fixture-auth-token")).toMatchObject({value:"refreshed-fixture",httpOnly:true,secure:true,sameSite:"lax"});
  expect(res.headers.get("cache-control")).toContain("no-store");
 });
+it("redirects missing session before dashboard streaming begins",async()=>{
+ f.create.mockReturnValue({auth:{getUser:async()=>({data:{user:null},error:null})}});
+ const {proxy}=await import("../src/proxy");
+ const res=await proxy(new NextRequest("https://portal.example/dashboard"));
+ expect(res.status).toBe(307);
+ expect(res.headers.get("location")).toBe("https://portal.example/login?next=%2Fdashboard");
+});
+it("fails closed with 503 instead of claiming logout during a provider outage",async()=>{
+ f.create.mockReturnValue({auth:{getUser:async()=>({data:{user:null},error:{status:503}})}});
+ const {proxy}=await import("../src/proxy");
+ expect((await proxy(new NextRequest("https://portal.example/dashboard"))).status).toBe(503);
+});
+it("lets a freshly verified account reach the separately protected dashboard",async()=>{
+ f.create.mockReturnValue({auth:{getUser:async()=>({data:{user:{email:"fixture@example.invalid",email_confirmed_at:"2026-10-09T00:00:00Z"}},error:null})}});
+ const {proxy}=await import("../src/proxy");
+ const res=await proxy(new NextRequest("https://portal.example/dashboard"));
+ expect(res.status).toBe(200);expect(res.headers.get("location")).toBeNull();
+});
+it("does not treat an unconfirmed session as a verified account",async()=>{
+ f.create.mockReturnValue({auth:{getUser:async()=>({data:{user:{email:"fixture@example.invalid",email_confirmed_at:null}},error:null})}});
+ const {proxy}=await import("../src/proxy");
+ const res=await proxy(new NextRequest("https://portal.example/dashboard"));
+ expect(res.status).toBe(307);expect(res.headers.get("location")).toContain("error=confirmation");
+});
