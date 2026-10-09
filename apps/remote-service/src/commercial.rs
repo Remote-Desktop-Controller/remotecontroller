@@ -273,21 +273,55 @@ pub(crate) async fn callback(
     Ok(response)
 }
 #[derive(Deserialize)]
-struct Authorization {
+pub(crate) struct Usage {
     subject: String,
     operation_id: String,
-    allowed: bool,
+    pub allowed: bool,
     state: String,
-    expires_at: Option<i64>,
+    pub plan: String,
+    pub expires_at: Option<i64>,
+    remaining_seconds: f64,
+    lease_remaining_ms: u64,
+    #[serde(skip)]
+    elapsed: Duration,
+    resets_at: i64,
+    error_code: Option<String>,
 }
-// Return the checked expiry so local transactions can reject a reply that expired in transit.
-pub(crate) async fn authorize(
+impl Usage {
+    pub fn remaining_ms(&self) -> u64 {
+        self.lease_remaining_ms.min(120000).saturating_sub(
+            self.elapsed
+                .as_micros()
+                .div_ceil(1000)
+                .min(u64::MAX as u128) as u64,
+        )
+    }
+    pub fn check(&self) -> ApiResult<()> {
+        if self.allowed && self.state == "ACTIVE" && self.remaining_ms() > 0 {
+            return Ok(());
+        }
+        let mut error = ApiError::new(
+            StatusCode::PAYMENT_REQUIRED,
+            if self.error_code.as_deref() == Some("FREE_DAILY_LIMIT_REACHED") {
+                "FREE_DAILY_LIMIT_REACHED"
+            } else {
+                "commercial_access_required"
+            },
+            "Limite de uso indisponível; aguarde a renovação ou faça upgrade para Premium",
+        );
+        error.details = Some(
+            json!({"remaining_seconds":self.remaining_seconds,"resets_at":self.resets_at,"upgrade_url":"/dashboard"}),
+        );
+        Err(error)
+    }
+}
+pub(crate) async fn usage(
     state: &AppState,
     user: &str,
     operation: uuid::Uuid,
-    execute: bool,
-    setup: bool,
-) -> ApiResult<Option<i64>> {
+    action: &str,
+    max_seconds: u64,
+) -> ApiResult<Option<Usage>> {
     let Some(config) = &state.config.commercial else {
         return Ok(None);
     };
@@ -302,25 +336,44 @@ pub(crate) async fn authorize(
         .map_err(|_| ApiError::forbidden())?;
         store::text(&row, 0)?
     };
-    let reply:Authorization=config.post("/api/mcp/authorize",json!({"subject":subject,"operation_id":operation.to_string(),"mode":if execute{"execute"}else{"inspect"}})).await?;
-    if reply.subject != subject || reply.operation_id != operation.to_string() {
+    let started = std::time::Instant::now();
+    let mut reply:Usage=config.post("/api/mcp/usage",json!({"subject":subject,"operation_id":operation.to_string(),"action":action,"max_seconds":max_seconds.clamp(1,120)})).await?;
+    reply.elapsed = started.elapsed();
+    if reply.subject != subject
+        || reply.operation_id != operation.to_string()
+        || !matches!(reply.plan.as_str(), "FREE" | "PREMIUM" | "ADMIN")
+        || !reply.remaining_seconds.is_finite()
+        || reply.remaining_seconds < 0.0
+    {
         return Err(ApiError::forbidden());
     }
-    if reply.allowed
-        && reply.state == "ACTIVE"
-        && reply
-            .expires_at
-            .is_some_and(|expiry| expiry > security::now())
-    {
+    Ok(Some(reply))
+}
+// Discovery checks identity and portal availability, but does not consume quota.
+pub(crate) async fn authorize(
+    state: &AppState,
+    user: &str,
+    operation: uuid::Uuid,
+    _execute: bool,
+    setup: bool,
+) -> ApiResult<Option<i64>> {
+    let Some(reply) = usage(state, user, operation, "inspect", 120).await? else {
+        return Ok(None);
+    };
+    if setup {
         return Ok(reply.expires_at);
     }
-    if setup
-        && !execute
-        && !reply.allowed
-        && reply.state == "READY_TO_ACTIVATE"
-        && reply.expires_at.is_none()
+    reply.check()?;
+    Ok(reply.expires_at)
+}
+pub(crate) fn bounded(reply: &Usage, tool: &str) -> ApiResult<()> {
+    if reply.plan == "FREE" && matches!(tool, "terminal.open" | "terminal.write" | "process.spawn")
     {
-        return Ok(None);
+        return Err(ApiError::new(
+            StatusCode::PAYMENT_REQUIRED,
+            "FREE_OPERATION_NOT_BOUNDED",
+            "Operação persistente exige Premium até haver encerramento verificável",
+        ));
     }
-    Err(ApiError::forbidden())
+    Ok(())
 }

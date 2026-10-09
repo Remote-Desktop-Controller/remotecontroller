@@ -95,6 +95,15 @@ async function authorize(user=users[0],mode="execute",operation=crypto.randomUUI
   return request("/api/mcp/authorize",{subject:user,operation_id:operation,mode},user,{authorization:"Bearer "+token});
 }
 async function ledger() { return (await db.query<any>("select *,extract(epoch from(expires_at-activated_at))::int as seconds from portal_entitlements order by created_at")).rows; }
+async function rustRoundTrip() {
+  return new Promise<string>((resolve,reject)=>{
+    const child=spawn(process.env.RDC_E2E_RUST_TEST_BIN!,["--ignored","--nocapture"],{cwd:fileURLToPath(new URL("../../../",import.meta.url)),env:{...process.env,RDC_E2E_PORTAL_ORIGIN:origin},windowsHide:true});
+    let text="";child.stdout.on("data",chunk=>text+=chunk);child.stderr.on("data",chunk=>text+=chunk);
+    const timer=setTimeout(()=>{child.kill();reject(Error("Rust crossstack timed out\n"+text));},240000);
+    child.on("error",error=>{clearTimeout(timer);reject(error);});
+    child.on("exit",code=>{clearTimeout(timer);if(code!==0)reject(Error("Rust crossstack exit "+code+"\n"+text));else resolve(text);});
+  });
+}
 
 beforeAll(async()=> {
   db=new PGlite();
@@ -122,7 +131,7 @@ beforeAll(async()=> {
     res.end(JSON.stringify(result));
   });
   providerOrigin=await listen(provider);
-  const routes: Record<string,any>={"/api/auth/register":handlers.register,"/api/auth/login":handlers.login,"/api/account":handlers.account,"/api/checkout":handlers.checkout,"/api/asaas/webhook":handlers.webhook,"/api/mcp/authorize":handlers.authorize,"/api/mcp/connect":handlers.connect,"/api/mcp/exchange":handlers.exchange};
+  const routes: Record<string,any>={"/api/auth/register":handlers.register,"/api/auth/login":handlers.login,"/api/account":handlers.account,"/api/checkout":handlers.checkout,"/api/asaas/webhook":handlers.webhook,"/api/mcp/authorize":handlers.authorize,"/api/mcp/usage":handlers.usage,"/api/mcp/connect":handlers.connect,"/api/mcp/exchange":handlers.exchange};
   portal=createServer(async(req,res)=> {
     let raw="";for await(const chunk of req) raw+=chunk;
     await session.run(req.headers["x-fixture-user"] as string,async()=> {
@@ -137,9 +146,10 @@ beforeAll(async()=> {
   origin=await listen(portal);
 },30000);
 beforeEach(async()=> {
+  await db.exec("truncate portal_usage_operations,portal_usage_sessions,portal_test_grants restart identity cascade");
   await db.exec("truncate portal_operations,portal_tickets,portal_events,portal_entitlements,portal_orders,portal_customers,portal_rate_limits restart identity cascade");
   payments.clear();customers.clear();registered.clear();outage=false;providerPosts=0;
-  for(const [key,value] of Object.entries({PORTAL_PUBLIC_URL:origin,PORTAL_ALLOW_HTTP_LOOPBACK:"true",MCP_SERVICE_ORIGIN:"https://remote.fixture.test",MCP_SHARED_SECRET:"s".repeat(32),ASAAS_WEBHOOK_TOKEN:"w".repeat(32),ASAAS_API_KEY:"fixture-only",ASAAS_ENV:"sandbox",PORTAL_PRICE_CENTS:"990",SALES_ENABLED:"true",REMOTE_SERVICE_AVAILABLE:"false"})) vi.stubEnv(key,value);
+  for(const [key,value] of Object.entries({FREE_DAILY_ENABLED:"false",PORTAL_PUBLIC_URL:origin,PORTAL_ALLOW_HTTP_LOOPBACK:"true",MCP_SERVICE_ORIGIN:"https://remote.fixture.test",MCP_SHARED_SECRET:"s".repeat(32),ASAAS_WEBHOOK_TOKEN:"w".repeat(32),ASAAS_API_KEY:"fixture-only",ASAAS_ENV:"sandbox",PORTAL_PRICE_CENTS:"990",SALES_ENABLED:"true",REMOTE_SERVICE_AVAILABLE:"false"})) vi.stubEnv(key,value);
   vi.stubGlobal("fetch",((input: string|URL|Request,init?:RequestInit)=> {
     const url=String(input);
     if(!url.startsWith("https://api-sandbox.asaas.com/v3/")) throw Error("Unexpected external network blocked: "+url);
@@ -149,6 +159,19 @@ beforeEach(async()=> {
 afterAll(async()=> {vi.unstubAllGlobals();vi.unstubAllEnvs();await close(portal);await close(provider);await db.close();});
 
 describe("isolated commercial lifecycle over HTTP and real PostgreSQL",()=> {
+  it("runs Free over authenticated HTTP with no payment and no consumption on inspection",async()=>{
+    vi.stubEnv("FREE_DAILY_ENABLED","true");vi.stubEnv("REMOTE_SERVICE_AVAILABLE","true");
+    const op=crypto.randomUUID(),headers={authorization:"Bearer "+"s".repeat(32)};
+    expect((await request("/api/mcp/usage",{subject:users[0],operation_id:op,action:"inspect"},users[0],headers)).body).toMatchObject({allowed:true,plan:"FREE",remaining_seconds:1800});
+    expect((await request("/api/account")).body.usage).toMatchObject({plan:"FREE",remaining_seconds:1800});
+    const reserved=await request("/api/mcp/usage",{subject:users[0],operation_id:op,action:"reserve",max_seconds:10},users[0],headers);
+    expect(reserved.body).toMatchObject({allowed:true,plan:"FREE"});
+    const replay=await request("/api/mcp/usage",{subject:users[0],operation_id:op,action:"reserve",max_seconds:120},users[0],headers);
+    expect(replay.body.expires_at).toBe(reserved.body.expires_at);
+    expect((await request("/api/mcp/usage",{subject:users[0],operation_id:op,action:"complete"},users[0],headers)).status).toBe(200);
+    expect(providerPosts).toBe(0);expect(await ledger()).toHaveLength(0);
+    expect((await db.query("select * from portal_orders")).rows).toHaveLength(0);
+  });
   it("overlaps HTTP checkout/settlement/use across users and reserves one charge per repeated checkout",async()=> {
     // Requests overlap, but PGlite is one SQL connection: this is not distributed PG contention proof.
     const [a,b]=await Promise.all([buy(users[0]),buy(users[1])]);
@@ -170,17 +193,20 @@ describe("isolated commercial lifecycle over HTTP and real PostgreSQL",()=> {
   it.skipIf(!process.env.RDC_E2E_RUST_TEST_BIN)("joins real Rust service/device-agent HTTP and IPC to the actual portal SQL license",async()=> {
     const {payment}=await buy();payment.status="RECEIVED";await notify(payment);
     vi.stubEnv("REMOTE_SERVICE_AVAILABLE","true");
+    vi.stubEnv("FREE_DAILY_ENABLED","true");
     expect((await ledger())[0].activated_at).toBeNull();
-    const output=await new Promise<string>((resolve,reject)=> {
-      const child=spawn(process.env.RDC_E2E_RUST_TEST_BIN!,["--ignored","--nocapture"],{cwd:fileURLToPath(new URL("../../../",import.meta.url)),env:{...process.env,RDC_E2E_PORTAL_ORIGIN:origin},windowsHide:true});
-      let text="";child.stdout.on("data",chunk=>text+=chunk);child.stderr.on("data",chunk=>text+=chunk);
-      const timer=setTimeout(()=>{child.kill();reject(Error("Rust crossstack timed out\n"+text));},240000);
-      child.on("error",error=>{clearTimeout(timer);reject(error);});
-      child.on("exit",code=>{clearTimeout(timer);if(code!==0)reject(Error("Rust crossstack exit "+code+"\n"+text));else resolve(text);});
-    });
+    const output=await rustRoundTrip();
     expect(output).toContain("1 passed");
     const rights=await ledger();expect(rights).toHaveLength(1);expect(rights[0].activated_at).not.toBeNull();expect(rights[0].seconds).toBe(2592000);
     expect((await db.query("select * from portal_operations")).rows).toHaveLength(1);
+  },300000);
+  it.skipIf(!process.env.RDC_E2E_RUST_TEST_BIN)("dispatches a real Free read through Rust, agent and daemon without creating revenue",async()=>{
+    vi.stubEnv("REMOTE_SERVICE_AVAILABLE","true");vi.stubEnv("FREE_DAILY_ENABLED","true");
+    expect(await rustRoundTrip()).toContain("1 passed");
+    const rows=(await db.query<{plan:string;completed_at:string|null}>("select plan,completed_at from portal_usage_operations")).rows;
+    expect(rows).toHaveLength(1);expect(rows[0].plan).toBe("FREE");expect(rows[0].completed_at).not.toBeNull();
+    expect(await ledger()).toHaveLength(0);expect((await db.query("select * from portal_orders")).rows).toHaveLength(0);
+    expect((await db.query("select * from portal_events")).rows).toHaveLength(0);expect(providerPosts).toBe(0);
   },300000);
   it("runs registration/login, preserves blocked sales, and isolates user orders",async()=> {
     const credentials={email:"user@fixture.test",password:"fixture-password-123"};

@@ -19,6 +19,13 @@ const ORIGIN: &str = "http://127.0.0.1:8787";
 #[derive(Default)]
 struct Portal {
     executions: AtomicUsize,
+    completions: AtomicUsize,
+    aborts: AtomicUsize,
+    lease_ms: AtomicI64,
+    expiry_shift: AtomicI64,
+    reserved: Mutex<std::collections::HashSet<String>>,
+    free: AtomicUsize,
+    usage_calls: Mutex<Vec<Value>>,
     inspections: AtomicUsize,
     exchanges: AtomicUsize,
     expiry: AtomicI64,
@@ -84,6 +91,46 @@ async fn authorize(
         json!({"subject":if portal.mismatch.load(Ordering::SeqCst)==1 {"forged"} else {SUBJECT},"operation_id":if portal.mismatch.load(Ordering::SeqCst)==2 {"forged"} else {input["operation_id"].as_str().unwrap()},"allowed":allowed,"state":if expiry==0 {"READY_TO_ACTIVATE"}else if allowed{"ACTIVE"}else{"EXPIRED"},"expires_at":if expiry==0 {None}else{Some(expiry)}}),
     )
 }
+async fn usage(
+    State(portal): State<Arc<Portal>>,
+    headers: HeaderMap,
+    Json(input): Json<Value>,
+) -> Json<Value> {
+    assert_eq!(headers["authorization"], format!("Bearer {SECRET}"));
+    portal.usage_calls.lock().unwrap().push(input.clone());
+    if input["action"] == "complete" {
+        portal.completions.fetch_add(1, Ordering::SeqCst);
+    }
+    if input["action"] == "abort" {
+        portal.aborts.fetch_add(1, Ordering::SeqCst);
+    }
+    let reserve = input["action"] == "reserve";
+    if reserve
+        && portal
+            .reserved
+            .lock()
+            .unwrap()
+            .insert(input["operation_id"].as_str().unwrap().to_owned())
+    {
+        portal.executions.fetch_add(1, Ordering::SeqCst);
+    } else {
+        portal.inspections.fetch_add(1, Ordering::SeqCst);
+    }
+    if portal.gate_mode.load(Ordering::SeqCst) == if reserve { 1 } else { 2 } {
+        portal.gate_started.notify_one();
+        portal.gate_continue.notified().await;
+    }
+    let expiry = portal.expiry.load(Ordering::SeqCst);
+    let allowed = (expiry == 0 || expiry > now())
+        && (!reserve || portal.deny_execution.load(Ordering::SeqCst) == 0);
+    Json(
+        json!({"subject": if portal.mismatch.load(Ordering::SeqCst)==1 {"forged"} else {SUBJECT},
+    "operation_id": if portal.mismatch.load(Ordering::SeqCst)==2 {json!("forged")} else {input["operation_id"].clone()},
+    "allowed":allowed,"state":if allowed {"ACTIVE"} else {"EXHAUSTED"},"plan":if portal.free.load(Ordering::SeqCst)==1 {"FREE"} else {"PREMIUM"},
+    "expires_at":if allowed {Some((now()+input["max_seconds"].as_i64().unwrap_or(120)).min(if expiry>0 {expiry} else {i64::MAX})+portal.expiry_shift.load(Ordering::SeqCst))} else {None},
+    "lease_remaining_ms":if portal.lease_ms.load(Ordering::SeqCst)>0 {portal.lease_ms.load(Ordering::SeqCst)}else{120000},"remaining_seconds":if allowed {1800} else {0},"resets_at":now()+86400,"error_code":if allowed {None} else {Some("FREE_DAILY_LIMIT_REACHED")}}),
+    )
+}
 struct Fixture {
     dir: tempfile::TempDir,
     app: Router,
@@ -107,6 +154,7 @@ async fn fixture() -> Fixture {
     let router = Router::new()
         .route("/api/mcp/exchange", post(exchange))
         .route("/api/mcp/authorize", post(authorize))
+        .route("/api/mcp/usage", post(usage))
         .with_state(portal.clone());
     let task = tokio::spawn(async move {
         axum::serve(listener, router).await.unwrap();
@@ -450,7 +498,7 @@ async fn setup_and_invalid_commands_do_not_activate_first_remote_call_does() {
         .as_str()
         .unwrap();
     let expiry = f.portal.expiry.load(Ordering::SeqCst);
-    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 1);
+    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 0);
     assert_eq!(
         rpc(
             &f,
@@ -466,7 +514,7 @@ async fn setup_and_invalid_commands_do_not_activate_first_remote_call_does() {
         StatusCode::TOO_MANY_REQUESTS
     );
     login(&f).await;
-    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 1);
+    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 0);
     assert_eq!(f.portal.expiry.load(Ordering::SeqCst), expiry);
     f.portal.expiry.store(now() - 1, Ordering::SeqCst);
     assert_eq!(
@@ -477,7 +525,7 @@ async fn setup_and_invalid_commands_do_not_activate_first_remote_call_does() {
         )
         .await
         .status(),
-        StatusCode::FORBIDDEN
+        StatusCode::PAYMENT_REQUIRED
     );
     assert_eq!(
         request(
@@ -571,16 +619,24 @@ async fn unavailable_service_reservations_are_never_delivered_or_reactivated_aft
         )
         .await
         .status(),
-        StatusCode::FORBIDDEN
+        StatusCode::OK
     );
-    assert_eq!(f.portal.expiry.load(Ordering::SeqCst), 0);
+    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 0);
     assert_eq!(
-        rpc(&f, "test.echo", json!({"text":"new"})).await.status(),
-        StatusCode::TOO_MANY_REQUESTS
+        request(
+            &f.app,
+            "GET",
+            "/api/agent/poll",
+            Value::Null,
+            None,
+            Some("agent")
+        )
+        .await
+        .status(),
+        StatusCode::PAYMENT_REQUIRED
     );
-    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 1);
     let (_database, conn) = db(&f).await;
-    let saved = conn
+    let row = conn
         .query("SELECT id,envelope FROM relay", ())
         .await
         .unwrap()
@@ -588,8 +644,8 @@ async fn unavailable_service_reservations_are_never_delivered_or_reactivated_aft
         .await
         .unwrap()
         .unwrap();
-    let request_id: String = saved.get(0).unwrap();
-    let mut envelope: Value = serde_json::from_str(&saved.get::<String>(1).unwrap()).unwrap();
+    let id: String = row.get(0).unwrap();
+    let mut envelope: Value = serde_json::from_str(&row.get::<String>(1).unwrap()).unwrap();
     envelope["meta"]["deadline"] = json!(runtime_protocol::now_ms() - 1);
     conn.execute(
         "UPDATE relay SET envelope=?1,deadline=?2",
@@ -599,31 +655,38 @@ async fn unavailable_service_reservations_are_never_delivered_or_reactivated_aft
     .unwrap();
     f.portal.deny_execution.store(0, Ordering::SeqCst);
     assert_eq!(
-        rpc(
-            &f,
-            "test.echo",
-            json!({"text":"hello","runtime_operation_id":operation})
+        json_response(
+            request(
+                &f.app,
+                "GET",
+                "/api/agent/poll",
+                Value::Null,
+                None,
+                Some("agent")
+            )
+            .await
+        )
+        .await["commands"],
+        json!([])
+    );
+    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 1);
+    let result = runtime_protocol::ResponseEnvelope {
+        meta: serde_json::from_value(envelope["meta"].clone()).unwrap(),
+        payload: Ok(json!({"completed":true})),
+    };
+    assert_eq!(
+        request(
+            &f.app,
+            "POST",
+            "/api/agent/result",
+            json!({"request_id":id,"envelope":result}),
+            None,
+            Some("agent")
         )
         .await
         .status(),
-        StatusCode::FORBIDDEN
+        StatusCode::NOT_FOUND
     );
-    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 1);
-    assert_eq!(f.portal.expiry.load(Ordering::SeqCst), 0);
-    // Even a separate valid active entitlement cannot release the blocked reservation.
-    f.portal.expiry.store(now() + 2592000, Ordering::SeqCst);
-    let response = request(
-        &f.app,
-        "GET",
-        "/api/agent/poll",
-        Value::Null,
-        None,
-        Some("agent"),
-    )
-    .await;
-    assert_eq!(json_response(response).await["commands"], json!([]));
-    let response=request(&f.app,"POST","/api/agent/result",json!({"request_id":request_id,"envelope":{"meta":envelope["meta"],"payload":{"Ok":{"completed":true}}}}),None,Some("agent")).await;
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 #[tokio::test]
 async fn started_command_can_finish_after_expiry_but_gateway_cannot_read_or_deliver_more() {
@@ -659,7 +722,7 @@ async fn started_command_can_finish_after_expiry_but_gateway_cannot_read_or_deli
         )
         .await
         .status(),
-        StatusCode::FORBIDDEN
+        StatusCode::PAYMENT_REQUIRED
     );
     assert_eq!(
         request(
@@ -722,14 +785,14 @@ async fn persistent_binding_survives_service_restart_and_repeated_login() {
         .unwrap();
     assert_eq!(row.get::<i64>(0).unwrap(), 1);
     assert_eq!(f.portal.expiry.load(Ordering::SeqCst), expiry);
-    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 1);
+    assert_eq!(f.portal.executions.load(Ordering::SeqCst), 0);
 }
 #[tokio::test]
 async fn revocation_during_commercial_authorization_blocks_delivery_without_holding_store_lock() {
     let f = fixture().await;
     operational(&f).await;
     let cookie = login(&f).await;
-    f.portal.gate_mode.store(1, Ordering::SeqCst);
+    f.portal.gate_mode.store(2, Ordering::SeqCst);
     let app = f.app.clone();
     let pending = tokio::spawn(async move {
         request(&app,"POST","/mcp",json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"test.echo","arguments":{"text":"hello"}}}),None,Some("access")).await
@@ -761,7 +824,7 @@ async fn revocation_during_commercial_authorization_blocks_delivery_without_hold
         StatusCode::OK
     );
     f.portal.gate_continue.notify_one();
-    assert_eq!(pending.await.unwrap().status(), StatusCode::FORBIDDEN);
+    assert_eq!(pending.await.unwrap().status(), StatusCode::NOT_FOUND);
     let (_database, conn) = db(&f).await;
     let row = conn
         .query("SELECT COUNT(*) FROM commercial_admissions", ())
@@ -781,7 +844,7 @@ async fn poll_rechecks_revocation_after_commercial_inspection() {
         rpc(&f, "test.echo", json!({"text":"hello"})).await.status(),
         StatusCode::OK
     );
-    f.portal.gate_mode.store(2, Ordering::SeqCst);
+    f.portal.gate_mode.store(1, Ordering::SeqCst);
     let app = f.app.clone();
     let pending = tokio::spawn(async move {
         request(
@@ -808,6 +871,11 @@ async fn poll_rechecks_revocation_after_commercial_inspection() {
     assert_eq!(
         json_response(pending.await.unwrap()).await["commands"],
         json!([])
+    );
+    assert_eq!(
+        f.portal.aborts.load(Ordering::SeqCst),
+        1,
+        "pre-dispatch revocation must not charge"
     );
 }
 
@@ -886,4 +954,487 @@ async fn callback_without_bound_nonce_is_rejected() {
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn free_queue_inspects_poll_reserves_once_restart_preserves_deadline_and_result_completes() {
+    let mut f = fixture().await;
+    operational(&f).await;
+    f.portal.free.store(1, Ordering::SeqCst);
+    assert_eq!(
+        rpc(&f, "test.echo", json!({"text":"hello"})).await.status(),
+        StatusCode::OK
+    );
+    assert_eq!(
+        f.portal.executions.load(Ordering::SeqCst),
+        0,
+        "queue must never reserve"
+    );
+    let first = json_response(
+        request(
+            &f.app,
+            "GET",
+            "/api/agent/poll",
+            Value::Null,
+            None,
+            Some("agent"),
+        )
+        .await,
+    )
+    .await;
+    let command = &first["commands"][0];
+    assert!(
+        command.is_object(),
+        "Free must dispatch without a paid entitlement: {first}"
+    );
+    let deadline = command["envelope"]["meta"]["deadline"].clone();
+    let (_database, conn) = db(&f).await;
+    conn.execute("UPDATE relay SET lease_until=0", ())
+        .await
+        .unwrap();
+    f.portal.lease_ms.store(1000, Ordering::SeqCst);
+    f.app = application(&f.dir.path().join("service.db"), f.config.clone())
+        .await
+        .unwrap();
+    let second = json_response(
+        request(
+            &f.app,
+            "GET",
+            "/api/agent/poll",
+            Value::Null,
+            None,
+            Some("agent"),
+        )
+        .await,
+    )
+    .await;
+    assert_eq!(
+        second["commands"][0]["envelope"]["meta"]["deadline"],
+        deadline
+    );
+    assert_eq!(
+        f.portal.executions.load(Ordering::SeqCst),
+        1,
+        "restart must not reserve again"
+    );
+    let body = json!({"request_id":command["request_id"],"envelope":{"meta":command["envelope"]["meta"],"payload":{"Ok":{"done":true}}}});
+    let mut envelope: runtime_protocol::RequestEnvelope =
+        serde_json::from_value(command["envelope"].clone()).unwrap();
+    envelope.meta.deadline = deadline.as_u64().unwrap();
+    let response = runtime_protocol::ResponseEnvelope {
+        meta: envelope.meta,
+        payload: Ok(json!({"status":"Succeeded","done":true})),
+    };
+    let body = json!({"request_id":body["request_id"],"envelope":response});
+    assert_eq!(
+        request(
+            &f.app,
+            "POST",
+            "/api/agent/result",
+            body,
+            None,
+            Some("agent")
+        )
+        .await
+        .status(),
+        StatusCode::OK
+    );
+    assert_eq!(f.portal.completions.load(Ordering::SeqCst), 1);
+}
+#[tokio::test]
+async fn exhausted_free_returns_reset_and_upgrade_without_dispatch() {
+    let f = fixture().await;
+    operational(&f).await;
+    assert_eq!(
+        rpc(&f, "test.echo", json!({"text":"hello"})).await.status(),
+        StatusCode::OK
+    );
+    f.portal.expiry.store(-1, Ordering::SeqCst);
+    let response = request(
+        &f.app,
+        "GET",
+        "/api/agent/poll",
+        Value::Null,
+        None,
+        Some("agent"),
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::PAYMENT_REQUIRED);
+    let body = json_response(response).await;
+    assert_eq!(body["error"], "FREE_DAILY_LIMIT_REACHED");
+    assert!(body["resets_at"].as_i64().unwrap() > now());
+    assert!(body["upgrade_url"].as_str().unwrap().contains("dashboard"));
+}
+
+#[tokio::test]
+async fn free_rejects_persistent_process_and_terminal_before_dispatch() {
+    for name in ["terminal.open", "terminal.write", "process.spawn"] {
+        let f = fixture().await;
+        operational(&f).await;
+        f.portal.free.store(1, Ordering::SeqCst);
+        let (_database, conn) = db(&f).await;
+        let tools = json!([{"name":name,"version":"1.0.0","description":"Persistent fixture","capabilities":[],"risk":"high","input_schema":{"type":"object"},"output_schema":null}]);
+        conn.execute("UPDATE devices SET tools=?1", params![tools.to_string()])
+            .await
+            .unwrap();
+        let response = rpc(&f, name, json!({})).await;
+        assert_eq!(response.status(), StatusCode::PAYMENT_REQUIRED);
+        assert_eq!(
+            json_response(response).await["error"],
+            "FREE_OPERATION_NOT_BOUNDED"
+        );
+        assert_eq!(f.portal.executions.load(Ordering::SeqCst), 0);
+        let count = conn
+            .query("SELECT COUNT(*) FROM relay", ())
+            .await
+            .unwrap()
+            .next()
+            .await
+            .unwrap()
+            .unwrap()
+            .get::<i64>(0)
+            .unwrap();
+        assert_eq!(count, 0);
+    }
+}
+
+#[tokio::test]
+async fn exhausted_normal_queue_does_not_starve_owned_recovery() {
+    let f = fixture().await;
+    let owner = operational(&f).await;
+    assert_eq!(
+        rpc(&f, "test.echo", json!({"text":"hello"})).await.status(),
+        StatusCode::OK
+    );
+    let (_database, conn) = db(&f).await;
+    let meta = runtime_protocol::Metadata::new(Some(uuid::Uuid::new_v4()), 120000);
+    let envelope = runtime_protocol::RequestEnvelope {
+        meta: meta.clone(),
+        payload: runtime_protocol::Request::Execute {
+            tool: "operation.cancel".into(),
+            input: json!({"operation_id":uuid::Uuid::new_v4()}),
+        },
+    };
+    conn.execute("INSERT INTO relay(id,device_id,user_id,grant_family,operation_id,dedupe_key,envelope,created_at,deadline) VALUES(?1,'device',?2,'family',?3,?3,?4,?5,?6)",params![meta.request_id.to_string(),owner,meta.operation_id.to_string(),serde_json::to_string(&envelope).unwrap(),now()+1,meta.deadline as i64]).await.unwrap();
+    conn.execute(
+        "INSERT INTO commercial_admissions VALUES(?1,1)",
+        params![meta.request_id.to_string()],
+    )
+    .await
+    .unwrap();
+    f.portal.expiry.store(-1, Ordering::SeqCst);
+    let response = request(
+        &f.app,
+        "GET",
+        "/api/agent/poll",
+        Value::Null,
+        None,
+        Some("agent"),
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = json_response(response).await;
+    assert_eq!(body["commands"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        body["commands"][0]["request_id"],
+        meta.request_id.to_string()
+    );
+}
+
+#[tokio::test]
+async fn disconnected_agent_response_does_not_release_reserved_usage() {
+    let f = fixture().await;
+    operational(&f).await;
+    assert_eq!(
+        rpc(&f, "test.echo", json!({"text":"hello"})).await.status(),
+        StatusCode::OK
+    );
+    let body = json_response(
+        request(
+            &f.app,
+            "GET",
+            "/api/agent/poll",
+            Value::Null,
+            None,
+            Some("agent"),
+        )
+        .await,
+    )
+    .await;
+    let command = &body["commands"][0];
+    let request: runtime_protocol::RequestEnvelope =
+        serde_json::from_value(command["envelope"].clone()).unwrap();
+    let response = runtime_protocol::ResponseEnvelope {
+        meta: request.meta,
+        payload: Err(runtime_protocol::ErrorEnvelope::new(
+            runtime_protocol::ErrorCode::Disconnected,
+            "IPC lost",
+        )),
+    };
+    assert_eq!(
+        request_result(&f, command["request_id"].clone(), response).await,
+        StatusCode::OK
+    );
+    assert_eq!(
+        f.portal.completions.load(Ordering::SeqCst),
+        0,
+        "IPC loss cannot prove detached daemon ended"
+    );
+}
+async fn request_result(
+    f: &Fixture,
+    id: Value,
+    envelope: runtime_protocol::ResponseEnvelope,
+) -> StatusCode {
+    request(
+        &f.app,
+        "POST",
+        "/api/agent/result",
+        json!({"request_id":id,"envelope":envelope}),
+        None,
+        Some("agent"),
+    )
+    .await
+    .status()
+}
+
+#[tokio::test]
+async fn owned_recovery_has_reserved_queue_capacity_after_free_exhaustion() {
+    let f = fixture().await;
+    operational(&f).await;
+    assert_eq!(
+        rpc(&f, "test.echo", json!({"text":"hello"})).await.status(),
+        StatusCode::OK
+    );
+    let (_database, conn) = db(&f).await;
+    let row = conn
+        .query("SELECT operation_id FROM relay", ())
+        .await
+        .unwrap()
+        .next()
+        .await
+        .unwrap()
+        .unwrap();
+    let operation: String = row.get(0).unwrap();
+    conn.execute("UPDATE relay SET lease_until=?1", params![now() + 30])
+        .await
+        .unwrap();
+    let row = conn
+        .query("SELECT tools FROM devices", ())
+        .await
+        .unwrap()
+        .next()
+        .await
+        .unwrap()
+        .unwrap();
+    let mut tools: Vec<Value> = serde_json::from_str(&row.get::<String>(0).unwrap()).unwrap();
+    tools.push(json!({"name":"operation.cancel","version":"1.0.0","description":"Cancel","capabilities":[],"risk":"write","input_schema":{"type":"object"},"output_schema":null}));
+    conn.execute(
+        "UPDATE devices SET tools=?1",
+        params![serde_json::to_string(&tools).unwrap()],
+    )
+    .await
+    .unwrap();
+    f.portal.expiry.store(-1, Ordering::SeqCst);
+    let calls = f.portal.usage_calls.lock().unwrap().len();
+    assert_eq!(
+        rpc(&f, "operation.cancel", json!({"operation_id":operation}))
+            .await
+            .status(),
+        StatusCode::OK
+    );
+    assert_eq!(f.portal.usage_calls.lock().unwrap().len(), calls);
+    assert_eq!(
+        rpc(
+            &f,
+            "operation.cancel",
+            json!({"operation_id":uuid::Uuid::new_v4()})
+        )
+        .await
+        .status(),
+        StatusCode::FORBIDDEN
+    );
+}
+
+#[tokio::test]
+async fn concurrent_poll_does_not_abort_or_reserve_another_dispatch_claim() {
+    let f = fixture().await;
+    operational(&f).await;
+    assert_eq!(
+        rpc(&f, "test.echo", json!({"text":"hello"})).await.status(),
+        StatusCode::OK
+    );
+    f.portal.gate_mode.store(1, Ordering::SeqCst);
+    let app = f.app.clone();
+    let first = tokio::spawn(async move {
+        request(
+            &app,
+            "GET",
+            "/api/agent/poll",
+            Value::Null,
+            None,
+            Some("agent"),
+        )
+        .await
+    });
+    tokio::time::timeout(
+        std::time::Duration::from_secs(3),
+        f.portal.gate_started.notified(),
+    )
+    .await
+    .unwrap();
+    let second = tokio::time::timeout(
+        std::time::Duration::from_secs(2),
+        request(
+            &f.app,
+            "GET",
+            "/api/agent/poll",
+            Value::Null,
+            None,
+            Some("agent"),
+        ),
+    )
+    .await
+    .expect("concurrent poll attempted same reservation HTTP");
+    assert_eq!(json_response(second).await["commands"], json!([]));
+    f.portal.gate_continue.notify_one();
+    assert_eq!(
+        json_response(first.await.unwrap()).await["commands"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+    assert_eq!(f.portal.aborts.load(Ordering::SeqCst), 0);
+}
+
+#[tokio::test]
+async fn sql_relative_budget_bounds_dispatch_even_when_reported_epoch_is_behind_service() {
+    let f = fixture().await;
+    operational(&f).await;
+    f.portal.lease_ms.store(1000, Ordering::SeqCst);
+    f.portal.expiry_shift.store(-600, Ordering::SeqCst);
+    assert_eq!(
+        rpc(&f, "test.echo", json!({"text":"hello"})).await.status(),
+        StatusCode::OK
+    );
+    let response = request(
+        &f.app,
+        "GET",
+        "/api/agent/poll",
+        Value::Null,
+        None,
+        Some("agent"),
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = json_response(response).await;
+    let command = &body["commands"][0];
+    assert!(command.is_object(), "{body}");
+    assert!(command["server_budget_ms"].as_u64().unwrap() <= 1000);
+    assert!(
+        command["envelope"]["meta"]["deadline"].as_u64().unwrap()
+            <= runtime_protocol::now_ms() + 1000
+    );
+}
+
+#[tokio::test]
+async fn recovery_handles_require_matching_successful_producer_and_remain_after_history_pruning() {
+    for (producer, control, field) in [
+        ("process.spawn", "process.kill", "process_id"),
+        ("terminal.open", "terminal.close", "terminal_id"),
+    ] {
+        let f = fixture().await;
+        operational(&f).await;
+        let (_database, conn) = db(&f).await;
+        let tools=vec![producer,control,"test.echo"].into_iter().map(|name|json!({"name":name,"version":"1.0.0","description":"Fixture","capabilities":[],"risk":"write","input_schema":{"type":"object"},"output_schema":null})).collect::<Vec<_>>();
+        conn.execute(
+            "UPDATE devices SET tools=?1",
+            params![serde_json::to_string(&tools).unwrap()],
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            rpc(&f, "test.echo", json!({})).await.status(),
+            StatusCode::OK
+        );
+        let command = json_response(
+            request(
+                &f.app,
+                "GET",
+                "/api/agent/poll",
+                Value::Null,
+                None,
+                Some("agent"),
+            )
+            .await,
+        )
+        .await["commands"][0]
+            .clone();
+        let original_request: runtime_protocol::RequestEnvelope =
+            serde_json::from_value(command["envelope"].clone()).unwrap();
+        let resource = uuid::Uuid::new_v4();
+        let mut output = json!({"status":"Succeeded","tool":"test.echo","result":{}});
+        output["result"][field] = json!(resource);
+        let reply = runtime_protocol::ResponseEnvelope {
+            meta: original_request.meta,
+            payload: Ok(output),
+        };
+        assert_eq!(
+            request_result(&f, command["request_id"].clone(), reply).await,
+            StatusCode::OK
+        );
+        f.portal.expiry.store(-1, Ordering::SeqCst);
+        let mut args = json!({});
+        args[field] = json!(resource);
+        assert_eq!(
+            rpc(&f, control, args.clone()).await.status(),
+            StatusCode::FORBIDDEN,
+            "arbitrary read output must not establish ownership"
+        );
+        f.portal.expiry.store(0, Ordering::SeqCst);
+        assert_eq!(rpc(&f, producer, json!({})).await.status(), StatusCode::OK);
+        let produced = json_response(
+            request(
+                &f.app,
+                "GET",
+                "/api/agent/poll",
+                Value::Null,
+                None,
+                Some("agent"),
+            )
+            .await,
+        )
+        .await["commands"][0]
+            .clone();
+        let produced_request: runtime_protocol::RequestEnvelope =
+            serde_json::from_value(produced["envelope"].clone()).unwrap();
+        let mut output = json!({"status":"Succeeded","tool":producer,"result":{}});
+        output["result"][field] = json!(resource);
+        assert_eq!(
+            request_result(
+                &f,
+                produced["request_id"].clone(),
+                runtime_protocol::ResponseEnvelope {
+                    meta: produced_request.meta,
+                    payload: Ok(output)
+                }
+            )
+            .await,
+            StatusCode::OK
+        );
+        f.portal.expiry.store(-1, Ordering::SeqCst);
+        conn.execute("DELETE FROM relay", ()).await.unwrap();
+        assert_eq!(
+            rpc(&f, control, args).await.status(),
+            StatusCode::OK,
+            "owned handle recovery survives request retention"
+        );
+        let mut other = json!({});
+        other[field] = json!(uuid::Uuid::new_v4());
+        assert_eq!(
+            rpc(&f, control, other).await.status(),
+            StatusCode::FORBIDDEN
+        );
+    }
 }

@@ -24,6 +24,8 @@ pub struct Metadata {
     pub session_id: Option<Uuid>,
     pub operation_id: Uuid,
     pub deadline: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_ms: Option<u64>,
 }
 impl Metadata {
     pub fn new(workspace_id: Option<Uuid>, timeout_ms: u64) -> Self {
@@ -36,6 +38,7 @@ impl Metadata {
             session_id: None,
             operation_id: Uuid::new_v4(),
             deadline: now_ms().saturating_add(timeout_ms),
+            timeout_ms: None,
         }
     }
 }

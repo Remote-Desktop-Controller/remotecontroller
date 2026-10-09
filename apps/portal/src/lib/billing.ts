@@ -14,39 +14,37 @@ export class Billing {
     readonly store: Store = new Store(),
     readonly provider: Asaas = new Asaas(getConfig()),
   ) {}
+  async verifiedOrders(subject: string, available: boolean) {
+    if (!available || (await this.store.hasActiveTestGrant?.(subject))) return [];
+    const orders = await this.store.authorizationOrders(subject);
+    if (orders.length > 16)
+      fail(503, "RECONCILIATION_REQUIRED", "Pedidos requerem conciliação administrativa.");
+    const verified: string[] = [];
+    await Promise.all(orders.map(async (initial) => {
+      if (initial.user_id !== subject) fail(503, "PAYMENT_UNVERIFIED", "Conciliação financeira não confirmada.");
+      const {order,p} = await this.source(initial);
+      await this.apply(order,p);
+      const refunded = p.status === "REFUNDED" || p.status === "PARTIALLY_REFUNDED" || p.refunds?.some(r=>r.status === "DONE" && r.value > 0);
+      if (!refunded && initial.status !== "PENDING_PAYMENT" && (p.status !== "RECEIVED" || p.deleted))
+        fail(503,"PAYMENT_UNVERIFIED","Pagamento ainda não confirmado pela operadora.");
+      if (!refunded && p.status === "RECEIVED" && !p.deleted) verified.push(order.id);
+    }));
+    return verified;
+  }
+  async usage(subject: string, operationId: string, action: "inspect" | "reserve" | "complete" | "abort", maxSeconds: number, available: boolean) {
+    const verified = action === "complete" || action === "abort" ? [] : await this.verifiedOrders(subject, available);
+    return this.store.rpc("portal_usage", {
+      p_user:subject,p_operation:operationId,p_action:action,p_max_seconds:maxSeconds,
+      p_available:available,p_verified_orders:verified,
+    });
+  }
   async authorize(
     subject: string,
     operationId: string,
     mode: "inspect" | "execute",
     available: boolean,
   ) {
-    const verifiedOrders: string[] = [];
-    if (available) {
-      const orders = await this.store.authorizationOrders(subject);
-      // Bound both provider load and latency; every call is GET and outside SQL locks.
-      if (orders.length > 16)
-        fail(503, "RECONCILIATION_REQUIRED", "Pedidos requerem conciliação administrativa.");
-      await Promise.all(
-        orders.map(async (initial) => {
-          if (initial.user_id !== subject)
-            fail(503, "PAYMENT_UNVERIFIED", "Conciliação financeira não confirmada.");
-          const { order, p } = await this.source(initial);
-          await this.apply(order, p);
-          const refunded =
-            p.status === "REFUNDED" ||
-            p.status === "PARTIALLY_REFUNDED" ||
-            p.refunds?.some((r) => r.status === "DONE" && r.value > 0);
-          if (
-            !refunded &&
-            initial.status !== "PENDING_PAYMENT" &&
-            (p.status !== "RECEIVED" || p.deleted)
-          )
-            fail(503, "PAYMENT_UNVERIFIED", "Pagamento ainda não confirmado pela operadora.");
-          if (!refunded && p.status === "RECEIVED" && !p.deleted)
-            verifiedOrders.push(order.id);
-        }),
-      );
-    }
+    const verifiedOrders = await this.verifiedOrders(subject, available);
     return this.store.rpc("portal_authorize", {
       p_user: subject,
       p_operation: operationId,

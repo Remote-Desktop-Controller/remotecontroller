@@ -144,16 +144,18 @@ export async function account() {
     s = new Store(),
     c = getConfig();
   await s.rate("account:" + u.id, 60);
-  const [subscription, orders] = await Promise.all([
+  const [subscription, orders, usage] = await Promise.all([
     s.rpc("portal_subscription", {
       p_user: u.id,
       p_available: c.serviceAvailable,
     }),
     s.orders(u.id),
+    c.freeDailyEnabled ? s.rpc("portal_usage_status", {p_user:u.id}) : Promise.resolve(null),
   ]);
   return response({
     user: { id: u.id, email: u.email },
     subscription,
+    usage,
     orders: orders.map(summary),
     serviceAvailable: c.serviceAvailable,
     salesEnabled: c.salesEnabled,
@@ -377,6 +379,9 @@ export async function exchange(r: Request) {
 }
 export async function authorize(r: Request) {
   const c = mcpAuth(r);
+  // An old service only knows this route and cannot enforce dispatch leases.
+  // Once Free is enabled it must fail closed, never admit unmetered work.
+  if (c.freeDailyEnabled) fail(503, "SERVICE_UPGRADE_REQUIRED", "Atualize o serviço remoto para a autorização com franquia diária.");
   const body = await jsonBody(
     r,
     z
@@ -392,6 +397,18 @@ export async function authorize(r: Request) {
   return response(
     await new Billing(s).authorize(body.subject, body.operation_id, body.mode, c.serviceAvailable),
   );
+}
+export async function usage(r: Request) {
+  const c = mcpAuth(r);
+  if (!c.freeDailyEnabled) fail(503, "FREE_DAILY_NOT_ENABLED", "Franquia diária aguardando ativação.");
+  const body = await jsonBody(r, z.object({
+    subject:uuid,operation_id:uuid,action:z.enum(["inspect","reserve","complete","abort"]),
+    max_seconds:z.number().int().min(1).max(120).default(120),
+  }).strict());
+  const s = new Store();
+  // Completion is recovery: never exhaust its allowance behind execution requests.
+  await s.rate((body.action === "complete" || body.action === "abort" ? "usage-recovery:" : "usage:") + body.subject, 600);
+  return response(await new Billing(s).usage(body.subject,body.operation_id,body.action,body.max_seconds,c.serviceAvailable));
 }
 export async function callback(r: Request) {
   const url = new URL(r.url),

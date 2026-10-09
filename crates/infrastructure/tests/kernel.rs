@@ -487,3 +487,99 @@ async fn rust_ast_query_and_git_read_tools_are_real() {
         "initial"
     );
 }
+
+struct BudgetClock(std::sync::atomic::AtomicU64);
+impl ClockPort for BudgetClock {
+    fn now_ms(&self) -> u64 {
+        self.0.load(std::sync::atomic::Ordering::SeqCst)
+    }
+}
+struct BudgetTool {
+    entered: Arc<tokio::sync::Notify>,
+    release: Arc<tokio::sync::Notify>,
+}
+#[async_trait::async_trait]
+impl Tool for BudgetTool {
+    fn metadata(&self) -> ToolMetadata {
+        ToolMetadata {
+            name: "budget.test".into(),
+            version: "1".into(),
+            description: "fixture".into(),
+            capabilities: vec![],
+            input_schema: json!({"type":"object"}),
+            output_schema: json!({}),
+            risk: "read".into(),
+            workload: Workload::FileRead,
+        }
+    }
+    async fn execute(&self, input: Value, ctx: ToolContext) -> runtime_ports::Result<Value> {
+        if input["hold"] == true {
+            self.entered.notify_one();
+            self.release.notified().await;
+            return Ok(json!({}));
+        }
+        ctx.cancellation.cancelled().await;
+        Err(PortError::Cancelled)
+    }
+}
+#[tokio::test]
+async fn queued_operation_deadline_uses_one_monotonic_budget_despite_wall_clock_rollback() {
+    let (_root, _state, k) = fixture().await;
+    let entered = Arc::new(tokio::sync::Notify::new());
+    let release = Arc::new(tokio::sync::Notify::new());
+    let mut registry = runtime_application::Registry::new();
+    registry
+        .register(Arc::new(BudgetTool {
+            entered: entered.clone(),
+            release: release.clone(),
+        }))
+        .unwrap();
+    let mut limits = runtime_application::SchedulerLimits::default();
+    limits.file_reads = 1;
+    let executor = runtime_application::Executor::new(
+        k.services.store.clone(),
+        registry,
+        ExecutionPolicy::new([]),
+        limits,
+    )
+    .unwrap();
+    let clock = Arc::new(BudgetClock(std::sync::atomic::AtomicU64::new(10000)));
+    let make = |hold: bool| Operation {
+        id: OperationId::new(),
+        workspace_id: k.workspace.id,
+        task_id: None,
+        trace_id: TraceId::new(),
+        tool: "budget.test".into(),
+        input: serde_json::to_vec(&json!({"hold":hold})).unwrap(),
+        status: OperationStatus::Queued,
+        result: None,
+        created_at: 10000,
+    };
+    let first = make(true);
+    let first_executor = executor.clone();
+    let first_clock = clock.clone();
+    let worker = tokio::spawn(async move {
+        first_executor
+            .execute(first, 20000, first_clock, Arc::new(NoProgress))
+            .await
+    });
+    entered.notified().await;
+    let second = make(false);
+    let second_executor = executor.clone();
+    let second_clock = clock.clone();
+    let queued = tokio::spawn(async move {
+        second_executor
+            .execute(second, 10200, second_clock, Arc::new(NoProgress))
+            .await
+    });
+    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    clock.0.store(0, std::sync::atomic::Ordering::SeqCst);
+    release.notify_one();
+    let result = tokio::time::timeout(std::time::Duration::from_millis(600), queued)
+        .await
+        .expect("wall clock rollback extended execution budget")
+        .unwrap()
+        .unwrap();
+    assert_eq!(result.status, OperationStatus::TimedOut);
+    worker.await.unwrap().unwrap();
+}

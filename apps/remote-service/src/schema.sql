@@ -15,3 +15,9 @@ CREATE INDEX IF NOT EXISTS relay_poll ON relay(device_id, result, lease_until);
 CREATE TABLE IF NOT EXISTS commercial_accounts(user_id TEXT PRIMARY KEY REFERENCES users(id),subject TEXT NOT NULL UNIQUE);
 CREATE TABLE IF NOT EXISTS commercial_nonces(nonce_hash TEXT PRIMARY KEY,next TEXT NOT NULL,expires_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS commercial_admissions(request_id TEXT PRIMARY KEY REFERENCES relay(id) ON DELETE CASCADE,authorized INTEGER NOT NULL DEFAULT 0 CHECK(authorized IN(0,1)));
+
+CREATE TABLE IF NOT EXISTS commercial_dispatches(request_id TEXT PRIMARY KEY REFERENCES relay(id) ON DELETE CASCADE,deadline INTEGER NOT NULL);
+
+CREATE TABLE IF NOT EXISTS commercial_dispatch_claims(request_id TEXT PRIMARY KEY REFERENCES relay(id) ON DELETE CASCADE,token TEXT NOT NULL,claim_until INTEGER NOT NULL,dispatched INTEGER NOT NULL DEFAULT 0 CHECK(dispatched IN(0,1)));
+
+CREATE TABLE IF NOT EXISTS commercial_resources(device_id TEXT NOT NULL REFERENCES devices(id),user_id TEXT NOT NULL REFERENCES users(id),kind TEXT NOT NULL,resource_id TEXT NOT NULL,PRIMARY KEY(device_id,kind,resource_id));

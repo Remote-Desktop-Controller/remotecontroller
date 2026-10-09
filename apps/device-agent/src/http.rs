@@ -79,6 +79,10 @@ pub struct PairStatus {
 pub struct RemoteCommand {
     pub request_id: uuid::Uuid,
     pub envelope: RequestEnvelope,
+    #[serde(default)]
+    pub server_budget_ms: Option<u64>,
+    #[serde(skip)]
+    pub received_at: Option<std::time::Instant>,
 }
 
 #[derive(Deserialize)]
@@ -188,7 +192,15 @@ impl ServiceClient {
         Ok(())
     }
     pub async fn poll(&self) -> Result<PollResponse> {
-        let response: PollResponse = self.request(Method::GET, "/api/agent/poll", None).await?;
+        let started = std::time::Instant::now();
+        let mut response: PollResponse = self.request(Method::GET, "/api/agent/poll", None).await?;
+        for command in &mut response.commands {
+            if let Some(budget) = command.server_budget_ms {
+                command.server_budget_ms =
+                    Some(crate::budget::remaining_budget(budget, started.elapsed()));
+                command.received_at = Some(std::time::Instant::now());
+            }
+        }
         ensure!(response.commands.len() <= 64, "Fila remota excede limite");
         Ok(response)
     }

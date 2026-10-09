@@ -49,6 +49,13 @@ export class Store {
     )
       fail(429, "RATE_LIMIT", "Aguarde antes de tentar novamente.");
   }
+  async hasActiveTestGrant(user: string): Promise<boolean> {
+    try {
+      return await this.rpc<boolean>("portal_has_test_grant", { p_user: user });
+    } catch {
+      return false;
+    }
+  }
   async findOrder(id: string): Promise<Order | null> {
     const { data, error } = await this.db
       .from("portal_orders")

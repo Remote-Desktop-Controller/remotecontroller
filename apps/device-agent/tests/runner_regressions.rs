@@ -261,6 +261,8 @@ async fn commercial_expiry_on_poll_keeps_running_worker_and_delivers_its_result(
     let meta = Metadata::new(Some(workspace), 60_000);
     let request_id = meta.request_id;
     *fixture.observed.commands.lock().unwrap() = vec![RemoteCommand {
+        server_budget_ms: None,
+        received_at: None,
         request_id,
         envelope: RequestEnvelope {
             meta,
@@ -318,6 +320,8 @@ async fn execute_control_tools_reach_ipc_while_four_normal_workers_are_blocked()
         let meta = Metadata::new(Some(workspace), 60_000);
         let request_id = meta.request_id;
         commands.push(RemoteCommand {
+            server_budget_ms: None,
+            received_at: None,
             request_id,
             envelope: RequestEnvelope {
                 meta,
@@ -546,5 +550,35 @@ async fn temporary_result_backlog_does_not_starve_a_later_healthy_delivery() -> 
     );
     stop.cancel();
     task.await??;
+    Ok(())
+}
+
+#[tokio::test]
+async fn commercial_budget_rejects_old_daemon_without_monotonic_capability() -> Result<()> {
+    let fixture = fixture().await?;
+    let (workspace, _) = runner::catalog(&fixture.ipc).await?;
+    let meta = Metadata::new(Some(workspace), 3600000);
+    let command = RemoteCommand {
+        request_id: meta.request_id,
+        envelope: RequestEnvelope {
+            meta: meta.clone(),
+            payload: Request::Execute {
+                tool: "process.wait".into(),
+                input: json!({}),
+            },
+        },
+        server_budget_ms: Some(1000),
+        received_at: Some(std::time::Instant::now()),
+    };
+    let result = runner::execute(&fixture.ipc, command, workspace).await;
+    assert_eq!(
+        result.envelope.payload.unwrap_err().code,
+        runtime_protocol::ErrorCode::PolicyDenied
+    );
+    assert_eq!(
+        result.envelope.meta.deadline, meta.deadline,
+        "result identity must retain server metadata"
+    );
+    assert_eq!(fixture.observed.normal_started.load(Ordering::SeqCst), 0);
     Ok(())
 }

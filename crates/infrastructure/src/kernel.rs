@@ -148,7 +148,7 @@ impl Kernel {
                     })
                     .collect();
                 Ok(
-                    serde_json::json!({"workspace_id":self.workspace.id.to_string(),"protocol_version":VERSION,"tools":tools,"operation_timeout_ms":self.config.operation_timeout_ms}),
+                    serde_json::json!({"workspace_id":self.workspace.id.to_string(),"protocol_version":VERSION,"tools":tools,"operation_timeout_ms":self.config.operation_timeout_ms,"execution_budget":"monotonic_v1"}),
                 )
             }
             Request::Heartbeat => {
@@ -222,7 +222,8 @@ impl Kernel {
                 };
                 let deadline = meta
                     .deadline
-                    .min(now_ms().saturating_add(self.config.operation_timeout_ms));
+                    .min(now_ms().saturating_add(self.config.operation_timeout_ms))
+                    .min(now_ms().saturating_add(meta.timeout_ms.unwrap_or(u64::MAX)));
                 let session_id = meta.session_id.or_else(|| {
                     if op.tool == "session.note" {
                         input["session_id"].as_str().and_then(|id| id.parse().ok())

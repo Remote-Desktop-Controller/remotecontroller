@@ -77,7 +77,34 @@ pub async fn execute(
     command: RemoteCommand,
     workspace: uuid::Uuid,
 ) -> RemoteResult {
-    let request = command.envelope;
+    let mut request = command.envelope;
+    let server_meta = request.meta.clone();
+    let mut budget_denied = false;
+    if let Some(budget) = command.server_budget_ms {
+        // Capability is mandatory: old daemons would ignore the relative budget.
+        let capable = client
+            .request(
+                &RequestEnvelope {
+                    meta: Metadata::new(Some(workspace), 5000),
+                    payload: Request::Catalog,
+                },
+                |_| {},
+            )
+            .await
+            .ok()
+            .and_then(|v| v.payload.ok())
+            .is_some_and(|v| v["execution_budget"] == "monotonic_v1");
+        let remaining = crate::budget::remaining_budget(
+            budget,
+            command
+                .received_at
+                .map(|v| v.elapsed())
+                .unwrap_or(Duration::ZERO),
+        );
+        budget_denied = !capable || remaining == 0;
+        request.meta.deadline = runtime_protocol::now_ms().saturating_add(remaining);
+        request.meta.timeout_ms = Some(remaining);
+    }
     let allowed = request.meta.workspace_id == Some(workspace)
         && matches!(
             request.payload,
@@ -87,7 +114,15 @@ pub async fn execute(
                 | Request::Cancel { .. }
                 | Request::GetOperation { .. }
         );
-    let result = if !allowed {
+    let result = if budget_denied {
+        ResponseEnvelope {
+            meta: request.meta.clone(),
+            payload: Err(ErrorEnvelope::new(
+                ErrorCode::PolicyDenied,
+                "Daemon sem suporte verificável ao prazo monotônico, ou orçamento esgotado",
+            )),
+        }
+    } else if !allowed {
         ResponseEnvelope {
             meta: request.meta.clone(),
             payload: Err(ErrorEnvelope::new(
@@ -116,6 +151,8 @@ pub async fn execute(
             },
         }
     };
+    let mut result = result;
+    result.meta = server_meta;
     let fallback = result.meta.clone();
     let result = crate::bounded_result(result).unwrap_or_else(|_| ResponseEnvelope {
         meta: fallback,

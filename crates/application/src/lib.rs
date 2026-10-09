@@ -171,6 +171,8 @@ impl<S: Storage + 'static> Executor<S> {
         clock: Arc<dyn ClockPort>,
         progress: Arc<dyn ProgressPort>,
     ) -> Result<Operation> {
+        let monotonic_deadline = tokio::time::Instant::now()
+            + Duration::from_millis(deadline.saturating_sub(clock.now_ms()));
         self.store.get_workspace(op.workspace_id).await?;
         match self.store.operation(op.id).await {
             Ok(previous) => {
@@ -217,7 +219,14 @@ impl<S: Storage + 'static> Executor<S> {
         tokio::spawn(async move {
             let _admission = permit;
             let result = executor
-                .run(op, tool, cancellation, deadline, worker_clock, progress)
+                .run(
+                    op,
+                    tool,
+                    cancellation,
+                    monotonic_deadline,
+                    worker_clock,
+                    progress,
+                )
                 .await;
             if let Err(error) = result {
                 tracing::error!(operation=%id,error=%error,"execution persistence failure");
@@ -271,18 +280,17 @@ impl<S: Storage + 'static> Executor<S> {
         op: Operation,
         tool: Arc<dyn Tool>,
         token: CancellationToken,
-        deadline: u64,
+        deadline: tokio::time::Instant,
         clock: Arc<dyn ClockPort>,
         progress: Arc<dyn ProgressPort>,
     ) -> Result<()> {
-        let duration = Duration::from_millis(deadline.saturating_sub(clock.now_ms()));
         let acquire = self.classes[&tool.metadata().workload]
             .clone()
             .acquire_owned();
         let admission = tokio::select! {
             biased;
             _ = token.cancelled() => Err(PortError::Cancelled),
-            _ = tokio::time::sleep(duration) => Err(PortError::TimedOut),
+            _ = tokio::time::sleep_until(deadline) => Err(PortError::TimedOut),
             p = acquire => p.map_err(|_| PortError::Busy),
         };
         self.metrics.queue_depth.fetch_sub(1, Ordering::Relaxed);
@@ -314,12 +322,11 @@ impl<S: Storage + 'static> Executor<S> {
                             Err(PortError::Tool("tool panicked; operation failed".into()))
                         })
                 });
-                let remaining = Duration::from_millis(deadline.saturating_sub(clock.now_ms()));
                 let workload = tool.metadata().workload;
                 tokio::select! {
                     biased;
                     _ = token.cancelled() => { match execution.await {Ok(value) if workload==Workload::FileWrite=>Ok(value),Err(PortError::Cancelled)=>Err(PortError::Cancelled),Err(error) if workload==Workload::FileWrite=>Err(error),_=>Err(PortError::Cancelled)} },
-                    _ = tokio::time::sleep(remaining) => { token.cancel(); match execution.await {Ok(value) if workload==Workload::FileWrite=>Ok(value),Err(PortError::Cancelled)=>Err(PortError::TimedOut),Err(error) if workload==Workload::FileWrite=>Err(error),_=>Err(PortError::TimedOut)} },
+                    _ = tokio::time::sleep_until(deadline) => { token.cancel(); match execution.await {Ok(value) if workload==Workload::FileWrite=>Ok(value),Err(PortError::Cancelled)=>Err(PortError::TimedOut),Err(error) if workload==Workload::FileWrite=>Err(error),_=>Err(PortError::TimedOut)} },
                     r = &mut execution => r,
                 }
             }

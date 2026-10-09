@@ -16,13 +16,16 @@ describe("server commercial boundary", () => {
     expect(getPublicConfig().salesEnabled).toBe(true);
     expect(JSON.stringify(getPublicConfig())).not.toContain("secret-value");
   });
-  it("requires explicit price and sales flag even in sandbox", () => {
+  it("keeps the fixed Premium price independent of stale environment and requires sales flag", () => {
     vi.stubEnv("ASAAS_ENV", "sandbox");
     vi.stubEnv("SALES_ENABLED", "true");
     vi.stubEnv("PORTAL_PRICE_CENTS", "");
-    expect(getPublicConfig().salesEnabled).toBe(false);
+    expect(getPublicConfig().priceCents).toBe(990);
+    expect(getPublicConfig().salesEnabled).toBe(true);
     vi.stubEnv("PORTAL_PRICE_CENTS", "2990");
     expect(getPublicConfig().salesEnabled).toBe(true);
+    vi.stubEnv("SALES_ENABLED", "false");
+    expect(getPublicConfig().salesEnabled).toBe(false);
   });
   it("disables remote availability without authenticated configured service", () => {
     vi.stubEnv("REMOTE_SERVICE_AVAILABLE", "true");

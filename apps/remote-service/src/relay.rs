@@ -85,87 +85,177 @@ pub(crate) async fn poll(
     state.rate(format!("agent-poll:{}", device.id), 120).await?;
     let start = Instant::now();
     loop {
-        // Presence is independent of a paid right: a newly paired computer must stay
-        // online until its first authorized operation. Inspect only when there is
-        // deliverable work, immediately before leasing it. Empty long polls never
-        // consume the portal's per-subject quota.
-        let pending = {
+        // Select candidates without a transaction across the authoritative HTTP reservation.
+        let candidates = {
             let connection = state.store.lock().await;
-            let row = store::first(&connection,
-                "SELECT EXISTS(SELECT 1 FROM relay r WHERE device_id=?1 AND user_id=?2 AND result IS NULL AND deadline>?3 AND lease_until<=?4 AND (?5=0 OR EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=r.id AND c.authorized=1)) AND EXISTS(SELECT 1 FROM grants g WHERE g.family=r.grant_family AND g.revoked=0 AND g.expires_at>?4))",
-                params![device.id.clone(),device.owner.clone(),runtime_protocol::now_ms() as i64,security::now(),i64::from(state.config.commercial.is_some())]).await?;
-            store::integer(&row, 0)? != 0
+            let mut rows=connection.query("SELECT r.id,r.envelope,c.deadline FROM relay r LEFT JOIN commercial_dispatches c ON c.request_id=r.id WHERE device_id=?1 AND user_id=?2 AND result IS NULL AND r.deadline>?3 AND lease_until<=?4 AND NOT EXISTS(SELECT 1 FROM commercial_dispatch_claims q WHERE q.request_id=r.id AND q.claim_until>?4) AND (?5=0 OR EXISTS(SELECT 1 FROM commercial_admissions a WHERE a.request_id=r.id AND a.authorized=1)) AND EXISTS(SELECT 1 FROM grants g WHERE g.family=r.grant_family AND g.revoked=0 AND g.expires_at>?4) ORDER BY CASE WHEN json_extract(envelope,'$.payload.Execute.tool') IN ('operation.status','operation.cancel','process.kill','terminal.close') THEN 0 ELSE 1 END,created_at LIMIT 8",params![device.id.clone(),device.owner.clone(),runtime_protocol::now_ms() as i64,security::now(),i64::from(state.config.commercial.is_some())]).await?;
+            let mut values = Vec::new();
+            while let Some(row) = rows.next().await? {
+                values.push((
+                    store::text(&row, 0)?,
+                    serde_json::from_str::<RequestEnvelope>(&store::text(&row, 1)?)?,
+                    row.get::<Option<i64>>(2)?,
+                ));
+            }
+            values
         };
-        let commercial_expiry = if pending {
-            commercial::authorize(&state, &device.owner, uuid::Uuid::new_v4(), false, false)
+        let mut commands = Vec::new();
+        let mut deferred_error = None;
+        let mut budgets = std::collections::HashMap::new();
+        for (id, mut envelope, persisted) in candidates {
+            let recovery = recovery(&envelope.payload);
+            let mut deadline = envelope.meta.deadline;
+            let commercial = state.config.commercial.is_some() && !recovery;
+            let claim = uuid::Uuid::new_v4().to_string();
+            if commercial {
+                let connection = state.store.lock().await;
+                let changed=connection.execute("INSERT INTO commercial_dispatch_claims(request_id,token,claim_until) VALUES(?1,?2,?3) ON CONFLICT(request_id) DO UPDATE SET token=excluded.token,claim_until=excluded.claim_until WHERE commercial_dispatch_claims.claim_until<=?4",params![id.clone(),claim.clone(),security::now()+30,security::now()]).await?;
+                if changed == 0 {
+                    continue;
+                }
+            }
+            let mut budget_end = None;
+            if commercial {
+                // Even redelivery/restart asks SQL for the remaining duration of the SAME interval.
+                let seconds =
+                    (deadline.saturating_sub(runtime_protocol::now_ms()) / 1000).clamp(1, 120);
+                let reply = match commercial::usage(
+                    &state,
+                    &device.owner,
+                    envelope.meta.operation_id,
+                    "reserve",
+                    seconds,
+                )
                 .await
-                .map_err(|error| {
-                    if error.status == StatusCode::FORBIDDEN {
-                        // 401/403 tell the agent its device token is revoked and
-                        // stop all workers. A missing paid right is recoverable;
-                        // already started workers may still upload their result.
-                        ApiError::new(
-                            StatusCode::PAYMENT_REQUIRED,
-                            "commercial_access_required",
-                            "Acesso comercial indisponível para novas operações",
-                        )
-                    } else {
-                        error
+                {
+                    Ok(Some(reply)) => reply,
+                    Ok(None) => {
+                        deferred_error = Some(ApiError::forbidden());
+                        continue;
                     }
-                })?
-        } else {
-            None
-        };
-        let commands = {
+                    Err(error) => {
+                        deferred_error = Some(error);
+                        continue;
+                    }
+                };
+                if let Err(error) = reply.check() {
+                    release_claim(&state, &id, &claim).await?;
+                    deferred_error = Some(error);
+                    continue;
+                }
+                if let Request::Execute { tool, .. } = &envelope.payload {
+                    if let Err(error) = commercial::bounded(&reply, tool) {
+                        abort_claim(
+                            &state,
+                            &device.owner,
+                            &id,
+                            &claim,
+                            envelope.meta.operation_id,
+                        )
+                        .await?;
+                        deferred_error = Some(error);
+                        continue;
+                    }
+                }
+                let remaining = reply.remaining_ms();
+                budget_end = Some(Instant::now() + Duration::from_millis(remaining));
+                deadline = deadline.min(runtime_protocol::now_ms().saturating_add(remaining));
+                if let Some(saved) = persisted {
+                    deadline = deadline.min(saved as u64);
+                }
+            }
             let connection = state.store.lock().await;
             let tx = connection
                 .transaction_with_behavior(libsql::TransactionBehavior::Immediate)
                 .await?;
-            let mut live = tx
-                .query(
-                    "SELECT revoked FROM devices WHERE id=?1",
-                    params![device.id.clone()],
+            if state.config.commercial.is_some() && !recovery {
+                tx.execute("INSERT INTO commercial_dispatches(request_id,deadline) VALUES(?1,?2) ON CONFLICT(request_id) DO NOTHING",params![id.clone(),deadline as i64]).await?;
+                let row = store::first(
+                    &tx,
+                    "SELECT deadline FROM commercial_dispatches WHERE request_id=?1",
+                    params![id.clone()],
                 )
                 .await?;
-            let row = live.next().await?.ok_or_else(ApiError::unauthorized)?;
-            drop(live);
-            if store::integer(&row, 0)? != 0 {
-                return Err(ApiError::unauthorized());
+                deadline = deadline.min(store::integer(&row, 0)? as u64);
             }
-            if commercial_expiry.is_some_and(|expiry| expiry <= security::now()) {
-                return Err(ApiError::new(
-                    StatusCode::PAYMENT_REQUIRED,
-                    "commercial_access_required",
-                    "Acesso comercial expirou antes da entrega",
-                ));
+            let mut previously_dispatched = false;
+            if commercial {
+                let own=tx.query("SELECT dispatched FROM commercial_dispatch_claims WHERE request_id=?1 AND token=?2 AND claim_until>?3",params![id.clone(),claim.clone(),security::now()]).await?.next().await?;
+                if let Some(row) = own {
+                    previously_dispatched = store::integer(&row, 0)? != 0;
+                } else {
+                    tx.commit().await?;
+                    continue;
+                }
             }
-            // Do not lease work that appeared while an empty-poll query was in
-            // flight; that work needs its own fresh commercial inspection.
-            let mut rows=tx.query("SELECT id,envelope FROM relay r WHERE ?6=1 AND device_id=?1 AND user_id=?2 AND result IS NULL AND deadline>?3 AND lease_until<=?4 AND (?5=0 OR EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=r.id AND c.authorized=1)) AND EXISTS(SELECT 1 FROM grants g WHERE g.family=r.grant_family AND g.revoked=0 AND g.expires_at>?4) ORDER BY created_at LIMIT 8",params![device.id.clone(),device.owner.clone(),runtime_protocol::now_ms() as i64,security::now(),i64::from(state.config.commercial.is_some()),i64::from(pending)]).await?;
-            let mut commands = Vec::new();
-            while let Some(row) = rows.next().await? {
-                commands.push((
-                    store::text(&row, 0)?,
-                    serde_json::from_str::<Value>(&store::text(&row, 1)?)?,
-                ));
+            if deadline <= runtime_protocol::now_ms()
+                || budget_end.is_some_and(|end| end <= Instant::now())
+            {
+                tx.commit().await?;
+                drop(connection);
+                if commercial {
+                    abort_claim(
+                        &state,
+                        &device.owner,
+                        &id,
+                        &claim,
+                        envelope.meta.operation_id,
+                    )
+                    .await?;
+                }
+                continue;
             }
-            drop(rows);
-            for (id, _) in &commands {
-                tx.execute(
-                    "UPDATE relay SET lease_until=?1 WHERE id=?2",
-                    params![security::now() + 30, id.clone()],
-                )
-                .await?;
+            if !previously_dispatched {
+                envelope.meta.deadline = deadline;
+            }
+            let changed=tx.execute("UPDATE relay SET lease_until=?1,deadline=?2,envelope=?3 WHERE id=?4 AND result IS NULL AND lease_until<=?5 AND EXISTS(SELECT 1 FROM devices d WHERE d.id=relay.device_id AND d.revoked=0) AND EXISTS(SELECT 1 FROM grants g WHERE g.family=relay.grant_family AND g.revoked=0 AND g.expires_at>?5)",params![security::now()+30,deadline as i64,serde_json::to_string(&envelope)?,id.clone(),security::now()]).await?;
+            if changed > 0 && commercial {
+                tx.execute("UPDATE commercial_dispatch_claims SET dispatched=1,claim_until=0 WHERE request_id=?1 AND token=?2",params![id.clone(),claim.clone()]).await?;
             }
             tx.commit().await?;
-            commands
-                .into_iter()
-                .map(|(id, envelope)| json!({"request_id":id,"envelope":envelope}))
-                .collect::<Vec<_>>()
-        };
+            drop(connection);
+            if changed > 0 {
+                if let Some(end) = budget_end {
+                    budgets.insert(id.clone(), end);
+                }
+                commands.push(json!({"request_id":id,"envelope":envelope}));
+            } else if commercial {
+                abort_claim(
+                    &state,
+                    &device.owner,
+                    &id,
+                    &claim,
+                    envelope.meta.operation_id,
+                )
+                .await?;
+            }
+        }
+        if commands.is_empty() {
+            if let Some(error) = deferred_error {
+                return Err(error);
+            }
+        }
         if !commands.is_empty()
             || start.elapsed() >= Duration::from_secs(state.config.poll_seconds.min(25))
         {
+            if state.config.commercial.is_some() {
+                for command in &mut commands {
+                    let deadline = command["envelope"]["meta"]["deadline"]
+                        .as_u64()
+                        .unwrap_or(0);
+                    let monotonic = command["request_id"]
+                        .as_str()
+                        .and_then(|id| budgets.get(id))
+                        .map(|end| end.saturating_duration_since(Instant::now()).as_millis() as u64)
+                        .unwrap_or(120000);
+                    command["server_budget_ms"] = json!(
+                        deadline
+                            .saturating_sub(runtime_protocol::now_ms())
+                            .min(120000)
+                            .min(monotonic)
+                    );
+                }
+            }
             return Ok(Json(json!({"commands":commands})));
         }
         tokio::time::sleep(Duration::from_millis(250)).await;
@@ -192,7 +282,7 @@ pub(crate) async fn result(
     let tx = connection
         .transaction_with_behavior(libsql::TransactionBehavior::Immediate)
         .await?;
-    let mut rows=tx.query("SELECT envelope,result FROM relay WHERE id=?1 AND device_id=?2 AND user_id=?3 AND (?4=0 OR (lease_until>0 AND EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=relay.id AND c.authorized=1))) AND EXISTS(SELECT 1 FROM devices WHERE id=?2 AND revoked=0)",params![input.request_id.to_string(),device.id,device.owner,i64::from(state.config.commercial.is_some())]).await?;
+    let mut rows=tx.query("SELECT envelope,result FROM relay WHERE id=?1 AND device_id=?2 AND user_id=?3 AND (?4=0 OR (lease_until>0 AND EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=relay.id AND c.authorized=1))) AND EXISTS(SELECT 1 FROM devices WHERE id=?2 AND revoked=0)",params![input.request_id.to_string(),device.id.clone(),device.owner.clone(),i64::from(state.config.commercial.is_some())]).await?;
     let row = rows.next().await?.ok_or_else(ApiError::not_found)?;
     drop(rows);
     let expected: RequestEnvelope = serde_json::from_str(&store::text(&row, 0)?)?;
@@ -217,7 +307,35 @@ pub(crate) async fn result(
         )
         .await?;
     }
+    if let Request::Execute { tool, .. } = &expected.payload {
+        let producer = match tool.as_str() {
+            "process.spawn" => Some(("process", "process_id")),
+            "terminal.open" => Some(("terminal", "terminal_id")),
+            _ => None,
+        };
+        if let (Some((kind, field)), Ok(value)) = (producer, &input.envelope.payload) {
+            if value["status"] == "Succeeded" && value["tool"] == *tool {
+                if let Some(resource) = value["result"][field]
+                    .as_str()
+                    .and_then(|v| v.parse::<uuid::Uuid>().ok())
+                {
+                    tx.execute("INSERT INTO commercial_resources(device_id,user_id,kind,resource_id) VALUES(?1,?2,?3,?4) ON CONFLICT DO NOTHING",params![device.id.clone(),device.owner.clone(),kind,resource.to_string()]).await?;
+                }
+            }
+        }
+    }
     tx.commit().await?;
+    drop(connection);
+    if !recovery(&expected.payload) && terminal_result(&input.envelope) {
+        commercial::usage(
+            &state,
+            &device.owner,
+            expected.meta.operation_id,
+            "complete",
+            120,
+        )
+        .await?;
+    }
     Ok(Json(json!({"ok":true})))
 }
 pub(crate) async fn unsupported_stream(
@@ -285,7 +403,12 @@ pub(crate) async fn mcp(
     Json(input): Json<Rpc>,
 ) -> ApiResult<Response> {
     let mut grant = oauth::grant(&state, &headers).await?;
-    commercial::authorize(&state, &grant.user_id, uuid::Uuid::new_v4(), false, true).await?;
+    if !matches!(
+        input.params["name"].as_str(),
+        Some("operation.status" | "operation.cancel" | "process.kill" | "terminal.close")
+    ) {
+        commercial::authorize(&state, &grant.user_id, uuid::Uuid::new_v4(), false, true).await?;
+    }
     // A single paired PC must expose its tools on the host's first discovery request.
     if grant.selected_device.is_none() {
         let connection = state.store.lock().await;
@@ -485,6 +608,33 @@ async fn forward(
     tool: &str,
     mut input: Value,
 ) -> ApiResult<Value> {
+    let is_recovery = recovery_tool(tool);
+    if is_recovery && state.config.commercial.is_some() {
+        let connection = state.store.lock().await;
+        if matches!(tool, "operation.status" | "operation.cancel") {
+            let target = input["operation_id"]
+                .as_str()
+                .and_then(|v| v.parse::<uuid::Uuid>().ok())
+                .ok_or_else(ApiError::forbidden)?;
+            store::first(&connection,"SELECT id FROM relay WHERE device_id=?1 AND user_id=?2 AND operation_id=?3 AND lease_until>0",params![device.id.clone(),grant.user_id.clone(),target.to_string()]).await.map_err(|_|ApiError::forbidden())?;
+        } else {
+            let (kind, field) = if tool == "process.kill" {
+                ("process", "process_id")
+            } else {
+                ("terminal", "terminal_id")
+            };
+            let target = input[field]
+                .as_str()
+                .and_then(|v| v.parse::<uuid::Uuid>().ok())
+                .ok_or_else(ApiError::forbidden)?;
+            store::first(&connection,"SELECT resource_id FROM commercial_resources WHERE device_id=?1 AND user_id=?2 AND kind=?3 AND resource_id=?4",params![device.id.clone(),grant.user_id.clone(),kind,target.to_string()]).await.map_err(|_|ApiError::forbidden())?;
+        }
+    } else if let Some(reply) =
+        commercial::usage(state, &grant.user_id, uuid::Uuid::new_v4(), "inspect", 120).await?
+    {
+        reply.check()?;
+        commercial::bounded(&reply, tool)?;
+    }
     let local_session_argument = device
         .tools
         .iter()
@@ -575,7 +725,7 @@ async fn forward(
     if serialized.len() > 512 * 1024 {
         return Err(ApiError::bad("Requisição remota excede 512 KiB"));
     }
-    let (request_id, execute, operation) = {
+    let (request_id, _execute, _operation) = {
         let connection = state.store.lock().await;
         let tx = connection
             .transaction_with_behavior(libsql::TransactionBehavior::Immediate)
@@ -628,8 +778,10 @@ async fn forward(
             let mut count=tx.query("SELECT COUNT(*),COALESCE(SUM(CASE WHEN result IS NULL AND deadline>?2 THEN 1 ELSE 0 END),0) FROM relay WHERE device_id=?1",params![device.id.clone(),runtime_protocol::now_ms()as i64]).await?;
             let row = count.next().await?.ok_or_else(ApiError::not_found)?;
             drop(count);
-            if store::integer(&row, 0)? >= state.config.result_limit
-                || store::integer(&row, 1)? >= state.config.queue_limit
+            if store::integer(&row, 0)?
+                >= state.config.result_limit + if is_recovery { 16 } else { 0 }
+                || store::integer(&row, 1)?
+                    >= state.config.queue_limit + if is_recovery { 16 } else { 0 }
             {
                 return Err(ApiError::quota());
             }
@@ -647,13 +799,9 @@ async fn forward(
         tx.commit().await?;
         (id, execute, operation)
     };
-    // Local queue reservation is committed before activation; poll cannot deliver it yet.
-    let expiry = commercial::authorize(state, &grant.user_id, operation, execute, false).await?;
+    // Enqueue is an inspection only; the poll reserves this persisted operation identity.
     if state.config.commercial.is_some() {
         let connection = state.store.lock().await;
-        if expiry.is_none_or(|expiry| expiry <= security::now()) {
-            return Err(ApiError::forbidden());
-        }
         let changed=connection.execute("UPDATE commercial_admissions SET authorized=1 WHERE request_id=?1 AND EXISTS(SELECT 1 FROM relay r JOIN devices d ON d.id=r.device_id WHERE r.id=?1 AND d.revoked=0 AND EXISTS(SELECT 1 FROM grants g WHERE g.id=?2 AND g.revoked=0 AND g.expires_at>?3))",params![request_id.clone(),grant.id.clone(),security::now()]).await?;
         if changed == 0 {
             return Err(ApiError::forbidden());
@@ -670,15 +818,6 @@ async fn forward(
             )
         };
         if let Some(saved) = saved {
-            let expiry =
-                commercial::authorize(state, &grant.user_id, operation, false, false).await?;
-            if state.config.commercial.is_some() {
-                let connection = state.store.lock().await;
-                if expiry.is_none_or(|expiry| expiry <= security::now()) {
-                    return Err(ApiError::forbidden());
-                }
-                store::first(&connection,"SELECT r.id FROM relay r JOIN devices d ON d.id=r.device_id JOIN grants g ON g.id=?3 WHERE r.id=?1 AND r.user_id=?2 AND d.revoked=0 AND g.revoked=0 AND g.expires_at>?4 AND EXISTS(SELECT 1 FROM commercial_admissions c WHERE c.request_id=r.id AND c.authorized=1)",params![request_id.clone(),grant.user_id.clone(),grant.id.clone(),security::now()]).await.map_err(|_|ApiError::forbidden())?;
-            }
             let response: ResponseEnvelope = serde_json::from_str(&saved)?;
             return Ok(match response.payload {
                 Ok(value) => {
@@ -701,4 +840,52 @@ async fn forward(
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
+}
+
+fn recovery_tool(tool: &str) -> bool {
+    matches!(
+        tool,
+        "operation.status" | "operation.cancel" | "process.kill" | "terminal.close"
+    )
+}
+fn recovery(payload: &Request) -> bool {
+    matches!(payload,Request::Execute{tool,..} if recovery_tool(tool))
+}
+
+fn terminal_result(reply: &ResponseEnvelope) -> bool {
+    reply.payload.as_ref().ok().is_some_and(|value| {
+        matches!(
+            value["status"].as_str(),
+            Some("Succeeded" | "Failed" | "Cancelled" | "TimedOut")
+        )
+    })
+}
+
+async fn release_claim(state: &AppState, id: &str, token: &str) -> ApiResult<()> {
+    let connection = state.store.lock().await;
+    connection
+        .execute(
+            "UPDATE commercial_dispatch_claims SET claim_until=0 WHERE request_id=?1 AND token=?2",
+            params![id, token],
+        )
+        .await?;
+    Ok(())
+}
+async fn abort_claim(
+    state: &AppState,
+    owner: &str,
+    id: &str,
+    token: &str,
+    operation: uuid::Uuid,
+) -> ApiResult<()> {
+    // Permanently fence this never-dispatched job BEFORE HTTP. A suspended abort
+    // must never cancel a claim reclaimed and delivered by another poll.
+    let safe = {
+        let connection = state.store.lock().await;
+        connection.execute("UPDATE commercial_dispatch_claims SET claim_until=9223372036854775807 WHERE request_id=?1 AND token=?2 AND claim_until>?3 AND dispatched=0",params![id,token,security::now()]).await?>0
+    };
+    if safe {
+        commercial::usage(state, owner, operation, "abort", 120).await?;
+    }
+    Ok(())
 }

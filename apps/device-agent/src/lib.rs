@@ -1,4 +1,5 @@
 pub mod autostart;
+mod budget;
 pub mod daemon;
 pub mod http;
 pub mod profile;

@@ -27,6 +27,7 @@ pub struct ApiError {
     pub code: &'static str,
     pub message: &'static str,
     pub challenge: Option<String>,
+    pub details: Option<serde_json::Value>,
 }
 impl ApiError {
     pub fn bad(message: &'static str) -> Self {
@@ -66,6 +67,7 @@ impl ApiError {
             code,
             message,
             challenge: None,
+            details: None,
         }
     }
 }
@@ -92,11 +94,10 @@ impl From<serde_json::Error> for ApiError {
 }
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        let mut response = (
-            self.status,
-            Json(json!({"error":self.code,"message":self.message})),
-        )
-            .into_response();
+        let mut body = self.details.unwrap_or_else(|| json!({}));
+        body["error"] = json!(self.code);
+        body["message"] = json!(self.message);
+        let mut response = (self.status, Json(body)).into_response();
         if let Some(challenge) = self.challenge
             && let Ok(value) = challenge.parse()
         {

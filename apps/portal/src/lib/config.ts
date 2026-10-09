@@ -33,12 +33,7 @@ function download(value: string | null) {
   }
 }
 export function getConfig() {
-  const value = text("PORTAL_PRICE_CENTS");
-  const price = value && /^\d+$/.test(value) ? Number(value) : NaN;
-  const priceCents =
-    Number.isSafeInteger(price) && price > 0 && price <= 100000000
-      ? price
-      : null;
+  const priceCents = 990;
   const environment = text("ASAAS_ENV") ?? "sandbox";
   const environmentValid = ["sandbox", "production"].includes(environment);
   const sandbox = environment !== "production";
@@ -69,6 +64,7 @@ export function getConfig() {
   );
   return {
     priceCents,
+    freeDailyEnabled: text("FREE_DAILY_ENABLED") === "true",
     sandbox,
     salesEnabled:
       environmentValid &&
@@ -108,6 +104,7 @@ export function getPublicConfig() {
   const c = getConfig();
   return {
     priceCents: c.priceCents,
+    freeDailyEnabled: c.freeDailyEnabled,
     salesEnabled: c.salesEnabled,
     sandbox: c.sandbox,
     serviceAvailable: c.serviceAvailable,

@@ -61,6 +61,35 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("commercial HTTP contracts", () => {
+  it("authenticates quota before parsing or database access",async()=>{
+    vi.stubEnv("FREE_DAILY_ENABLED","true");
+    const result=await route(handlers.usage)(post("/api/mcp/usage",{subject,operation_id:operation,action:"reserve"}),{});
+    expect(result.status).toBe(401);
+    expect(f.rpc).not.toHaveBeenCalled();
+  });
+  it("rejects caller durations, oversized reservations and foreign fields",async()=>{
+    vi.stubEnv("FREE_DAILY_ENABLED","true");
+    for(const extra of [{max_seconds:1800},{elapsed_seconds:0},{device_id:operation},{max_seconds:-1}]){
+      const result=await route(handlers.usage)(post("/api/mcp/usage",{subject,operation_id:operation,action:"reserve",...extra},{authorization:"Bearer "+"s".repeat(32)}),{});
+      expect(result.status).toBe(400);
+    }
+    expect(f.rpc).not.toHaveBeenCalled();
+  });
+  it("blocks legacy services that cannot enforce dispatch leases when Free is enabled",async()=>{
+    vi.stubEnv("FREE_DAILY_ENABLED","true");vi.stubEnv("REMOTE_SERVICE_AVAILABLE","true");
+    f.rpc.mockResolvedValue({subject,operation_id:operation,allowed:true,plan:"FREE"});
+    const result=await route(handlers.authorize)(post("/api/mcp/authorize",{subject,operation_id:operation,mode:"execute"},{authorization:"Bearer "+"s".repeat(32)}),{});
+    expect(result.status).toBe(503);
+    expect(await result.json()).toMatchObject({error:"SERVICE_UPGRADE_REQUIRED"});
+    expect(f.rpc).not.toHaveBeenCalled();
+  });
+  it("returns structured exhaustion with reset and never converts it to paid revenue",async()=>{
+    vi.stubEnv("FREE_DAILY_ENABLED","true");vi.stubEnv("REMOTE_SERVICE_AVAILABLE","true");
+    f.rpc.mockResolvedValue({subject,operation_id:operation,allowed:false,plan:"FREE",error_code:"FREE_DAILY_LIMIT_REACHED",remaining_seconds:0,resets_at:1791601200});
+    const result=await route(handlers.usage)(post("/api/mcp/usage",{subject,operation_id:operation,action:"reserve"},{authorization:"Bearer "+"s".repeat(32)}),{});
+    expect(await result.json()).toMatchObject({error_code:"FREE_DAILY_LIMIT_REACHED",resets_at:1791601200});
+    expect(f.rpc.mock.calls.map(([name])=>name)).toEqual(["portal_usage"]);
+  });
   it("does not diagnose an unavailable partial-refund checkbox as required webhook misconfiguration", async () => {
     vi.stubEnv("ASAAS_WEBHOOK_TOKEN", "w".repeat(32)); vi.stubEnv("ASAAS_API_KEY", "fixture");
     f.from.mockImplementation(() => ({ select: (_c: string, o?: { head?: boolean }) => o?.head ? Promise.resolve({ count: 0, error: null }) : { eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) } }));
