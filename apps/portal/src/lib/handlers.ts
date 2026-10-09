@@ -6,6 +6,7 @@ import { authenticatedUser, administrator, sessionClient } from "./supabase";
 import { Billing } from "./billing";
 import { Asaas } from "./asaas";
 import { webhookDiagnostics } from "./webhook-diagnostics";
+import { safeNext } from "./auth-session";
 import { Store, type Order } from "./store";
 import {
   fail,
@@ -17,6 +18,7 @@ import {
   uuid,
   response,
   type RouteContext,
+  HttpError,
 } from "./http";
 
 const credentials = z
@@ -117,7 +119,7 @@ export async function login(r: Request) {
 export async function logout(r: Request) {
   sameOrigin(r);
   const client = await sessionClient();
-  const { error } = await client.auth.signOut();
+  const { error } = await client.auth.signOut({ scope: "local" });
   if (error)
     fail(
       503,
@@ -125,6 +127,17 @@ export async function logout(r: Request) {
       "Não foi possível encerrar a sessão. Tente novamente.",
     );
   return response({ ok: true });
+}
+export async function session() {
+  try {
+    const user = await authenticatedUser();
+    return response({ user: { id: user.id, email: user.email!, emailVerified: true,
+      confirmedAt: user.email_confirmed_at! } });
+  } catch (error) {
+    if (error instanceof HttpError && [401, 403].includes(error.status))
+      return response({ user: null });
+    throw error;
+  }
 }
 export async function account() {
   const u = await authenticatedUser(),
@@ -387,27 +400,24 @@ export async function callback(r: Request) {
   const code = url.searchParams.get("code");
   const token = url.searchParams.get("token_hash"),
     type = url.searchParams.get("type");
+  const failure = () => Response.redirect(c.portalOrigin + "/login?error=confirmation", 303);
+  if ((code && token) || (!code && !(token && ["email", "signup"].includes(type ?? "")))) return failure();
   const client = await sessionClient();
   let error: unknown;
   if (code) ({ error } = await client.auth.exchangeCodeForSession(code));
   else if (
     token &&
-    (type === "email" || type === "signup" || type === "recovery")
+    (type === "email" || type === "signup")
   )
     ({ error } = await client.auth.verifyOtp({ token_hash: token, type }));
   else error = true;
-  if (error)
-    return Response.redirect(c.portalOrigin + "/login?error=confirmation", 303);
-  const next = url.searchParams.get("next");
-  const safe =
-    next &&
-    next.startsWith("/") &&
-    !next.startsWith("//") &&
-    !next.includes("\\") &&
-    !/[\x00-\x20]/.test(next)
-      ? next
-      : "/dashboard";
-  const target = new URL(safe, c.portalOrigin);
+  if (error) return failure();
+  const { data, error: identityError } = await client.auth.getUser();
+  if (identityError || !data.user?.email || !data.user.email_confirmed_at) {
+    await client.auth.signOut({ scope: "local" });
+    return failure();
+  }
+  const target = new URL(safeNext(url.searchParams.get("next")), c.portalOrigin);
   return Response.redirect(
     target.origin === c.portalOrigin
       ? target

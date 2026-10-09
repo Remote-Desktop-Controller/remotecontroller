@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { getConfig } from "./config";
 import { fail } from "./http";
-export async function sessionClient() {
+export async function sessionClient(options: { readOnly?: boolean } = {}) {
   const c = getConfig();
   if (!c.supabaseUrl || !c.supabaseAnonKey)
     fail(503, "CONFIGURATION", "Autenticação ainda não configurada.");
@@ -13,6 +13,8 @@ export async function sessionClient() {
     cookies: {
       getAll: () => jar.getAll(),
       setAll: (items) => {
+        // Server Components cannot mutate cookies. The dashboard proxy refreshes them.
+        if (options.readOnly) return;
         for (const { name, value, options } of items)
           jar.set(name, value, {
             ...options,
@@ -32,9 +34,11 @@ export function serviceClient() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
-export async function authenticatedUser() {
-  const client = await sessionClient();
+export async function authenticatedUser(options: { readOnly?: boolean } = {}) {
+  const client = await sessionClient(options);
   const { data, error } = await client.auth.getUser();
+  if (error && (error.name === "AuthRetryableFetchError" || (error.status ?? 0) >= 500))
+    fail(503, "AUTH_UNAVAILABLE", "Não foi possível verificar sua sessão. Tente novamente.");
   if (error || !data.user) fail(401, "UNAUTHENTICATED", "Entre na sua conta.");
   if (!data.user.email_confirmed_at || !data.user.email)
     fail(403, "EMAIL_NOT_VERIFIED", "Confirme seu e-mail antes de continuar.");

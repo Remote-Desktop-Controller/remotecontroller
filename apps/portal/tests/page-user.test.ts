@@ -1,0 +1,10 @@
+import { beforeEach, expect, it, vi } from "vitest";
+const f=vi.hoisted(()=>({user:vi.fn(),redirect:vi.fn((url:string)=>{throw new Error("REDIRECT:"+url);})}));
+vi.mock("../src/lib/supabase",()=>({authenticatedUser:f.user}));
+vi.mock("next/navigation",()=>({redirect:f.redirect}));
+import { requirePageUser } from "../src/lib/page-user";
+import { HttpError } from "../src/lib/http";
+beforeEach(()=>vi.clearAllMocks());
+it("requires a fresh verified server identity before rendering dashboard",async()=>{f.user.mockResolvedValue({id:"fixture"});expect(await requirePageUser("/dashboard")).toEqual({id:"fixture"});expect(f.user).toHaveBeenCalledWith({readOnly:true});});
+it.each([401,403])("denies dashboard for absent or unverified identity (%s)",async status=>{f.user.mockRejectedValue(new HttpError(status,"fixture","fixture"));await expect(requirePageUser("/dashboard")).rejects.toThrow("REDIRECT:/login?next=%2Fdashboard");});
+it("never renders dashboard or turns provider failure into success",async()=>{f.user.mockRejectedValue(new HttpError(503,"AUTH_UNAVAILABLE","fixture"));await expect(requirePageUser("/dashboard")).rejects.toMatchObject({status:503});expect(f.redirect).not.toHaveBeenCalled();});

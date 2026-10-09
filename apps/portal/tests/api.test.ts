@@ -9,13 +9,14 @@ const f = vi.hoisted(() => ({
   findOrder: vi.fn(),
   signOut: vi.fn(),
   exchangeCode: vi.fn(),
+  callbackUser: vi.fn(),
   from: vi.fn(),
 }));
 vi.mock("../src/lib/supabase", () => ({
   authenticatedUser: f.user,
   administrator: f.user,
   sessionClient: async () => ({
-    auth: { signOut: f.signOut, exchangeCodeForSession: f.exchangeCode },
+    auth: { signOut: f.signOut, exchangeCodeForSession: f.exchangeCode, getUser: f.callbackUser },
   }),
 }));
 vi.mock("../src/lib/store", () => ({
@@ -469,6 +470,7 @@ describe("commercial HTTP contracts", () => {
   });
   it("auth callback uses provider PKCE verification and safe local redirect", async () => {
     f.exchangeCode.mockResolvedValue({ error: null });
+    f.callbackUser.mockResolvedValue({data:{user:{id:subject,email:"user@example.com",email_confirmed_at:"2026-10-09T00:00:00Z"}},error:null});
     const result = await route(handlers.callback)(
       new Request(
         "https://portal.example/auth/callback?code=fixture&next=" +

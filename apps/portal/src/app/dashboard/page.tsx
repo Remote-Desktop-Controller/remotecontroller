@@ -1,2 +1,4 @@
 import { Dashboard } from "@/components/account-views";
-export default function Page(){return <Dashboard/>;}
+import { requirePageUser } from "@/lib/page-user";
+export const dynamic = "force-dynamic";
+export default async function Page(){await requirePageUser("/dashboard");return <Dashboard/>;}

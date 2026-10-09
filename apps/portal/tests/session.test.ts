@@ -23,6 +23,15 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 describe("verified server identity", () => {
+  it("does not try to mutate cookies from a Server Component", async () => {
+    await sessionClient({readOnly:true});
+    f.create.mock.calls[0][2].cookies.setAll([{name:"fixture",value:"fixture",options:{path:"/"}}]);
+    expect(f.setCookie).not.toHaveBeenCalled();
+  });
+  it("keeps transient Auth failure distinct from a signed-out visitor", async () => {
+    f.getUser.mockResolvedValue({data:{user:null},error:{name:"AuthRetryableFetchError",status:503}});
+    await expect(authenticatedUser()).rejects.toMatchObject({status:503});
+  });
   it("requires fresh Supabase validated identity rather than trusting cookie payload", async () => {
     f.getUser.mockResolvedValue({
       data: { user: null },
