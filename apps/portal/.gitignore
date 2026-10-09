@@ -6,3 +6,7 @@ node_modules/
 coverage/
 playwright-report/
 test-results/
+.vercel/
+
+.vercel
+.env*

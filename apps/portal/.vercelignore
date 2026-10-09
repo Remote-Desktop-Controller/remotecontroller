@@ -1,0 +1,17 @@
+# Upload apenas do portal. Segredos/configuração local nunca entram no deployment.
+.env*
+**/.env*
+.vercel
+**/.vercel/**
+.git
+**/.git/**
+node_modules
+.next
+coverage
+test-results
+playwright-report
+*.log
+*.tsbuildinfo
+tests
+supabase
+AGENTS.md
