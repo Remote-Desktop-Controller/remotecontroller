@@ -8,6 +8,7 @@ const f = vi.hoisted(() => ({
   findOrder: vi.fn(),
   signOut: vi.fn(),
   exchangeCode: vi.fn(),
+  from: vi.fn(),
 }));
 vi.mock("../src/lib/supabase", () => ({
   authenticatedUser: f.user,
@@ -18,6 +19,7 @@ vi.mock("../src/lib/supabase", () => ({
 }));
 vi.mock("../src/lib/store", () => ({
   Store: class {
+    db = { from: f.from };
     rpc = f.rpc;
     rate = f.rate;
     orders = f.orders;
@@ -55,6 +57,21 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("commercial HTTP contracts", () => {
+  it("reads configured webhook and aggregate database records without exposing secrets or customer data", async () => {
+    vi.stubEnv("ASAAS_WEBHOOK_TOKEN", "w".repeat(32));
+    vi.stubEnv("ASAAS_API_KEY", "fixture-private-key");
+    f.from.mockImplementation(() => ({ select: (_columns: string, options?: {head?: boolean}) => options?.head ? Promise.resolve({count: 0, error: null}) : {eq: () => ({maybeSingle: async () => ({data: {hits: 2, starts_at: "2026-10-09T10:00:00Z"}, error: null})})} }));
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>(async input => Response.json(String(input).includes("/webhooks?") ? {data: [{id: "private-hook-id", name: "Remote Controller - Pagamentos", url: "https://portal.example/api/asaas/webhook", enabled: true, interrupted: false, apiVersion: 3, sendType: "NON_SEQUENTIALLY", authToken: "w".repeat(32), events: ["PAYMENT_RECEIVED","PAYMENT_CONFIRMED","PAYMENT_REFUNDED","PAYMENT_PARTIALLY_REFUNDED","PAYMENT_DELETED"]}],hasMore:false} : {data:[{id:"private-payment",customer:"private-customer"}]})));
+    const result = await route(handlers.webhookHealth)(new Request("https://portal.example/api/asaas/webhook?diagnostics=1", {headers:{"asaas-access-token":"w".repeat(32)}}),{});
+    const body = await result.json();
+    expect(result.status).toBe(200);
+    expect(body.diagnostics.database).toMatchObject({orders:0,entitlements:0,events:0,operations:0});
+    expect(body.diagnostics.webhooks.matches).toHaveLength(1);
+    expect(body.diagnostics.webhooks.matches[0]).toMatchObject({urlMatches:true,enabled:true,apiVersion:3,sendType:"NON_SEQUENTIALLY",queueActive:true,tokenMatches:true,missingEvents:[]});
+    expect(JSON.stringify(body)).not.toMatch(/private-payment|private-customer|private-hook-id|fixture-private-key/);
+    expect(JSON.stringify(body)).not.toContain("w".repeat(32));
+    expect(f.rpc).not.toHaveBeenCalled();
+  });
   it("authenticates webhook readiness before database or provider access", async () => {
     vi.stubEnv("ASAAS_WEBHOOK_TOKEN", "w".repeat(32));
     const fetcher = vi.fn();

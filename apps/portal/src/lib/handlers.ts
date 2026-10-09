@@ -5,6 +5,7 @@ import { getConfig, getPublicConfig } from "./config";
 import { authenticatedUser, administrator, sessionClient } from "./supabase";
 import { Billing } from "./billing";
 import { Asaas } from "./asaas";
+import { webhookDiagnostics } from "./webhook-diagnostics";
 import { Store, type Order } from "./store";
 import {
   fail,
@@ -189,8 +190,10 @@ function authenticatedWebhookConfig(r: Request) {
 }
 export async function webhookHealth(r: Request) {
   const c = authenticatedWebhookConfig(r);
-  await new Store().rate("webhook-readiness", 10);
-  const result = await new Asaas(c).request<{ data: unknown[] }>(
+  const store = new Store();
+  const provider = new Asaas(c);
+  await store.rate("webhook-readiness", 10);
+  const result = await provider.request<{ data: unknown[] }>(
     "/payments?limit=1",
   );
   if (!Array.isArray(result.data))
@@ -202,6 +205,9 @@ export async function webhookHealth(r: Request) {
     sandbox: c.sandbox,
     salesEnabled: c.salesEnabled,
     serviceAvailable: c.serviceAvailable,
+    ...(new URL(r.url).searchParams.get("diagnostics") === "1"
+      ? { diagnostics: await webhookDiagnostics(c, store, provider) }
+      : {}),
   });
 }
 export async function webhook(r: Request) {
