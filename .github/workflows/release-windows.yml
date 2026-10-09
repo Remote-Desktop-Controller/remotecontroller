@@ -1,0 +1,129 @@
+name: release-windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versão do release (ex: 0.3.0)'
+        required: true
+        default: '0.3.0'
+      dry_run:
+        description: 'Modo simulação (não publica no repositório público)'
+        type: boolean
+        default: true
+      publish_repo:
+        description: 'Repositório público de distribuição'
+        required: true
+        default: 'Remote-Desktop-Controller/remotecontroller-windows'
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+concurrency:
+  group: release-windows-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-package:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repositório privado
+        uses: actions/checkout@v4
+
+      - name: Configurar Rust Toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.98.1
+
+      - name: Compilar executáveis Windows x64 em release mode
+        shell: pwsh
+        run: |
+          cargo build --release -p device-agent -p local-daemon -p mcp-gateway -p remote-service --locked
+          if ($LASTEXITCODE -ne 0) { throw "Falha na compilação release" }
+
+      - name: Assinatura digital Authenticode (opcional se secrets configurados)
+        if: env.CODE_SIGNING_CERT_BASE64 != '' && env.CODE_SIGNING_PASSWORD != ''
+        env:
+          CODE_SIGNING_CERT_BASE64: ${{ secrets.CODE_SIGNING_CERT_BASE64 }}
+          CODE_SIGNING_PASSWORD: ${{ secrets.CODE_SIGNING_PASSWORD }}
+        shell: pwsh
+        run: |
+          $certBytes = [Convert]::FromBase64String($env:CODE_SIGNING_CERT_BASE64)
+          $certPath = Join-Path $env:TEMP "authenticode.pfx"
+          [IO.File]::WriteAllBytes($certPath, $certBytes)
+          $binaries = @(
+            "target/release/device-agent.exe",
+            "target/release/local-daemon.exe",
+            "target/release/mcp-gateway.exe",
+            "target/release/remote-service.exe"
+          )
+          foreach ($bin in $binaries) {
+            if (Test-Path $bin) {
+              & signtool.exe sign /f $certPath /p $env:CODE_SIGNING_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $bin
+            }
+          }
+          Remove-Item -Force $certPath
+
+      - name: Determinar versão de release
+        id: release_version
+        shell: pwsh
+        run: |
+          $ver = "${{ inputs.version }}"
+          if (-not $ver) {
+            $ver = "${{ github.ref_name }}".TrimStart('v')
+          }
+          if ($ver -notmatch '^[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?$') {
+            $ver = "0.3.0"
+          }
+          Write-Output "version=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Gerar pacote de produto com manifesto e checksums SHA-256
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.release_version.outputs.version }}"
+          ./tools/package-product.ps1 -Version $ver -Platform windows -Architecture x64
+          if ($LASTEXITCODE -ne 0) { throw "Falha no empacotamento" }
+
+      - name: Validar integridade e SHA-256 dos artefatos
+        shell: pwsh
+        run: |
+          $archives = Get-ChildItem -Path dist -Filter "*.zip"
+          if (-not $archives) { throw "Nenhum arquivo zip encontrado em dist/" }
+          foreach ($zip in $archives) {
+            $shaFile = "$($zip.FullName).sha256"
+            if (-not (Test-Path $shaFile)) { throw "Arquivo sha256 ausente para $($zip.Name)" }
+            $expected = (Get-Content $shaFile).Split(' ')[0].Trim()
+            $actual = (Get-FileHash -LiteralPath $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actual -ne $expected.ToLowerInvariant()) {
+              throw "Divergência de hash SHA256 no pacote $($zip.Name)"
+            }
+            Write-Output "OK: $($zip.Name) -> $actual"
+          }
+
+      - name: Upload de artefatos no GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-release
+          path: |
+            dist/*.zip
+            dist/*.sha256
+            dist/*/manifest.json
+
+      - name: Publicar Release no repositório de distribuição público
+        if: inputs.dry_run == false && env.DISTRIBUTION_TOKEN != ''
+        env:
+          DISTRIBUTION_TOKEN: ${{ secrets.DISTRIBUTION_RELEASE_TOKEN }}
+          PUBLISH_REPO: ${{ inputs.publish_repo || 'Remote-Desktop-Controller/remotecontroller-windows' }}
+        shell: pwsh
+        run: |
+          $ver = "v${{ steps.release_version.outputs.version }}"
+          $zipPath = (Get-ChildItem -Path dist -Filter "*.zip" | Select-Object -First 1).FullName
+          $shaPath = "$zipPath.sha256"
+          $manifestPath = (Get-ChildItem -Path dist -Filter "manifest.json" -Recurse | Select-Object -First 1).FullName
+          $env:GH_TOKEN = $env:DISTRIBUTION_TOKEN
+          gh release create $ver $zipPath $shaPath $manifestPath `
+            --repo $env:PUBLISH_REPO `
+            --title "Remote Controller Windows $ver" `
+            --notes "Versão oficial estável do Remote Controller para Windows x64. Verifique a integridade SHA-256 antes da instalação."
