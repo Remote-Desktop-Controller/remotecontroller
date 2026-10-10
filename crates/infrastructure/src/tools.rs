@@ -948,12 +948,18 @@ impl Tool for Builtin {
                 s.rollback(cp, &ctx).await
             }
             "process.spawn" => {
-                let args = serde_json::from_value(input["args"].clone())
+                let args: Vec<String> = serde_json::from_value(input["args"].clone())
                     .map_err(|e| PortError::Tool(e.to_string()))?;
+                let program_str = text(&input, "program")?;
+                crate::processes::ProcessManager::is_allowed(
+                    std::path::Path::new(program_str),
+                    &args,
+                    s.processes.rules(),
+                )?;
                 s.processes
                     .spawn(
                         ProcessSpec {
-                            program: text(&input, "program")?.into(),
+                            program: program_str.into(),
                             args,
                             cwd: input["cwd"].as_str().unwrap_or(".").into(),
                         },

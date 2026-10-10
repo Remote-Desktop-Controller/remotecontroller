@@ -120,7 +120,15 @@ async fn main() -> Result<()> {
         .unwrap_or_else(|| default_endpoint(&state));
     let listener = Listener::bind(&endpoint).await?;
     let config: RuntimeConfig = match args.config.as_ref() {
-        Some(path) if path.exists() => serde_json::from_slice(&tokio::fs::read(path).await?)?,
+        Some(path) if path.exists() => {
+            let bytes = tokio::fs::read(path).await?;
+            let content = if bytes.starts_with(&[0xEF, 0xBB, 0xBF]) {
+                &bytes[3..]
+            } else {
+                &bytes[..]
+            };
+            serde_json::from_slice(content)?
+        }
         _ => RuntimeConfig::default(),
     };
     let config = {

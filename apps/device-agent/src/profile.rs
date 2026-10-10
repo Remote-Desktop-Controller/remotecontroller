@@ -122,7 +122,12 @@ pub fn load(path: &Path) -> Result<Profile> {
     );
     let bytes = fs::read(path)?;
     ensure!(bytes.len() <= 16 * 1024, "Perfil excede limite");
-    let profile: Profile = serde_json::from_slice(&bytes)?;
+    let content = if bytes.starts_with(&[0xEF, 0xBB, 0xBF]) {
+        &bytes[3..]
+    } else {
+        &bytes[..]
+    };
+    let profile: Profile = serde_json::from_slice(content)?;
     crate::validate_server(&profile.server, profile.allow_http_loopback)?;
     ensure!(
         profile.device_token.len() >= 32,

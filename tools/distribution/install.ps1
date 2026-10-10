@@ -287,7 +287,7 @@ Write-Host ""
                 $agentJson.allow_terminal = $true
                 $agentJson.allow_process_outside_workspace = $true
                 $agentJson.allow_process_network = $true
-                $agentJson | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $credentialsPath -Encoding UTF8
+                [IO.File]::WriteAllText($credentialsPath, ($agentJson | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
                 Write-Success "Permissões de Controle Completo ativadas no perfil existente."
                 
                 $powerShellPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
@@ -500,7 +500,7 @@ Write-Host ""
     # 7. Iniciar o Agente em Segundo Plano
     Write-Step "Iniciando o agente em segundo plano..."
     # Mata qualquer instância antiga presa antes de subir
-    Get-Process -Name 'device-agent' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Get-Process -Name 'device-agent', 'local-daemon' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     Start-Sleep -Milliseconds 500
 
     $agentProcess = Start-Process -FilePath $taskAgent -ArgumentList @('--profile', ('"' + $profileBase + '"'), 'run') -WindowStyle Hidden -PassThru

@@ -239,6 +239,35 @@ impl ProcessManager {
         .map_err(crate::files::io_error)?;
         Ok(self)
     }
+    pub fn rules(&self) -> &[ProgramRule] {
+        &self.rules
+    }
+    pub fn is_allowed(
+        program: &std::path::Path,
+        args: &[String],
+        rules: &[ProgramRule],
+    ) -> Result<()> {
+        let clean_program = program.to_string_lossy();
+        let clean_program_str = clean_program.trim_start_matches(r"\\?\");
+        for rule in rules {
+            let rule_str = rule.program.to_string_lossy();
+            let rule_clean = rule_str.trim_start_matches(r"\\?\");
+            if rule.program == program || rule_clean == clean_program_str {
+                if rule.args == args {
+                    return Ok(());
+                }
+                return Err(PortError::Policy(format!(
+                    "program {:?} is not allowed with args {:?}",
+                    program, args
+                )));
+            }
+        }
+
+        Err(PortError::Policy(format!(
+            "program {:?} is not in the approved allowlist",
+            program
+        )))
+    }
     async fn enrich(
         &self,
         id: ProcessId,
@@ -352,10 +381,17 @@ impl ProcessPort for ProcessManager {
         let requested_program = tokio::fs::canonicalize(&spec.program)
             .await
             .map_err(crate::files::io_error)?;
+        Self::is_allowed(&requested_program, &spec.args, &self.rules)?;
         let rule = self
             .rules
             .iter()
-            .find(|r| r.program == requested_program && r.args == spec.args)
+            .find(|r| {
+                let r_clean = r.program.to_string_lossy();
+                let r_clean = r_clean.trim_start_matches(r"\\?\");
+                let req_clean = requested_program.to_string_lossy();
+                let req_clean = req_clean.trim_start_matches(r"\\?\");
+                (r.program == requested_program || r_clean == req_clean) && r.args == spec.args
+            })
             .ok_or_else(|| {
                 PortError::Policy(
                     "program and exact argument vector must be explicitly allowed".into(),
@@ -546,8 +582,7 @@ impl ProcessPort for ProcessManager {
                 cancelled=true;
                 #[cfg(windows)]containment.terminate();
                 #[cfg(unix)]drop(heartbeat.take());
-                #[cfg(windows)]
-                child.kill().await.map_err(crate::files::io_error)?;
+                let _ = child.kill().await;
                 child.wait().await.map_err(crate::files::io_error)?
             }
             r=child.wait()=>r.map_err(crate::files::io_error)?,

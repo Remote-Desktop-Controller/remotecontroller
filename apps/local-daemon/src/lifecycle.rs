@@ -298,7 +298,13 @@ pub fn capabilities(args: &Args) -> Vec<Capability> {
 fn config(args: &Args) -> Result<RuntimeConfig> {
     let p = args.config.as_ref().unwrap();
     Ok(if p.exists() {
-        serde_json::from_slice(&std::fs::read(p)?)?
+        let bytes = std::fs::read(p)?;
+        let content = if bytes.starts_with(&[0xEF, 0xBB, 0xBF]) {
+            &bytes[3..]
+        } else {
+            &bytes[..]
+        };
+        serde_json::from_slice(content)?
     } else {
         RuntimeConfig::default()
     })
