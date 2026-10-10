@@ -14,6 +14,17 @@ use tokio_util::sync::CancellationToken;
 mod mutations;
 pub(crate) use mutations::Mutation;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum AccessScope {
+    Restricted,
+    FullComputer,
+}
+impl Default for AccessScope {
+    fn default() -> Self {
+        Self::Restricted
+    }
+}
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct FileLimits {
@@ -22,6 +33,10 @@ pub struct FileLimits {
     pub max_batch_files: usize,
     pub max_scan_entries: usize,
     pub excluded: Vec<String>,
+    #[serde(default)]
+    pub scope: AccessScope,
+    #[serde(default)]
+    pub enclaves: Vec<PathBuf>,
 }
 impl Default for FileLimits {
     fn default() -> Self {
@@ -34,6 +49,8 @@ impl Default for FileLimits {
                 .into_iter()
                 .map(String::from)
                 .collect(),
+            scope: AccessScope::Restricted,
+            enclaves: Vec::new(),
         }
     }
 }
@@ -161,9 +178,144 @@ impl WorkspaceFiles {
         }
         Ok(relative)
     }
+}
+
+pub(crate) struct ResolvedTarget {
+    pub(crate) dir: Dir,
+    pub(crate) file_name: std::ffi::OsString,
+    pub(crate) canonical: PathBuf,
+}
+
+impl WorkspaceFiles {
+    pub(crate) fn is_enclave_path(&self, canonical: &Path) -> bool {
+        let clean_upper = canonical.to_string_lossy().to_ascii_uppercase().replace('/', "\\");
+        for enclave in &self.limits.enclaves {
+            let enc_str = enclave.to_string_lossy().to_ascii_uppercase().replace('/', "\\");
+            if clean_upper.starts_with(&enc_str) {
+                return true;
+            }
+            if let Ok(canon_enclave) = enclave.canonicalize() {
+                let canon_enc_str = canon_enclave.to_string_lossy().to_ascii_uppercase().replace('/', "\\");
+                if clean_upper.starts_with(&canon_enc_str) {
+                    return true;
+                }
+            }
+        }
+        for component in canonical.components() {
+            let name = component.as_os_str().to_string_lossy();
+            let upper = name.to_ascii_uppercase();
+            if upper == ".SSH"
+                || upper == ".AWS"
+                || upper == ".GNUPG"
+                || upper == "REMOTEDESKTOPCONTROLLER"
+                || upper == "AGENT.JSON"
+                || upper == "IPC.SECRET"
+                || upper.starts_with(".RDC")
+            {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub(crate) fn is_root_system_dir(&self, path: &Path) -> bool {
+        let p = path.to_string_lossy().to_ascii_uppercase();
+        let normalized = p.replace('/', "\\");
+        let trimmed = normalized.trim_end_matches('\\');
+        matches!(
+            trimmed,
+            "C:" | "D:" | "E:" | "C:\\WINDOWS" | "C:\\PROGRAM FILES" | "C:\\PROGRAM FILES (X86)" | "C:\\PROGRAMDATA"
+        ) || path == self.root
+    }
+
+    pub(crate) fn resolve_target(&self, path: &str) -> Result<ResolvedTarget> {
+        if path.contains('\0') {
+            return Err(PortError::Policy("null byte in path denied".into()));
+        }
+        if path.starts_with(r"\\") || path.starts_with("//") {
+            return Err(PortError::Policy("UNC or namespace path denied".into()));
+        }
+        if self.limits.scope == AccessScope::Restricted {
+            let relative = self.validate(path)?;
+            let parent_path = relative
+                .parent()
+                .filter(|p| !p.as_os_str().is_empty())
+                .unwrap_or(Path::new("."));
+            let dir = self.dir.open_dir(parent_path).map_err(io_error)?;
+            let file_name = relative
+                .file_name()
+                .unwrap_or_else(|| std::ffi::OsStr::new("."))
+                .to_owned();
+            let canonical = self.root.join(&relative);
+            return Ok(ResolvedTarget { dir, file_name, canonical });
+        }
+
+        // FullComputer scope:
+        let normalized = path.replace('\\', "/");
+        let colon_allowed_idx = if normalized.len() >= 2 && normalized.as_bytes()[1] == b':' { 1 } else { usize::MAX };
+        if normalized.match_indices(':').any(|(i, _)| i != colon_allowed_idx) {
+            return Err(PortError::Policy("alternate data stream denied".into()));
+        }
+        for c in Path::new(&normalized).components() {
+            if let Component::Normal(s) = c {
+                let name = s.to_string_lossy();
+                let base = name.split('.').next().unwrap_or("").to_ascii_uppercase();
+                let device = matches!(base.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+                    || (base.len() == 4
+                        && (base.starts_with("COM") || base.starts_with("LPT"))
+                        && matches!(base.as_bytes()[3], b'1'..=b'9'));
+                if device {
+                    return Err(PortError::Policy("device name denied".into()));
+                }
+            }
+        }
+        let is_abs = Path::new(&normalized).is_absolute()
+            || (normalized.len() >= 2 && normalized.as_bytes()[1] == b':');
+        let initial = if is_abs {
+            PathBuf::from(&normalized)
+        } else {
+            self.root.join(&normalized)
+        };
+        let mut clean = PathBuf::new();
+        for c in initial.components() {
+            match c {
+                Component::Normal(s) => clean.push(s),
+                Component::RootDir => clean.push(c),
+                Component::Prefix(p) => clean.push(p.as_os_str()),
+                Component::CurDir => {}
+                Component::ParentDir => {
+                    if !clean.pop() {
+                        return Err(PortError::Policy("path traversal denied".into()));
+                    }
+                }
+            }
+        }
+        if self.is_enclave_path(&clean) {
+            return Err(PortError::Policy("access to sensitive enclave denied".into()));
+        }
+        if let Ok(canon) = clean.canonicalize() {
+            if self.is_enclave_path(&canon) {
+                return Err(PortError::Policy("access to sensitive enclave denied".into()));
+            }
+        }
+        let parent_path = clean
+            .parent()
+            .filter(|p| !p.as_os_str().is_empty())
+            .unwrap_or(Path::new("."));
+        let file_name = clean
+            .file_name()
+            .unwrap_or_else(|| std::ffi::OsStr::new("."))
+            .to_owned();
+        let dir = Dir::open_ambient_dir(parent_path, cap_std::ambient_authority()).map_err(io_error)?;
+        Ok(ResolvedTarget { dir, file_name, canonical: clean })
+    }
+
     pub(crate) fn read_sync(&self, path: &str) -> Result<Vec<u8>> {
-        let relative = self.validate(path)?;
-        let file = self.dir.open(relative).map_err(io_error)?;
+        let target = self.resolve_target(path)?;
+        if self.is_root_system_dir(&target.canonical) || target.file_name == "." {
+            return Err(PortError::Policy("directory operation denied".into()));
+        }
+        let file = target.dir.open(&target.file_name).map_err(io_error)?;
         let metadata = file.metadata().map_err(io_error)?;
         if !metadata.is_file() || metadata.len() > self.limits.max_file_bytes as u64 {
             return Err(PortError::Policy("file size/type limit".into()));
@@ -177,9 +329,13 @@ impl WorkspaceFiles {
         }
         Ok(bytes)
     }
+
     pub(crate) fn snapshot_sync(&self, path: &str) -> Result<FileSnapshot> {
-        let relative = self.validate(path)?;
-        let mut file = match self.dir.open(&relative) {
+        let target = self.resolve_target(path)?;
+        if self.is_root_system_dir(&target.canonical) || target.file_name == "." {
+            return Err(PortError::Policy("directory operation denied".into()));
+        }
+        let mut file = match target.dir.open(&target.file_name) {
             Ok(file) => file.into_std(),
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
                 return Ok(FileSnapshot::new(path, None));
@@ -209,10 +365,10 @@ impl WorkspaceFiles {
             metadata: Some(metadata),
             restore_precondition: None,
         };
-        // A second handle-relative read detects writes/replacements during capture.
         self.check_snapshot_sync(&snapshot)?;
         Ok(snapshot)
     }
+
     pub(crate) fn check_snapshot_sync(&self, snapshot: &FileSnapshot) -> Result<()> {
         let actual = match self.read_sync(&snapshot.path) {
             Ok(bytes) => Some(bytes),
@@ -223,8 +379,8 @@ impl WorkspaceFiles {
             return Err(PortError::Conflict);
         }
         if let Some(expected) = &snapshot.metadata {
-            let relative = self.validate(&snapshot.path)?;
-            let file = self.dir.open(relative).map_err(io_error)?.into_std();
+            let target = self.resolve_target(&snapshot.path)?;
+            let file = target.dir.open(&target.file_name).map_err(io_error)?.into_std();
             let actual = native_metadata::capture(&file).map_err(io_error)?;
             if !native_metadata::same_state(expected, &actual) {
                 return Err(PortError::Conflict);
@@ -232,6 +388,7 @@ impl WorkspaceFiles {
         }
         Ok(())
     }
+
     pub(crate) fn write_sync(&self, path: &str, bytes: &[u8]) -> Result<()> {
         let original = self.snapshot_sync(path)?;
         self.apply_snapshot_sync(&original, Some(bytes)).map(|_| ())
@@ -247,26 +404,21 @@ impl WorkspaceFiles {
         match content {
             Some(bytes) => self.write_checked_sync(original, bytes, original.metadata.as_ref())?,
             None => {
-                let relative = self.validate(&original.path)?;
-                if relative == Path::new(".")
-                    || relative
-                        .file_name()
-                        .is_some_and(|s| s.to_string_lossy().to_uppercase() == ".GITIGNORE")
+                let target = self.resolve_target(&original.path)?;
+                if self.is_root_system_dir(&target.canonical)
+                    || target.file_name == "."
+                    || target
+                        .file_name
+                        .to_string_lossy()
+                        .to_uppercase()
+                        == ".GITIGNORE"
                 {
                     return Err(PortError::Policy(
-                        "cannot delete workspace root or ignore policy".into(),
+                        "cannot delete root or ignore policy".into(),
                     ));
                 }
                 self.check_snapshot_sync(original)?;
-                let parent = relative
-                    .parent()
-                    .filter(|p| !p.as_os_str().is_empty())
-                    .unwrap_or(Path::new("."));
-                let parent = self.dir.open_dir(parent).map_err(io_error)?;
-                let name = relative
-                    .file_name()
-                    .ok_or_else(|| PortError::Policy("workspace root cannot be deleted".into()))?;
-                match parent.remove_file(name) {
+                match target.dir.remove_file(&target.file_name) {
                     Ok(()) => {}
                     Err(error)
                         if error.kind() == std::io::ErrorKind::NotFound
@@ -274,7 +426,8 @@ impl WorkspaceFiles {
                     Err(error) => return Err(io_error(error)),
                 }
                 #[cfg(unix)]
-                parent
+                target
+                    .dir
                     .open(".")
                     .map_err(io_error)?
                     .sync_all()
@@ -297,25 +450,19 @@ impl WorkspaceFiles {
         if bytes.len() > self.limits.max_file_bytes {
             return Err(PortError::Policy("file size limit".into()));
         }
-        let relative = self.validate(&expected.path)?;
-        if relative == Path::new(".")
-            || relative
-                .file_name()
-                .is_some_and(|s| s.to_string_lossy().to_uppercase() == ".GITIGNORE")
+        let target = self.resolve_target(&expected.path)?;
+        if self.is_root_system_dir(&target.canonical)
+            || target.file_name == "."
+            || target
+                .file_name
+                .to_string_lossy()
+                .to_uppercase()
+                == ".GITIGNORE"
         {
             return Err(PortError::Policy(
-                "cannot replace workspace root or ignore policy".into(),
+                "cannot replace root or ignore policy".into(),
             ));
         }
-        let parent_path = relative
-            .parent()
-            .filter(|p| !p.as_os_str().is_empty())
-            .unwrap_or(Path::new("."));
-        // Pin the directory handle; all create/rename/remove operations use it.
-        let parent = self.dir.open_dir(parent_path).map_err(io_error)?;
-        let name = relative
-            .file_name()
-            .ok_or_else(|| PortError::Policy("missing filename".into()))?;
         let temp = format!(".rdc-{}.tmp", uuid::Uuid::new_v4());
         let mut options = OpenOptions::new();
         options.read(true).write(true).create_new(true);
@@ -324,7 +471,8 @@ impl WorkspaceFiles {
             use cap_std::fs::OpenOptionsExt;
             options.access_mode(0x8000_0000 | 0x4000_0000 | 0x0004_0000);
         }
-        let mut file = parent
+        let mut file = target
+            .dir
             .open_with(&temp, &options)
             .map_err(io_error)?
             .into_std();
@@ -343,11 +491,14 @@ impl WorkspaceFiles {
                 }
             }
             file.sync_all().map_err(io_error)?;
-            self.validate(&expected.path)?;
             self.check_snapshot_sync(expected)?;
-            parent.rename(&temp, &parent, name).map_err(io_error)?;
+            target
+                .dir
+                .rename(&temp, &target.dir, &target.file_name)
+                .map_err(io_error)?;
             #[cfg(unix)]
-            parent
+            target
+                .dir
                 .open(".")
                 .map_err(io_error)?
                 .sync_all()
@@ -367,7 +518,7 @@ impl WorkspaceFiles {
         }
         drop(file);
         if result.is_err() {
-            let _ = parent.remove_file(&temp);
+            let _ = target.dir.remove_file(&temp);
         }
         result
     }
@@ -434,8 +585,8 @@ impl WorkspaceFiles {
         let fs = self.clone();
         let path = path.to_string();
         tokio::task::spawn_blocking(move || {
-            let relative = fs.validate(&path)?;
-            let m = fs.dir.metadata(relative).map_err(io_error)?;
+            let target = fs.resolve_target(&path)?;
+            let m = target.dir.metadata(&target.file_name).map_err(io_error)?;
             Ok(serde_json::json!({"path":path,"bytes":m.len(),"directory":m.is_dir()}))
         })
         .await
@@ -476,43 +627,100 @@ impl FileSystemPort for WorkspaceFiles {
         let _guard = self.gate.read().await;
         let path = path.to_owned();
         self.blocking(move |fs| {
-            let relative = fs.validate(&path)?;
-            let mut pending = vec![relative];
-            let mut files = Vec::new();
-            let mut examined = 0;
-            let limit = limit.min(fs.limits.max_scan_entries);
-            while let Some(path) = pending.pop() {
-                if cancellation.is_cancelled() {
-                    return Err(PortError::Cancelled);
-                }
-                for entry in fs.dir.read_dir(&path).map_err(io_error)? {
+            if fs.limits.scope == AccessScope::Restricted {
+                let relative = fs.validate(&path)?;
+                let mut pending = vec![relative];
+                let mut files = Vec::new();
+                let mut examined = 0;
+                let limit = limit.min(fs.limits.max_scan_entries);
+                while let Some(path) = pending.pop() {
                     if cancellation.is_cancelled() {
                         return Err(PortError::Cancelled);
                     }
-                    let entry = entry.map_err(io_error)?;
-                    examined += 1;
-                    if examined > fs.limits.max_scan_entries {
-                        return Err(PortError::Policy("scan entry limit".into()));
-                    }
-                    let p = path.join(entry.file_name());
-                    let display = p.to_string_lossy().replace('\\', "/");
-                    if fs.validate(&display).is_err() {
-                        continue;
-                    }
-                    let kind = entry.file_type().map_err(io_error)?;
-                    if kind.is_dir() {
-                        pending.push(p);
-                    } else if kind.is_file() {
-                        files.push(display);
-                        if files.len() >= limit {
-                            files.sort();
-                            return Ok(files);
+                    for entry in fs.dir.read_dir(&path).map_err(io_error)? {
+                        if cancellation.is_cancelled() {
+                            return Err(PortError::Cancelled);
+                        }
+                        let entry = entry.map_err(io_error)?;
+                        examined += 1;
+                        if examined > fs.limits.max_scan_entries {
+                            return Err(PortError::Policy("scan entry limit".into()));
+                        }
+                        let p = path.join(entry.file_name());
+                        let display = p.to_string_lossy().replace('\\', "/");
+                        if fs.validate(&display).is_err() {
+                            continue;
+                        }
+                        let kind = entry.file_type().map_err(io_error)?;
+                        if kind.is_dir() {
+                            pending.push(p);
+                        } else if kind.is_file() {
+                            files.push(display);
+                            if files.len() >= limit {
+                                files.sort();
+                                return Ok(files);
+                            }
                         }
                     }
                 }
+                files.sort();
+                Ok(files)
+            } else {
+                let target = fs.resolve_target(if path.is_empty() { "." } else { &path })?;
+                let start_dir = match Dir::open_ambient_dir(&target.canonical, cap_std::ambient_authority()) {
+                    Ok(d) => d,
+                    Err(_) => target.dir,
+                };
+                let mut pending: Vec<(Dir, PathBuf)> = vec![(start_dir, target.canonical.clone())];
+                let mut files = Vec::new();
+                let mut examined = 0;
+                let limit = limit.min(fs.limits.max_scan_entries);
+                while let Some((dir, curr_path)) = pending.pop() {
+                    if cancellation.is_cancelled() {
+                        return Err(PortError::Cancelled);
+                    }
+                    let entries = match dir.read_dir(".") {
+                        Ok(e) => e,
+                        Err(_) => continue,
+                    };
+                    for entry in entries {
+                        if cancellation.is_cancelled() {
+                            return Err(PortError::Cancelled);
+                        }
+                        let entry = match entry {
+                            Ok(e) => e,
+                            Err(_) => continue,
+                        };
+                        examined += 1;
+                        if examined > fs.limits.max_scan_entries {
+                            return Err(PortError::Policy("scan entry limit".into()));
+                        }
+                        let fname = entry.file_name();
+                        let child_path = curr_path.join(&fname);
+                        if fs.is_enclave_path(&child_path) {
+                            continue;
+                        }
+                        let kind = match entry.file_type() {
+                            Ok(k) => k,
+                            Err(_) => continue,
+                        };
+                        if kind.is_dir() {
+                            if let Ok(sub) = dir.open_dir(&fname) {
+                                pending.push((sub, child_path));
+                            }
+                        } else if kind.is_file() {
+                            let display = child_path.to_string_lossy().replace('\\', "/");
+                            files.push(display);
+                            if files.len() >= limit {
+                                files.sort();
+                                return Ok(files);
+                            }
+                        }
+                    }
+                }
+                files.sort();
+                Ok(files)
             }
-            files.sort();
-            Ok(files)
         })
         .await
     }
