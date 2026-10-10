@@ -11,7 +11,7 @@ Este repositório contém os instaladores, manifestos de integridade criptográf
 Abra o PowerShell no seu Windows e cole o comando oficial abaixo:
 
 ```powershell
-irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 | iex
+$p="$env:TEMP\remotecontroller-install.ps1"; irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 -OutFile $p; & $p
 ```
 
 ### O que o instalador faz automaticamente:
@@ -42,7 +42,7 @@ Compare a saída com o arquivo `.zip.sha256` e com o `manifest.json` publicado n
 ### Atualizar para a versão estável mais recente
 Basta executar novamente o instalador ou passar o parâmetro de atualização:
 ```powershell
-irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 | iex
+$p="$env:TEMP\remotecontroller-install.ps1"; irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 -OutFile $p; & $p
 ```
 *(Suas credenciais e pareamento existentes serão preservados automaticamente)*
 

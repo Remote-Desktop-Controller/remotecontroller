@@ -72,7 +72,7 @@ flowchart TD
 ### 2.2. Script de Instalação e Bootstrap (`install.ps1`)
 - **Ponto de entrada:**
   ```powershell
-  irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 | iex
+  $p="$env:TEMP\remotecontroller-install.ps1"; irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 -OutFile $p; & $p
   ```
 - **Fluxo de execução:**
   1. **Validação de ambiente:** Windows 10/11 x64, PowerShell 5.1+.

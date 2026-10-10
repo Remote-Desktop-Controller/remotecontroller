@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Copy, Check, Terminal, ShieldCheck, Cpu, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
 
-export const OFFICIAL_INSTALL_CMD = "irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 | iex";
+export const OFFICIAL_INSTALL_CMD = "$p=\"$env:TEMP\\remotecontroller-install.ps1\"; irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 -OutFile $p; & $p";
 export const OFFICIAL_MCP_URL = "https://andredozero.webajato.com.br/mcp";
 
 export function WindowsInstallerCard() {

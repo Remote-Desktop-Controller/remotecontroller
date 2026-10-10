@@ -20,7 +20,7 @@ Servidor Oficial: `https://andredozero.webajato.com.br`
 2. **Instalador Oficial (`tools/distribution/install.ps1`):**
    - Comando de execução única:
      ```powershell
-     irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 | iex
+     $p="$env:TEMP\remotecontroller-install.ps1"; irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 -OutFile $p; & $p
      ```
    - Compatível com Windows PowerShell 5.1 e PowerShell 7.
    - Validação criptográfica obrigatória do hash SHA-256 do arquivo ZIP antes da extração.

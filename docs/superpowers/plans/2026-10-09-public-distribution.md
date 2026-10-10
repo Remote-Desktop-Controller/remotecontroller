@@ -131,7 +131,7 @@ Expected: All test cases pass with green output.
 Create `apps/portal/tests/installer-onboarding.test.tsx` testing:
 - Renders "Instalar no Windows" section.
 - Renders the official PowerShell command string:
-  `irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 | iex`
+  `$p="$env:TEMP\remotecontroller-install.ps1"; irm https://raw.githubusercontent.com/Remote-Desktop-Controller/remotecontroller-windows/main/install.ps1 -OutFile $p; & $p`
 - Renders ChatGPT MCP connection tutorial details (`https://andredozero.webajato.com.br/mcp`).
 
 - [ ] **Step 2: Update `apps/portal/src/components/account-views.tsx`**

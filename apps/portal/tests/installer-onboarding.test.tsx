@@ -7,7 +7,7 @@ it("renders Windows installer card with official PowerShell command and SHA-256 
   const html = renderToStaticMarkup(<WindowsInstallerCard />);
   expect(html).toContain("Instalar no Windows em 1 Passo");
   expect(html).toContain("Verificado SHA-256");
-  expect(html).toContain(OFFICIAL_INSTALL_CMD);
+  expect(html.replace(/&quot;/g, '"').replace(/&amp;/g, '&')).toContain(OFFICIAL_INSTALL_CMD);
   expect(html).toContain("Copiar comando");
   expect(html).toContain("1. Cole no PowerShell");
   expect(html).toContain("2. Pareie com 1 Clique");
