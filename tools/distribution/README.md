@@ -20,7 +20,7 @@ $p="$env:TEMP\remotecontroller-install.ps1"; irm https://raw.githubusercontent.c
 3. **Seleção de Pasta e Nome:** Permite escolher qual pasta de trabalho a IA poderá acessar e qual o nome deste computador no seu painel.
 4. **Pareamento Guiado:** Inicia o pareamento com código de uso único e abre automaticamente seu navegador para confirmação no portal.
 5. **Segundo Plano & Autostart:** Inicia o agente em segundo plano e oferece opção de inicialização automática ao ligar o computador.
-6. **Segurança por Padrão:** Por padrão, o agente opera em **somente leitura**. Escrita, execução de processos e terminal permanecem desativados até que você os autorize explicitamente.
+6. **Controle Completo com Consentimento:** Ao autorizar Controle Completo na instalação, leitura, escrita de arquivos, processos e terminal remoto ficam prontos para uso pelo ChatGPT, mantendo credenciais (.ssh, .aws) e arquivos de sistema protegidos.
 
 ---
 

@@ -664,7 +664,7 @@ dependencies = [
 
 [[package]]
 name = "device-agent"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1542,7 +1542,7 @@ checksum = "47d9d19d1d6efa0109d2f65ff4c85cddd50bd572e5a00127ab10987290bcefae"
 
 [[package]]
 name = "local-daemon"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1610,7 +1610,7 @@ checksum = "4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4"
 
 [[package]]
 name = "mcp-gateway"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2194,7 +2194,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "remote-service"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -2327,7 +2327,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-application"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "futures-util",
@@ -2341,7 +2341,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-domain"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "thiserror 2.0.21",
  "uuid",
@@ -2349,7 +2349,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-infrastructure"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "cap-std",
@@ -2383,7 +2383,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-ports"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "runtime-domain",
@@ -2395,7 +2395,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-protocol"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -2405,7 +2405,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-transport"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bytes",
  "futures-util",

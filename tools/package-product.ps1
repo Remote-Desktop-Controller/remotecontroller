@@ -3,7 +3,7 @@
 param(
     [string]$BinaryDirectory,
     [string]$OutputDirectory,
-    [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?$')][string]$Version = '0.3.0',
+    [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?$')][string]$Version = '0.4.0',
     [ValidateSet('windows','linux','macos')][string]$Platform,
     [ValidateSet('x64','arm64')][string]$Architecture,
     [switch]$VerifyOnly

@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 <#
 .SYNOPSIS
     Instalador oficial do Remote Controller Windows.
@@ -123,8 +123,8 @@ try {
                 $releaseInfo = Invoke-RestMethod -Uri $releaseApiUrl -Headers $headers -TimeoutSec 15
                 $resolvedTag = $releaseInfo.tag_name
             } catch {
-                Write-WarnMessage "Consulta à API do GitHub indisponível; usando versão padrão estável v0.3.0"
-                $resolvedTag = "v0.3.0"
+                Write-WarnMessage "Consulta à API do GitHub indisponível; usando versão padrão estável v0.4.0"
+                $resolvedTag = "v0.4.0"
             }
         }
         
@@ -265,9 +265,42 @@ Write-Host ""
     
     if (Test-Path -LiteralPath $credentialsPath) {
         Write-Step "Perfil de computador pareado já existente detectado."
-        Write-Host "Suas credenciais e workspace autorizados foram preservados." -ForegroundColor Green
+        Write-Host "Credenciais de pareamento preservadas com sucesso." -ForegroundColor Green
+        
+        # Na atualização, assegura que Controle Completo esteja ativo se solicitado ou por padrão
+        $shouldEnableFull = $FullComputer
+        if (-not $shouldEnableFull -and -not $NonInteractive) {
+            $respUpgrade = Read-Host "Deseja assegurar Controle Completo (Escrita, Processos e Terminal) nesta instalação? (S/N) [Padrão: S]"
+            if (-not $respUpgrade -or $respUpgrade -match '^(s|sim|y|yes)$') {
+                $shouldEnableFull = $true
+            }
+        } elseif (-not $shouldEnableFull -and $NonInteractive) {
+            $shouldEnableFull = $true
+        }
+        
+        if ($shouldEnableFull) {
+            try {
+                $agentJson = Get-Content -LiteralPath $credentialsPath -Raw | ConvertFrom-Json
+                $agentJson.full_computer = $true
+                $agentJson.allow_write = $true
+                $agentJson.allow_process = $true
+                $agentJson.allow_terminal = $true
+                $agentJson.allow_process_outside_workspace = $true
+                $agentJson.allow_process_network = $true
+                $agentJson | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $credentialsPath -Encoding UTF8
+                Write-Success "Permissões de Controle Completo ativadas no perfil existente."
+                
+                $powerShellPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+                if (Test-Path -LiteralPath $powerShellPath) {
+                    & "$taskAgent" --profile "$profileBase" --daemon "$taskDaemon" terminal-approve --program "$powerShellPath" --trust-unconfined
+                    Write-Success "Terminal PowerShell aprovado para uso imediato pelo ChatGPT."
+                }
+            } catch {
+                Write-WarnMessage "Aviso ao atualizar permissões do perfil: $_"
+            }
+        }
     } else {
-        Write-Step "Configuração do Computador e Segurança"
+        Write-Step "Configuração de Autorização e Pareamento"
         
         # Nome do computador
         if (-not $Name) {
@@ -281,21 +314,27 @@ Write-Host ""
         }
         Write-Host "Nome definido: $Name" -ForegroundColor Gray
 
-        # Permissão de Acesso aos Arquivos / Workspace
+        # Autorização do Modo de Controle
         if (-not $Workspace -and -not $FullComputer) {
             if ($NonInteractive) {
-                # Padrão: Computador Inteiro a partir de USERPROFILE
                 $Workspace = $env:USERPROFILE
                 $FullComputer = $true
+                $AllowWrite = $true
+                $AllowProcess = $true
+                $AllowTerminal = $true
             } else {
-                Write-Host "`n-- Permissão de Acesso aos Arquivos --" -ForegroundColor Cyan
-                Write-Host "[1] Computador Inteiro (Recomendado):" -ForegroundColor Green
-                Write-Host "    Permite à IA navegar e ler pastas como Downloads, Documentos, Área de Trabalho e projetos no seu computador." -ForegroundColor White
-                Write-Host "    Suas credenciais locais, chaves e arquivos sensíveis permanecem estritamente protegidos." -ForegroundColor Gray
-                Write-Host "[2] Pasta Específica (Modo Restrito):" -ForegroundColor Yellow
-                Write-Host "    Restringe a IA exclusivamente a uma pasta de sua escolha (ex: RemoteWorkspace)." -ForegroundColor White
+                Write-Host "`n-- Autorização de Controle do Computador --" -ForegroundColor Cyan
+                Write-Host "[1] Controle Completo do Computador (Recomendado):" -ForegroundColor Green
+                Write-Host "    * Navegar e ler pastas e arquivos em todas as unidades (Downloads, Documentos, Projetos, etc.)" -ForegroundColor White
+                Write-Host "    * Criar, editar, mover e gerenciar arquivos e projetos completos" -ForegroundColor White
+                Write-Host "    * Executar ferramentas e programas locais autorizados" -ForegroundColor White
+                Write-Host "    * Utilizar terminal remoto interativo (PowerShell)" -ForegroundColor White
+                Write-Host "    * Segurança ativa: credenciais (.ssh, .aws) e arquivos de sistema permanecem protegidos." -ForegroundColor Gray
+                Write-Host "[2] Modo Restrito (Apenas Leitura em Pasta Isolada):" -ForegroundColor Yellow
+                Write-Host "    * Restringe o acesso exclusivamente a uma pasta de sua escolha." -ForegroundColor White
+                Write-Host "    * Apenas leitura; escrita, processos e terminal desativados." -ForegroundColor Gray
                 
-                $modeChoice = Read-Host "`nEscolha o modo de acesso [1 ou 2, Padrão: 1]"
+                $modeChoice = Read-Host "`nEscolha o modo de controle [1 ou 2, Padrão: 1]"
                 if ($modeChoice.Trim() -eq '2') {
                     $FullComputer = $false
                     $defaultWs = Join-Path $env:USERPROFILE 'RemoteWorkspace'
@@ -314,17 +353,25 @@ Write-Host ""
                         } catch {}
                     }
                     if (-not $chosenWs) {
-                        $inputWs = Read-Host "Digite o caminho completo da pasta de trabalho [Padrão: $defaultWs]"
+                        $inputWs = Read-Host "Digite o caminho completo da pasta [Padrão: $defaultWs]"
                         $chosenWs = if ($inputWs.Trim()) { $inputWs.Trim() } else { $defaultWs }
                     }
                     $Workspace = $chosenWs
                 } else {
                     $FullComputer = $true
+                    $AllowWrite = $true
+                    $AllowProcess = $true
+                    $AllowTerminal = $true
                     $Workspace = $env:USERPROFILE
                 }
             }
-        } elseif ($FullComputer -and -not $Workspace) {
-            $Workspace = $env:USERPROFILE
+        } elseif ($FullComputer) {
+            $AllowWrite = $true
+            $AllowProcess = $true
+            $AllowTerminal = $true
+            if (-not $Workspace) {
+                $Workspace = $env:USERPROFILE
+            }
         }
         
         $Workspace = [IO.Path]::GetFullPath($Workspace)
@@ -332,20 +379,16 @@ Write-Host ""
             New-Item -ItemType Directory -Path $Workspace -Force | Out-Null
         }
         Assert-NoReparsePath $Workspace
+        
+        # Apresentação da Política Operacional Ativa
+        Write-Host "`n-- Política Operacional Ativa --" -ForegroundColor Cyan
         if ($FullComputer) {
-            Write-Success "Acesso ao Computador Inteiro autorizado (início: $Workspace)"
+            Write-Host "Controle Completo autorizado: Leitura, Escrita, Processos e Terminal HABILITADOS." -ForegroundColor Green
+            Write-Host "Workspace base: $Workspace" -ForegroundColor Gray
+            Write-Host "Credenciais sensíveis (.ssh, .aws) continuam estritamente protegidas por enclave." -ForegroundColor Gray
         } else {
-            Write-Success "Pasta de trabalho restrita autorizada: $Workspace"
+            Write-Host "Modo restrito: Apenas leitura restrita dentro de $Workspace." -ForegroundColor Yellow
         }
-
-        # Segurança restritiva por padrão
-        Write-Host "`n-- Política de Segurança --" -ForegroundColor Gray
-        if ($FullComputer) {
-            Write-Host "Modo seguro ativado: Leitura autorizada no computador com proteção estrita de credenciais e enclaves." -ForegroundColor Green
-        } else {
-            Write-Host "Modo seguro ativado: Apenas LEITURA de arquivos dentro do workspace restrito." -ForegroundColor Green
-        }
-        Write-Host "Escrita, execução de processos e terminal permanecem DESATIVADOS." -ForegroundColor Gray
 
         # Iniciar pareamento guiado
         Write-Step "Iniciando pareamento com o servidor $ServerUrl..."
@@ -358,10 +401,20 @@ Write-Host ""
             '--workspace', $Workspace,
             '--name', $Name
         )
-        if ($FullComputer) { $pairArgs += '--full-computer' }
-        if ($AllowWrite) { $pairArgs += '--allow-write' }
-        if ($AllowProcess) { $pairArgs += '--allow-process' }
-        if ($AllowTerminal) { $pairArgs += '--allow-terminal' }
+        if ($FullComputer) {
+            $pairArgs += @(
+                '--full-computer',
+                '--allow-write',
+                '--allow-process',
+                '--allow-terminal',
+                '--allow-process-outside-workspace',
+                '--allow-process-network'
+            )
+        } else {
+            if ($AllowWrite) { $pairArgs += '--allow-write' }
+            if ($AllowProcess) { $pairArgs += '--allow-process' }
+            if ($AllowTerminal) { $pairArgs += '--allow-terminal' }
+        }
         
         Write-Host "Executando pareamento inicial..." -ForegroundColor Gray
         
@@ -409,6 +462,16 @@ Write-Host ""
             throw "Falha durante o pareamento (Código de saída $($pairProc.ExitCode)): $errText"
         }
         Write-Success "Pareamento concluído com sucesso!"
+
+        # Aprovação automática do terminal PowerShell para uso imediato pelo ChatGPT
+        if ($FullComputer -or $AllowTerminal) {
+            $powerShellPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+            if (Test-Path -LiteralPath $powerShellPath) {
+                Write-Host "Configurando aprovação local do PowerShell para o terminal..." -ForegroundColor Gray
+                & "$taskAgent" --profile "$profileBase" --daemon "$taskDaemon" terminal-approve --program "$powerShellPath" --trust-unconfined
+                Write-Success "Terminal PowerShell aprovado para uso imediato pelo ChatGPT."
+            }
+        }
     }
 
     # 6. Consentimento de Autostart

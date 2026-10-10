@@ -617,6 +617,9 @@ pub fn add_args(cmd: &mut Command, args: &Args) {
     if let Some(e) = &args.endpoint {
         cmd.arg("--endpoint").arg(e);
     }
+    if args.full_computer {
+        cmd.arg("--full-computer");
+    }
     for (enabled, flag) in [
         (args.allow_write, "--allow-write"),
         (args.allow_process, "--allow-process"),

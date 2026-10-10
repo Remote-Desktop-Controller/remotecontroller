@@ -197,16 +197,39 @@ impl TerminalManager {
         let fingerprint = self.config.fingerprint.clone().ok_or(PortError::NotFound)?;
         let args = self.config.args.clone();
         let geometry = size(input)?;
-        let cwd = self.files.validate(input["cwd"].as_str().unwrap_or("."))?;
-        let cwd = self
-            .files
-            .root()
-            .join(cwd)
-            .canonicalize()
-            .map_err(crate::files::io_error)?;
-        if !cwd.starts_with(self.files.root()) || !cwd.is_dir() {
-            return Err(PortError::Policy("terminal cwd escapes workspace".into()));
-        }
+        let cwd_str = input["cwd"].as_str().unwrap_or(".");
+        let cwd = if self.files.limits.scope == crate::files::AccessScope::FullComputer {
+            let p = std::path::Path::new(cwd_str);
+            let target = if p.is_absolute()
+                || (cwd_str.len() >= 2 && cwd_str.as_bytes()[1] == b':')
+            {
+                PathBuf::from(cwd_str)
+            } else {
+                self.files.root().join(cwd_str)
+            };
+            let canon = target.canonicalize().map_err(crate::files::io_error)?;
+            if self.files.is_enclave_path(&canon) {
+                return Err(PortError::Policy(
+                    "terminal cwd access to sensitive enclave denied".into(),
+                ));
+            }
+            if !canon.is_dir() {
+                return Err(PortError::Policy("terminal cwd must be a directory".into()));
+            }
+            canon
+        } else {
+            let cwd = self.files.validate(cwd_str)?;
+            let cwd = self
+                .files
+                .root()
+                .join(cwd)
+                .canonicalize()
+                .map_err(crate::files::io_error)?;
+            if !cwd.starts_with(self.files.root()) || !cwd.is_dir() {
+                return Err(PortError::Policy("terminal cwd escapes workspace".into()));
+            }
+            cwd
+        };
         #[cfg(windows)]
         let cwd = {
             use std::path::{Component, Prefix};

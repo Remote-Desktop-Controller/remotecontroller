@@ -142,6 +142,11 @@ async fn main() -> Result<()> {
             let workspace = workspace.canonicalize()?;
             let root = profile::protect_profile_scoped(&root, &workspace, full_computer)?;
             let service = ServiceClient::new(&server, allow_http_loopback, None)?;
+            let allow_write = allow_write || full_computer;
+            let allow_process = allow_process || full_computer;
+            let allow_terminal = allow_terminal || full_computer;
+            let allow_process_network = allow_process_network || full_computer;
+            let allow_process_outside_workspace = allow_process_outside_workspace || full_computer;
             let mut config = Profile {
                 server,
                 device_id: uuid::Uuid::nil(),
@@ -264,23 +269,37 @@ async fn main() -> Result<()> {
         }
         Action::Status => {
             let config = profile::load(&credential)?;
-            let client = Client::new(
-                config.endpoint.clone(),
-                read_secret(&config.state_dir.join("ipc.secret"))?,
-            );
-            let heartbeat = client
-                .request(
-                    &RequestEnvelope {
-                        meta: Metadata::new(None, 1000),
-                        payload: Request::Heartbeat,
-                    },
-                    |_| {},
-                )
-                .await;
+            let daemon_online = match read_secret(&config.state_dir.join("ipc.secret")) {
+                Ok(secret) => {
+                    let client = Client::new(config.endpoint.clone(), secret);
+                    let heartbeat = client
+                        .request(
+                            &RequestEnvelope {
+                                meta: Metadata::new(None, 1000),
+                                payload: Request::Heartbeat,
+                            },
+                            |_| {},
+                        )
+                        .await;
+                    heartbeat.is_ok_and(|v| v.payload.is_ok())
+                }
+                Err(_) => false,
+            };
             println!(
                 "{}",
                 serde_json::to_string_pretty(
-                    &serde_json::json!({"server":config.server,"device_id":config.device_id,"workspace":config.workspace,"daemon_online":heartbeat.is_ok_and(|v|v.payload.is_ok()),"allow_write":config.allow_write,"allow_process":config.allow_process,"allow_terminal":config.allow_terminal})
+                    &serde_json::json!({
+                        "server": config.server,
+                        "device_id": config.device_id,
+                        "workspace": config.workspace,
+                        "daemon_online": daemon_online,
+                        "allow_write": config.allow_write,
+                        "allow_process": config.allow_process,
+                        "allow_terminal": config.allow_terminal,
+                        "full_computer": config.full_computer,
+                        "allow_process_network": config.allow_process_network,
+                        "allow_process_outside_workspace": config.allow_process_outside_workspace
+                    })
                 )?
             );
         }

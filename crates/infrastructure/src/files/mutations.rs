@@ -180,14 +180,13 @@ fn mutation_handle(
     Ok(file)
 }
 
-fn rename_no_replace(
-    fs: &WorkspaceFiles,
-    source: &Path,
-    destination: &Path,
+fn rename_no_replace_dirs(
+    from: &Dir,
+    name: &std::ffi::OsStr,
+    to: &Dir,
+    target: &std::ffi::OsStr,
     expected: &Identity,
 ) -> Result<()> {
-    let (from, name) = parent_name(fs, source)?;
-    let (to, target) = parent_name(fs, destination)?;
     #[cfg(windows)]
     {
         use std::os::windows::{ffi::OsStrExt, io::AsRawHandle};
@@ -208,7 +207,7 @@ fn rename_no_replace(
             ) -> i32;
             fn RtlNtStatusToDosError(status: i32) -> u32;
         }
-        let source = mutation_handle(&from, &name, expected)?;
+        let source = mutation_handle(from, name, expected)?;
         let wide: Vec<u16> = target.encode_wide().collect();
         let offset = std::mem::offset_of!(FILE_RENAME_INFO, FileName);
         let size = offset + wide.len() * 2;
@@ -244,9 +243,6 @@ fn rename_no_replace(
     }
     #[cfg(unix)]
     {
-        if &identity_at(fs, source, false).or_else(|_| identity_at(fs, source, true))? != expected {
-            return Err(PortError::Conflict);
-        }
         use std::os::{fd::AsRawFd, unix::ffi::OsStrExt};
         let a = std::ffi::CString::new(name.as_bytes())
             .map_err(|_| PortError::Policy("invalid path".into()))?;
@@ -291,8 +287,48 @@ fn rename_no_replace(
     }
     Ok(())
 }
+
+fn rename_no_replace(
+    fs: &WorkspaceFiles,
+    source: &Path,
+    destination: &Path,
+    expected: &Identity,
+) -> Result<()> {
+    let (from, name) = parent_name(fs, source)?;
+    let (to, target) = parent_name(fs, destination)?;
+    #[cfg(unix)]
+    {
+        if &identity_at(fs, source, false).or_else(|_| identity_at(fs, source, true))? != expected {
+            return Err(PortError::Conflict);
+        }
+    }
+    rename_no_replace_dirs(&from, &name, &to, &target, expected)
+}
 impl WorkspaceFiles {
     pub(crate) fn prepare_directory(&self, path: &str, operation: OperationId) -> Result<Mutation> {
+        if self.limits.scope == AccessScope::FullComputer {
+            let target = self.resolve_target(path)?;
+            if self.is_root_system_dir(&target.canonical) || target.file_name == "." {
+                return Err(PortError::Policy("cannot create root system directory".into()));
+            }
+            if target.file_name.to_string_lossy().eq_ignore_ascii_case(".gitignore") {
+                return Err(PortError::Policy("cannot create .gitignore directory".into()));
+            }
+            match target.dir.symlink_metadata(&target.file_name) {
+                Ok(_) => return Err(PortError::Conflict),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => return Err(io_error(e)),
+            }
+            let temporary = format!(".rdc-{operation}.directory");
+            target.dir.create_dir(&temporary).map_err(io_error)?;
+            let staging_dir = target.dir.open_dir(&temporary).map_err(io_error)?;
+            let id = identity(&staging_dir.into_std_file())?;
+            return Ok(Mutation::Directory {
+                path: path.into(),
+                staging: temporary,
+                identity: id,
+            });
+        }
         let relative = guarded_path(self, path)?;
         match self.dir.symlink_metadata(&relative) {
             Ok(_) => return Err(PortError::Conflict),
@@ -344,15 +380,30 @@ impl WorkspaceFiles {
             Mutation::Directory {
                 path,
                 staging,
-                identity,
+                identity: expected_identity,
             } => {
+                if self.limits.scope == AccessScope::FullComputer {
+                    let target = self.resolve_target(path)?;
+                    let stage_name = std::ffi::OsStr::new(staging);
+                    let stage_dir = target.dir.open_dir(stage_name).map_err(io_error)?;
+                    let actual_id = identity(&stage_dir.into_std_file())?;
+                    if &actual_id != expected_identity {
+                        return Err(PortError::Conflict);
+                    }
+                    rename_no_replace_dirs(&target.dir, stage_name, &target.dir, &target.file_name, expected_identity)?;
+                    let final_dir = target.dir.open_dir(&target.file_name).map_err(io_error)?;
+                    if &identity(&final_dir.into_std_file())? != expected_identity {
+                        return Err(PortError::Conflict);
+                    }
+                    return Ok(());
+                }
                 let target = guarded_path(self, path)?;
                 let stage = Path::new(staging);
-                if &identity_at(self, stage, true)? != identity {
+                if &identity_at(self, stage, true)? != expected_identity {
                     return Err(PortError::Conflict);
                 }
-                rename_no_replace(self, stage, &target, identity)?;
-                if &identity_at(self, &target, true)? != identity {
+                rename_no_replace(self, stage, &target, expected_identity)?;
+                if &identity_at(self, &target, true)? != expected_identity {
                     return Err(PortError::Conflict);
                 }
                 Ok(())
@@ -384,12 +435,26 @@ impl WorkspaceFiles {
             Mutation::Directory {
                 path,
                 staging,
-                identity,
+                identity: expected_identity,
             } => {
+                if self.limits.scope == AccessScope::FullComputer {
+                    let target = self.resolve_target(path)?;
+                    let stage_name = std::ffi::OsStr::new(staging);
+                    for item_name in [&target.file_name, stage_name] {
+                        if let Ok(d) = target.dir.open_dir(item_name) {
+                            if let Ok(actual) = identity(&d.into_std_file()) {
+                                if &actual == expected_identity {
+                                    let _ = target.dir.remove_dir(item_name);
+                                }
+                            }
+                        }
+                    }
+                    return Ok(());
+                }
                 let target = guarded_path(self, path)?;
                 for path in [&target, Path::new(staging)] {
                     match identity_at(self, path, true) {
-                        Ok(actual) if &actual == identity => {
+                        Ok(actual) if &actual == expected_identity => {
                             let directory = self.dir.open_dir(path).map_err(io_error)?;
                             if directory.entries().map_err(io_error)?.next().is_some() {
                                 return Err(PortError::Conflict);
@@ -403,7 +468,7 @@ impl WorkspaceFiles {
                                     FILE_DISPOSITION_INFO, FileDispositionInfo,
                                     SetFileInformationByHandle,
                                 };
-                                let handle = mutation_handle(&parent, &name, identity)?;
+                                let handle = mutation_handle(&parent, &name, expected_identity)?;
                                 let disposition = FILE_DISPOSITION_INFO { DeleteFile: true };
                                 if unsafe {
                                     SetFileInformationByHandle(

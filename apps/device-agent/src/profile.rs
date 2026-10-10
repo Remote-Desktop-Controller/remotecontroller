@@ -128,11 +128,13 @@ pub fn load(path: &Path) -> Result<Profile> {
         profile.device_token.len() >= 32,
         "Credencial de dispositivo inválida"
     );
-    let parent = path.parent().context("Perfil sem parent")?.canonicalize()?;
-    ensure!(
-        !parent.starts_with(profile.workspace.canonicalize()?),
-        "Perfil dentro do workspace"
-    );
+    if !profile.full_computer {
+        let parent = path.parent().context("Perfil sem parent")?.canonicalize()?;
+        ensure!(
+            !parent.starts_with(profile.workspace.canonicalize()?),
+            "Perfil dentro do workspace"
+        );
+    }
     Ok(profile)
 }
 

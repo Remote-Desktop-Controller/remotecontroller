@@ -382,16 +382,38 @@ impl ProcessPort for ProcessManager {
                 "Unix execution requires configured lifecycle guardian".into(),
             ));
         }
-        let cwd_relative = self.files.validate(&spec.cwd)?;
-        let cwd = self
-            .files
-            .root()
-            .join(cwd_relative)
-            .canonicalize()
-            .map_err(crate::files::io_error)?;
-        if !cwd.starts_with(self.files.root()) {
-            return Err(PortError::Policy("process cwd escapes workspace".into()));
-        }
+        let cwd = if self.files.limits.scope == crate::files::AccessScope::FullComputer {
+            let p = std::path::Path::new(&spec.cwd);
+            let target = if p.is_absolute()
+                || (spec.cwd.len() >= 2 && spec.cwd.as_bytes()[1] == b':')
+            {
+                PathBuf::from(&spec.cwd)
+            } else {
+                self.files.root().join(&spec.cwd)
+            };
+            let canon = target.canonicalize().map_err(crate::files::io_error)?;
+            if self.files.is_enclave_path(&canon) {
+                return Err(PortError::Policy(
+                    "process cwd access to sensitive enclave denied".into(),
+                ));
+            }
+            if !canon.is_dir() {
+                return Err(PortError::Policy("process cwd must be a directory".into()));
+            }
+            canon
+        } else {
+            let cwd_relative = self.files.validate(&spec.cwd)?;
+            let cwd = self
+                .files
+                .root()
+                .join(cwd_relative)
+                .canonicalize()
+                .map_err(crate::files::io_error)?;
+            if !cwd.starts_with(self.files.root()) {
+                return Err(PortError::Policy("process cwd escapes workspace".into()));
+            }
+            cwd
+        };
         {
             let states = self.states.read().await;
             if states.len() >= self.max_records {
