@@ -1,4 +1,4 @@
-﻿#requires -Version 5.1
+#requires -Version 5.1
 <#
 .SYNOPSIS
     Instalador oficial do Remote Controller Windows.
@@ -11,6 +11,7 @@ param(
     [uri]$ServerUrl = [uri]'https://andredozero.webajato.com.br',
     [string]$Workspace,
     [string]$Name,
+    [switch]$FullComputer,
     [switch]$AllowWrite,
     [switch]$AllowProcess,
     [switch]$AllowTerminal,
@@ -280,35 +281,50 @@ Write-Host ""
         }
         Write-Host "Nome definido: $Name" -ForegroundColor Gray
 
-        # Pasta de trabalho autorizada (Workspace)
-        if (-not $Workspace) {
-            $defaultWs = Join-Path $env:USERPROFILE 'RemoteWorkspace'
+        # Permissão de Acesso aos Arquivos / Workspace
+        if (-not $Workspace -and -not $FullComputer) {
             if ($NonInteractive) {
-                $Workspace = $defaultWs
+                # Padrão: Computador Inteiro a partir de USERPROFILE
+                $Workspace = $env:USERPROFILE
+                $FullComputer = $true
             } else {
-                Write-Host "`nEscolha a pasta que a IA terá permissão para ler." -ForegroundColor Yellow
-                Write-Host "Padrão recomendado: $defaultWs" -ForegroundColor Gray
+                Write-Host "`n-- Permissão de Acesso aos Arquivos --" -ForegroundColor Cyan
+                Write-Host "[1] Computador Inteiro (Recomendado):" -ForegroundColor Green
+                Write-Host "    Permite à IA navegar e ler pastas como Downloads, Documentos, Área de Trabalho e projetos no seu computador." -ForegroundColor White
+                Write-Host "    Suas credenciais locais, chaves e arquivos sensíveis permanecem estritamente protegidos." -ForegroundColor Gray
+                Write-Host "[2] Pasta Específica (Modo Restrito):" -ForegroundColor Yellow
+                Write-Host "    Restringe a IA exclusivamente a uma pasta de sua escolha (ex: RemoteWorkspace)." -ForegroundColor White
                 
-                $chosenWs = $null
-                if ([Threading.Thread]::CurrentThread.ApartmentState -eq 'STA') {
-                    try {
-                        Add-Type -AssemblyName System.Windows.Forms
-                        $dialog = New-Object Windows.Forms.FolderBrowserDialog
-                        $dialog.Description = 'Selecione a pasta de trabalho autorizada para o Remote Controller'
-                        $dialog.ShowNewFolderButton = $true
-                        if ($dialog.ShowDialog() -eq [Windows.Forms.DialogResult]::OK) {
-                            $chosenWs = $dialog.SelectedPath
-                        }
-                        $dialog.Dispose()
-                    } catch {}
+                $modeChoice = Read-Host "`nEscolha o modo de acesso [1 ou 2, Padrão: 1]"
+                if ($modeChoice.Trim() -eq '2') {
+                    $FullComputer = $false
+                    $defaultWs = Join-Path $env:USERPROFILE 'RemoteWorkspace'
+                    Write-Host "`nEscolha a pasta restrita autorizada." -ForegroundColor Yellow
+                    $chosenWs = $null
+                    if ([Threading.Thread]::CurrentThread.ApartmentState -eq 'STA') {
+                        try {
+                            Add-Type -AssemblyName System.Windows.Forms
+                            $dialog = New-Object Windows.Forms.FolderBrowserDialog
+                            $dialog.Description = 'Selecione a pasta de trabalho autorizada para o Remote Controller'
+                            $dialog.ShowNewFolderButton = $true
+                            if ($dialog.ShowDialog() -eq [Windows.Forms.DialogResult]::OK) {
+                                $chosenWs = $dialog.SelectedPath
+                            }
+                            $dialog.Dispose()
+                        } catch {}
+                    }
+                    if (-not $chosenWs) {
+                        $inputWs = Read-Host "Digite o caminho completo da pasta de trabalho [Padrão: $defaultWs]"
+                        $chosenWs = if ($inputWs.Trim()) { $inputWs.Trim() } else { $defaultWs }
+                    }
+                    $Workspace = $chosenWs
+                } else {
+                    $FullComputer = $true
+                    $Workspace = $env:USERPROFILE
                 }
-                
-                if (-not $chosenWs) {
-                    $inputWs = Read-Host "Digite o caminho completo da pasta de trabalho [Padrão: $defaultWs]"
-                    $chosenWs = if ($inputWs.Trim()) { $inputWs.Trim() } else { $defaultWs }
-                }
-                $Workspace = $chosenWs
             }
+        } elseif ($FullComputer -and -not $Workspace) {
+            $Workspace = $env:USERPROFILE
         }
         
         $Workspace = [IO.Path]::GetFullPath($Workspace)
@@ -316,11 +332,19 @@ Write-Host ""
             New-Item -ItemType Directory -Path $Workspace -Force | Out-Null
         }
         Assert-NoReparsePath $Workspace
-        Write-Success "Pasta de trabalho autorizada: $Workspace"
+        if ($FullComputer) {
+            Write-Success "Acesso ao Computador Inteiro autorizado (início: $Workspace)"
+        } else {
+            Write-Success "Pasta de trabalho restrita autorizada: $Workspace"
+        }
 
         # Segurança restritiva por padrão
         Write-Host "`n-- Política de Segurança --" -ForegroundColor Gray
-        Write-Host "Modo seguro ativado: Apenas LEITURA de arquivos dentro do workspace." -ForegroundColor Green
+        if ($FullComputer) {
+            Write-Host "Modo seguro ativado: Leitura autorizada no computador com proteção estrita de credenciais e enclaves." -ForegroundColor Green
+        } else {
+            Write-Host "Modo seguro ativado: Apenas LEITURA de arquivos dentro do workspace restrito." -ForegroundColor Green
+        }
         Write-Host "Escrita, execução de processos e terminal permanecem DESATIVADOS." -ForegroundColor Gray
 
         # Iniciar pareamento guiado
@@ -334,6 +358,7 @@ Write-Host ""
             '--workspace', $Workspace,
             '--name', $Name
         )
+        if ($FullComputer) { $pairArgs += '--full-computer' }
         if ($AllowWrite) { $pairArgs += '--allow-write' }
         if ($AllowProcess) { $pairArgs += '--allow-process' }
         if ($AllowTerminal) { $pairArgs += '--allow-terminal' }

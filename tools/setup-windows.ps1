@@ -8,6 +8,7 @@ param(
     [string]$Workspace,
     [string]$Name = 'Meu computador',
     [switch]$ChooseWorkspace,
+    [switch]$FullComputer,
     [switch]$AllowWrite,
     [switch]$AllowProcess,
     [switch]$AllowProcessNetwork,
@@ -112,7 +113,7 @@ if ($Workspace) {
     $Workspace = (Resolve-Path -LiteralPath $Workspace).Path
     if (-not (Get-Item -LiteralPath $Workspace).PSIsContainer) {throw 'Workspace deve ser uma pasta existente'}
     Assert-NoReparsePath $Workspace
-    if ((Test-Within $taskProfile $Workspace) -or (Test-Within $taskInstallRoot $Workspace)) {throw 'Perfil e executáveis devem permanecer fora do workspace'}
+    if (-not $FullComputer -and ((Test-Within $taskProfile $Workspace) -or (Test-Within $taskInstallRoot $Workspace))) {throw 'Perfil e executáveis devem permanecer fora do workspace'}
 }
 $taskCredentials = Join-Path $taskProfile 'agent.json'
 Assert-NoReparsePath $taskCredentials
@@ -122,7 +123,7 @@ if (Test-Path -LiteralPath $taskCredentials) {
     # Read only the workspace to protect the installation from existing tool access.
     $taskExistingProfile = Get-Content -LiteralPath $taskCredentials -Raw | ConvertFrom-Json
     $taskExistingWorkspace = [IO.Path]::GetFullPath([string]$taskExistingProfile.workspace)
-    if ((Test-Within $taskProfile $taskExistingWorkspace) -or (Test-Within $taskInstallRoot $taskExistingWorkspace)) {throw 'Perfil/instalação ficam dentro do workspace do perfil existente'}
+    if (-not $FullComputer -and ((Test-Within $taskProfile $taskExistingWorkspace) -or (Test-Within $taskInstallRoot $taskExistingWorkspace))) {throw 'Perfil/instalação ficam dentro do workspace do perfil existente'}
     $taskExistingProfile = $null
 }
 if ($ServerUrl -and -not (Test-Path -LiteralPath $taskCredentials) -and -not $Workspace) {throw 'Pareamento exige -Workspace ou -ChooseWorkspace'}
@@ -160,7 +161,7 @@ if (Test-Path -LiteralPath $taskCredentials) {
     Write-Output 'Perfil existente preservado. Servidor, workspace e permissões não foram substituídos.'
 } elseif ($ServerUrl) {
     $taskPairArgs = @('--profile', $taskProfile, 'pair', '--server', $ServerUrl.AbsoluteUri.TrimEnd('/'), '--workspace', $Workspace, '--name', $Name)
-    foreach ($taskFlag in @(@($AllowWrite,'--allow-write'),@($AllowProcess,'--allow-process'),@($AllowProcessNetwork,'--allow-process-network'),@($AllowProcessOutsideWorkspace,'--allow-process-outside-workspace'),@($AllowHttpLoopback,'--allow-http-loopback'))) {
+    foreach ($taskFlag in @(@($AllowWrite,'--allow-write'),@($AllowProcess,'--allow-process'),@($AllowProcessNetwork,'--allow-process-network'),@($AllowProcessOutsideWorkspace,'--allow-process-outside-workspace'),@($AllowHttpLoopback,'--allow-http-loopback'),@($FullComputer,'--full-computer'))) {
         if ($taskFlag[0]) {$taskPairArgs += $taskFlag[1]}
     }
     Invoke-Agent $taskPairArgs
