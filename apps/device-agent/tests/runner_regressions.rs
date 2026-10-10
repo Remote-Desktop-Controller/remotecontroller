@@ -209,6 +209,7 @@ async fn fixture() -> Result<Fixture> {
         allow_terminal: false,
         allow_process_network: false,
         allow_process_outside_workspace: false,
+        full_computer: false,
     };
     Ok(Fixture {
         _directory: directory,

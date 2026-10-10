@@ -27,9 +27,19 @@ pub struct Profile {
     pub allow_process_network: bool,
     #[serde(default)]
     pub allow_process_outside_workspace: bool,
+    #[serde(default)]
+    pub full_computer: bool,
 }
 
 pub fn protect_profile(profile: &Path, workspace: &Path) -> Result<PathBuf> {
+    protect_profile_scoped(profile, workspace, false)
+}
+
+pub fn protect_profile_scoped(
+    profile: &Path,
+    workspace: &Path,
+    full_computer: bool,
+) -> Result<PathBuf> {
     let workspace = workspace.canonicalize()?;
     let absolute = std::path::absolute(profile)?;
     ensure!(
@@ -53,16 +63,20 @@ pub fn protect_profile(profile: &Path, workspace: &Path) -> Result<PathBuf> {
     for component in missing.into_iter().rev() {
         resolved.push(component);
     }
-    ensure!(
-        !resolved.starts_with(&workspace),
-        "Perfil privado precisa ficar fora do workspace"
-    );
+    if !full_computer {
+        ensure!(
+            !resolved.starts_with(&workspace),
+            "Perfil privado precisa ficar fora do workspace"
+        );
+    }
     runtime_transport::private_directory(profile)?;
     let profile = profile.canonicalize()?;
-    ensure!(
-        !profile.starts_with(&workspace),
-        "Perfil privado precisa ficar fora do workspace"
-    );
+    if !full_computer {
+        ensure!(
+            !profile.starts_with(&workspace),
+            "Perfil privado precisa ficar fora do workspace"
+        );
+    }
     Ok(profile)
 }
 

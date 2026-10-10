@@ -46,6 +46,9 @@ pub fn add_args(command: &mut Command, profile: &Profile) {
     if policy.exists() {
         command.arg("--config").arg(policy);
     }
+    if profile.full_computer {
+        command.arg("--full-computer");
+    }
     if profile.allow_write {
         command.arg("--allow-write");
     }
@@ -223,6 +226,7 @@ mod tests {
             allow_terminal: false,
             allow_process_network: false,
             allow_process_outside_workspace: false,
+            full_computer: false,
         };
         let binaries = std::env::var_os("RUNTIME_TEST_BIN_DIR")
             .map(PathBuf::from)

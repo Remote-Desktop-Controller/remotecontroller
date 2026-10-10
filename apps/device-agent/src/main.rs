@@ -45,6 +45,8 @@ enum Action {
         allow_process_network: bool,
         #[arg(long)]
         allow_process_outside_workspace: bool,
+        #[arg(long)]
+        full_computer: bool,
         #[arg(long, hide = true)]
         allow_http_loopback: bool,
     },
@@ -130,6 +132,7 @@ async fn main() -> Result<()> {
             allow_process_network,
             allow_process_outside_workspace,
             allow_http_loopback,
+            full_computer,
         } => {
             device_agent::validate_server(&server, allow_http_loopback)?;
             ensure!(
@@ -137,7 +140,7 @@ async fn main() -> Result<()> {
                 "Computador já pareado; revogue na conta antes de substituir o perfil"
             );
             let workspace = workspace.canonicalize()?;
-            let root = profile::protect_profile(&root, &workspace)?;
+            let root = profile::protect_profile_scoped(&root, &workspace, full_computer)?;
             let service = ServiceClient::new(&server, allow_http_loopback, None)?;
             let mut config = Profile {
                 server,
@@ -152,6 +155,7 @@ async fn main() -> Result<()> {
                 allow_terminal,
                 allow_process_network,
                 allow_process_outside_workspace,
+                full_computer,
             };
             let daemon = Daemon::ensure(
                 &config,

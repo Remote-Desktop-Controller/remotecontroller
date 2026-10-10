@@ -138,6 +138,7 @@ async fn real_rust_and_agent_use_portal_sql_license_on_first_remote_operation() 
         allow_terminal: false,
         allow_process_network: false,
         allow_process_outside_workspace: false,
+        full_computer: false,
     };
     let binaries = std::env::var_os("RUNTIME_TEST_BIN_DIR")
         .map(std::path::PathBuf::from)
