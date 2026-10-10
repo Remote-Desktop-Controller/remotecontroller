@@ -114,46 +114,54 @@ pub fn resolve(args: &mut Args) -> Result<()> {
             PathBuf::from(home).join(".local-runtime")
         }
     };
-    validate_private_location(&profile, &lexical_root, &root, "profile")?;
+    if !args.full_computer {
+        validate_private_location(&profile, &lexical_root, &root, "profile")?;
+    }
     args.workspace = Some(root.clone());
     if args.state_dir.is_none() {
         let key = format!("{:x}", Sha256::digest(root.to_string_lossy().as_bytes()));
         args.state_dir = Some(profile.join("states").join(&key[..24]));
     }
-    validate_private_location(
-        args.state_dir.as_ref().unwrap(),
-        &lexical_root,
-        &root,
-        "state",
-    )?;
+    if !args.full_computer {
+        validate_private_location(
+            args.state_dir.as_ref().unwrap(),
+            &lexical_root,
+            &root,
+            "state",
+        )?;
+    }
     private_directory(&profile)?;
     args.profile = Some(profile.canonicalize()?);
     private_directory(args.state_dir.as_ref().unwrap())?;
-    ensure!(
-        !args
-            .state_dir
-            .as_ref()
-            .unwrap()
-            .canonicalize()?
-            .starts_with(&root),
-        "state must be outside workspace"
-    );
+    if !args.full_computer {
+        ensure!(
+            !args
+                .state_dir
+                .as_ref()
+                .unwrap()
+                .canonicalize()?
+                .starts_with(&root),
+            "state must be outside workspace"
+        );
+    }
     if args.config.is_none() {
         args.config = Some(args.state_dir.as_ref().unwrap().join("runtime.json"));
     }
-    let config = args.config.as_ref().unwrap();
-    let lexical_config = lexical_absolute(config)?;
-    ensure!(
-        !within_lexical_root(&lexical_config, &lexical_root)
-            && !within_lexical_root(&lexical_config, &lexical_absolute(&root)?)
-            && !config_crosses_workspace(config, &root)?
-            && !resolved_config_location(config)?.starts_with(&root),
-        "configuration must be outside workspace"
-    );
-    if args.config_explicit && !config.is_file() && !matches!(args.command, Some(Action::Init)) {
+    let config_path = args.config.as_ref().unwrap();
+    if !args.full_computer {
+        let lexical_config = lexical_absolute(config_path)?;
+        ensure!(
+            !within_lexical_root(&lexical_config, &lexical_root)
+                && !within_lexical_root(&lexical_config, &lexical_absolute(&root)?)
+                && !config_crosses_workspace(config_path, &root)?
+                && !resolved_config_location(config_path)?.starts_with(&root),
+            "configuration must be outside workspace"
+        );
+    }
+    if args.config_explicit && !config_path.is_file() && !matches!(args.command, Some(Action::Init)) {
         anyhow::bail!(
             "--config {} not found (expected an existing policy file)",
-            config.display()
+            config_path.display()
         );
     }
     Ok(())

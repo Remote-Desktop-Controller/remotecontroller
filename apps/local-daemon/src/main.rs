@@ -55,6 +55,12 @@ struct Args {
         help = "Allow network effects of trusted child programs"
     )]
     allow_process_network: bool,
+    #[arg(
+        long,
+        global = true,
+        help = "Allow file operations across the entire computer from the user's home with enclave protection"
+    )]
+    pub full_computer: bool,
     #[arg(long, global = true, default_value = "info")]
     log_level: String,
 }
@@ -93,10 +99,12 @@ async fn main() -> Result<()> {
     private_directory(args.state_dir.as_ref().unwrap()).context("protect state directory")?;
     let state = args.state_dir.as_ref().unwrap().canonicalize()?;
     let root = args.workspace.as_ref().unwrap().canonicalize()?;
-    anyhow::ensure!(
-        !state.starts_with(&root),
-        "state directory must be outside workspace"
-    );
+    if !args.full_computer {
+        anyhow::ensure!(
+            !state.starts_with(&root),
+            "state directory must be outside workspace"
+        );
+    }
     let lock = std::fs::OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -118,6 +126,17 @@ async fn main() -> Result<()> {
     let config = {
         let mut config = config;
         config.guardian_path = Some(std::env::current_exe()?);
+        if args.full_computer {
+            config.files.scope = runtime_infrastructure::files::AccessScope::FullComputer;
+            config.files.enclaves.push(state.clone());
+            if let Some(profile_path) = args.profile.as_ref() {
+                if let Ok(canon_profile) = profile_path.canonicalize() {
+                    config.files.enclaves.push(canon_profile);
+                } else {
+                    config.files.enclaves.push(profile_path.clone());
+                }
+            }
+        }
         config
     };
     let capabilities = lifecycle::capabilities(&args);

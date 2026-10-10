@@ -249,7 +249,10 @@ fn installed_connect_bootstraps_real_daemon_and_mcp() {
                 Ok(bytes) => bytes,
                 // The worker locks this file while atomically publishing the
                 // final status. Observe again within the existing deadline.
-                Err(error) if error.raw_os_error() == Some(32) => {
+                Err(error)
+                    if error.raw_os_error() == Some(32)
+                        || error.kind() == std::io::ErrorKind::NotFound =>
+                {
                     assert!(std::time::Instant::now() < deadline, "{error}");
                     std::thread::sleep(Duration::from_millis(50));
                     continue;
