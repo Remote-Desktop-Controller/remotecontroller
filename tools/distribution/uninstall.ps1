@@ -16,15 +16,58 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "        Remote Controller — Desinstalador Windows         " -ForegroundColor White
+Write-Host "        Remote Controller - Desinstalador Windows         " -ForegroundColor White
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-$installRoot = if ($InstallPath) { $InstallPath } else { Join-Path $env:LOCALAPPDATA 'Programs\RemoteDesktopController' }
-$profileRoot = if ($ProfilePath) { $ProfilePath } else { Join-Path $env:LOCALAPPDATA 'RemoteDesktopController\agent' }
+$installRoot = if ($InstallPath) {
+    $InstallPath
+} elseif (-not [string]::IsNullOrWhiteSpace($PSScriptRoot) -and (Split-Path -Path $PSScriptRoot -Leaf) -eq 'RemoteDesktopController') {
+    $PSScriptRoot
+} else {
+    Join-Path $env:LOCALAPPDATA 'Programs\RemoteDesktopController'
+}
+
+$installRoot = [IO.Path]::GetFullPath($installRoot).TrimEnd('\', '/')
+$installLeaf = Split-Path -Path $installRoot -Leaf
+if ($installLeaf -ne 'RemoteDesktopController') {
+    throw "ERRO CRÍTICO DE SEGURANÇA: O diretório alvo de desinstalação deve se chamar 'RemoteDesktopController'. Alvo recebido: '$installRoot'."
+}
+
+$forbiddenCriticalPaths = @(
+    $env:WINDIR,
+    $env:SystemRoot,
+    $env:ProgramFiles,
+    ${env:ProgramFiles(x86)},
+    $env:USERPROFILE,
+    $env:LOCALAPPDATA,
+    (Join-Path $env:LOCALAPPDATA 'Programs')
+) | Where-Object { $_ } | ForEach-Object { [IO.Path]::GetFullPath($_).TrimEnd('\', '/') }
+
+if ($forbiddenCriticalPaths -contains $installRoot) {
+    throw "ERRO CRÍTICO DE SEGURANÇA: O diretório de instalação coincide com um caminho de sistema ou raiz compartilhada ('$installRoot')."
+}
+
+$userHome = if ($HOME -and $HOME.Trim()) {
+    $HOME
+} elseif ($env:USERPROFILE -and $env:USERPROFILE.Trim()) {
+    $env:USERPROFILE
+} else {
+    [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile)
+}
+$canonicalProfile = Join-Path $userHome '.remotecontroller\agent'
+$legacyProfile = if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'RemoteDesktopController\agent' } else { $null }
+
+$profileRoot = if ($ProfilePath) {
+    $ProfilePath
+} elseif ($legacyProfile -and (Test-Path -LiteralPath (Join-Path $legacyProfile 'agent.json')) -and -not (Test-Path -LiteralPath (Join-Path $canonicalProfile 'agent.json'))) {
+    $legacyProfile
+} else {
+    $canonicalProfile
+}
 
 # 1. Parar agentes e daemons ativos
 Write-Host "`n==> Encerrando processos em execução..." -ForegroundColor Gray
-Get-Process -Name 'device-agent', 'local-daemon' -ErrorAction SilentlyContinue | ForEach-Object {
+Get-Process -Name 'device-agent', 'local-daemon', 'rdc', 'mcp-gateway' -ErrorAction SilentlyContinue | ForEach-Object {
     Write-Host "  Encerrando $($_.Name) (PID $($_.Id))..." -ForegroundColor Yellow
     Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
 }
@@ -57,9 +100,18 @@ if (-not $RemoveData -and -not $NonInteractive) {
 }
 
 if ($RemoveData) {
-    if (Test-Path -LiteralPath $profileRoot) {
-        Remove-Item -LiteralPath $profileRoot -Recurse -Force -ErrorAction SilentlyContinue
-        Write-Host "  Perfil e credenciais locais removidos com sucesso." -ForegroundColor Green
+    $profilesToPurge = @()
+    if ($ProfilePath) {
+        $profilesToPurge += $ProfilePath
+    } else {
+        $profilesToPurge += $canonicalProfile
+        if ($legacyProfile) { $profilesToPurge += $legacyProfile }
+    }
+    foreach ($p in $profilesToPurge) {
+        if (Test-Path -LiteralPath $p) {
+            Remove-Item -LiteralPath $p -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Host "  Perfil e credenciais locais removidos com sucesso: $p" -ForegroundColor Green
+        }
     }
 } else {
     Write-Host "  Perfil local preservado em: $profileRoot" -ForegroundColor Gray
@@ -68,12 +120,13 @@ if ($RemoveData) {
 # 4. Remover executáveis e pastas instaladas
 Write-Host "==> Removendo executáveis instalados..." -ForegroundColor Gray
 if (Test-Path -LiteralPath $installRoot) {
-    Get-ChildItem -Path $installRoot -ErrorAction SilentlyContinue | ForEach-Object {
+    Get-ChildItem -Path $installRoot -Exclude 'uninstall.ps1' -ErrorAction SilentlyContinue | ForEach-Object {
         try {
             Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
         } catch {}
     }
     try {
+        Remove-Item -LiteralPath (Join-Path $installRoot 'uninstall.ps1') -Force -ErrorAction SilentlyContinue
         Remove-Item -LiteralPath $installRoot -Recurse -Force -ErrorAction SilentlyContinue
     } catch {}
 }

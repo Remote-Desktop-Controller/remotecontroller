@@ -19,6 +19,8 @@ param(
     [switch]$DisableAutostart,
     [switch]$Update,
     [string]$LocalPackagePath,
+    [string]$InstallDir,
+    [string]$ProfileDir,
     [switch]$NonInteractive
 )
 
@@ -71,7 +73,7 @@ function Get-MachineArchitecture {
 
 # 1. Validação de Plataforma
 Write-Host "==========================================================" -ForegroundColor Magenta
-Write-Host "        Remote Controller — Instalador Oficial Windows     " -ForegroundColor White
+Write-Host "        Remote Controller - Instalador Oficial Windows     " -ForegroundColor White
 Write-Host "==========================================================" -ForegroundColor Magenta
 
 if ($env:OS -ne 'Windows_NT' -or -not $env:LOCALAPPDATA) {
@@ -83,8 +85,26 @@ if ($architecture -ne 'x64') {
 }
 
 # 2. Definição de Diretórios Seguros (Sem necessidade de Admin)
-$installBase = Join-Path $env:LOCALAPPDATA 'Programs\RemoteDesktopController'
-$profileBase = Join-Path $env:LOCALAPPDATA 'RemoteDesktopController\agent'
+$installBase = if ($InstallDir) { $InstallDir } else { Join-Path $env:LOCALAPPDATA 'Programs\RemoteDesktopController' }
+
+$userHome = if ($HOME -and $HOME.Trim()) {
+    $HOME
+} elseif ($env:USERPROFILE -and $env:USERPROFILE.Trim()) {
+    $env:USERPROFILE
+} else {
+    [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile)
+}
+$canonicalProfile = if ($ProfileDir) { $ProfileDir } else { Join-Path $userHome '.remotecontroller\agent' }
+$legacyProfile = if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'RemoteDesktopController\agent' } else { $null }
+
+# Harmonização de diretório de perfil com compatibilidade retroativa
+if (-not $ProfileDir -and $legacyProfile -and (Test-Path -LiteralPath (Join-Path $legacyProfile 'agent.json')) -and -not (Test-Path -LiteralPath (Join-Path $canonicalProfile 'agent.json'))) {
+    $profileBase = $legacyProfile
+    Write-WarnMessage "Perfil legado com credenciais detectado em '$legacyProfile'. Mantendo compatibilidade retroativa."
+} else {
+    $profileBase = $canonicalProfile
+}
+
 Assert-NoReparsePath $installBase
 Assert-NoReparsePath $profileBase
 
@@ -216,15 +236,62 @@ try {
     $uninstallContent = @'
 #requires -Version 5.1
 [CmdletBinding()]
-param([switch]$RemoveData, [switch]$NonInteractive)
+param([string]$InstallPath, [string]$ProfilePath, [switch]$RemoveData, [switch]$NonInteractive)
 $ErrorActionPreference = 'Stop'
-Write-Host "==> Desinstalando Remote Controller Windows..." -ForegroundColor Cyan
-$installRoot = Split-Path -Parent $PSScriptRoot
-if (-not $installRoot) { $installRoot = Join-Path $env:LOCALAPPDATA 'Programs\RemoteDesktopController' }
-$profileRoot = Join-Path $env:LOCALAPPDATA 'RemoteDesktopController\agent'
+Set-StrictMode -Version Latest
+
+Write-Host "==========================================================" -ForegroundColor Cyan
+Write-Host "        Remote Controller - Desinstalador Windows         " -ForegroundColor White
+Write-Host "==========================================================" -ForegroundColor Cyan
+
+$installRoot = if ($InstallPath) {
+    $InstallPath
+} elseif (-not [string]::IsNullOrWhiteSpace($PSScriptRoot) -and (Split-Path -Path $PSScriptRoot -Leaf) -eq 'RemoteDesktopController') {
+    $PSScriptRoot
+} else {
+    Join-Path $env:LOCALAPPDATA 'Programs\RemoteDesktopController'
+}
+
+$installRoot = [IO.Path]::GetFullPath($installRoot).TrimEnd('\', '/')
+$installLeaf = Split-Path -Path $installRoot -Leaf
+if ($installLeaf -ne 'RemoteDesktopController') {
+    throw "ERRO CRÍTICO DE SEGURANÇA: O diretório alvo de desinstalação deve se chamar 'RemoteDesktopController'. Alvo recebido: '$installRoot'."
+}
+
+$forbiddenCriticalPaths = @(
+    $env:WINDIR,
+    $env:SystemRoot,
+    $env:ProgramFiles,
+    ${env:ProgramFiles(x86)},
+    $env:USERPROFILE,
+    $env:LOCALAPPDATA,
+    (Join-Path $env:LOCALAPPDATA 'Programs')
+) | Where-Object { $_ } | ForEach-Object { [IO.Path]::GetFullPath($_).TrimEnd('\', '/') }
+
+if ($forbiddenCriticalPaths -contains $installRoot) {
+    throw "ERRO CRÍTICO DE SEGURANÇA: O diretório de instalação coincide com um caminho de sistema ou raiz compartilhada ('$installRoot')."
+}
+
+$userHome = if ($HOME -and $HOME.Trim()) {
+    $HOME
+} elseif ($env:USERPROFILE -and $env:USERPROFILE.Trim()) {
+    $env:USERPROFILE
+} else {
+    [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile)
+}
+$canonicalProfile = Join-Path $userHome '.remotecontroller\agent'
+$legacyProfile = if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'RemoteDesktopController\agent' } else { $null }
+
+$profileRoot = if ($ProfilePath) {
+    $ProfilePath
+} elseif ($legacyProfile -and (Test-Path -LiteralPath (Join-Path $legacyProfile 'agent.json')) -and -not (Test-Path -LiteralPath (Join-Path $canonicalProfile 'agent.json'))) {
+    $legacyProfile
+} else {
+    $canonicalProfile
+}
 
 # 1. Parar agentes ativos
-Get-Process -Name 'device-agent', 'local-daemon' -ErrorAction SilentlyContinue | ForEach-Object {
+Get-Process -Name 'device-agent', 'local-daemon', 'rdc', 'mcp-gateway' -ErrorAction SilentlyContinue | ForEach-Object {
     Write-Host "Encerrando processo $($_.Name) (PID $($_.Id))..." -ForegroundColor Yellow
     Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
 }
@@ -243,16 +310,33 @@ if (-not $RemoveData -and -not $NonInteractive) {
     $resp = Read-Host "Deseja remover as credenciais e configurações de pareamento locais? (S/N) [Padrão: N]"
     if ($resp -match '^(s|sim|y|yes)$') { $RemoveData = $true }
 }
-if ($RemoveData -and (Test-Path -LiteralPath $profileRoot)) {
-    Remove-Item -LiteralPath $profileRoot -Recurse -Force -ErrorAction SilentlyContinue
-    Write-Host "Perfil local removido com sucesso." -ForegroundColor Green
+if ($RemoveData) {
+    $profilesToPurge = @()
+    if ($ProfilePath) {
+        $profilesToPurge += $ProfilePath
+    } else {
+        $profilesToPurge += $canonicalProfile
+        if ($legacyProfile) { $profilesToPurge += $legacyProfile }
+    }
+    foreach ($p in $profilesToPurge) {
+        if (Test-Path -LiteralPath $p) {
+            Remove-Item -LiteralPath $p -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Host "Perfil local removido com sucesso: $p" -ForegroundColor Green
+        }
+    }
 } else {
     Write-Host "Perfil local preservado em $profileRoot." -ForegroundColor Gray
 }
 
 # 4. Remover executáveis
 Start-Sleep -Seconds 1
-Get-ChildItem -Path $installRoot -Exclude 'uninstall.ps1' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+if (Test-Path -LiteralPath $installRoot) {
+    Get-ChildItem -Path $installRoot -Exclude 'uninstall.ps1' -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    try {
+        Remove-Item -LiteralPath (Join-Path $installRoot 'uninstall.ps1') -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $installRoot -Force -Recurse -ErrorAction SilentlyContinue
+    } catch {}
+}
 Write-Host ""
 Write-Host "[OK] Remote Controller desinstalado com sucesso." -ForegroundColor Green
 Write-Host ""
@@ -416,12 +500,50 @@ Write-Host ""
             if ($AllowTerminal) { $pairArgs += '--allow-terminal' }
         }
         
+        # Construção segura de argumentos com escape para linha de comando
+        $escapedPairArgs = foreach ($arg in $pairArgs) {
+            if ($arg -match '[\s"]') {
+                '"' + ($arg -replace '"', '\"') + '"'
+            } else {
+                $arg
+            }
+        }
+        $serverEndpoint = $ServerUrl.AbsoluteUri.TrimEnd('/')
+        $manualPairParts = @(
+            "& `"$taskAgent`"",
+            "--profile `"$profileBase`""
+        )
+        if ($taskDaemon -and (Test-Path -LiteralPath $taskDaemon)) {
+            $manualPairParts += "--daemon `"$taskDaemon`""
+        }
+        $manualPairParts += @(
+            "pair",
+            "--server `"$serverEndpoint`"",
+            "--workspace `"$Workspace`"",
+            "--name `"$Name`""
+        )
+        if ($FullComputer) {
+            $manualPairParts += @(
+                "--full-computer",
+                "--allow-write",
+                "--allow-process",
+                "--allow-terminal",
+                "--allow-process-outside-workspace",
+                "--allow-process-network"
+            )
+        } else {
+            if ($AllowWrite) { $manualPairParts += "--allow-write" }
+            if ($AllowProcess) { $manualPairParts += "--allow-process" }
+            if ($AllowTerminal) { $manualPairParts += "--allow-terminal" }
+        }
+        $manualPairCommand = ($manualPairParts -join ' ')
+
         Write-Host "Executando pareamento inicial..." -ForegroundColor Gray
         
         # Execução com captura de saída para exibir o código e abrir o navegador automaticamente
         $pairProcInfo = New-Object System.Diagnostics.ProcessStartInfo
         $pairProcInfo.FileName = $taskAgent
-        $pairProcInfo.Arguments = ($pairArgs -join ' ')
+        $pairProcInfo.Arguments = ($escapedPairArgs -join ' ')
         $pairProcInfo.RedirectStandardOutput = $true
         $pairProcInfo.RedirectStandardError = $true
         $pairProcInfo.UseShellExecute = $false
@@ -430,7 +552,10 @@ Write-Host ""
         $pairProc = [System.Diagnostics.Process]::Start($pairProcInfo)
         $browserOpened = $false
 
-        while (-not $pairProc.HasExited) {
+        # Inicia leitura assíncrona de stderr para evitar deadlock em pipes de saída
+        $stdErrTask = $pairProc.StandardError.ReadToEndAsync()
+
+        while (-not $pairProc.StandardOutput.EndOfStream) {
             $line = $pairProc.StandardOutput.ReadLine()
             if ($line) {
                 Write-Host $line -ForegroundColor White
@@ -440,7 +565,7 @@ Write-Host ""
                     $pairCode = $matches[2]
                     
                     Write-Host "`n========================================================" -ForegroundColor Green
-                    Write-Host "  CÓDIGO DE PAREAMENTO: $pairCode" -ForegroundColor Yellow
+                    Write-Host "  CODIGO DE PAREAMENTO: $pairCode" -ForegroundColor Yellow
                     Write-Host "  ABRA O PORTAL E CONFIRME: $verifyUrl" -ForegroundColor Cyan
                     Write-Host "========================================================`n" -ForegroundColor Green
                     
@@ -453,74 +578,109 @@ Write-Host ""
                     }
                 }
             }
-            Start-Sleep -Milliseconds 100
         }
         $pairProc.WaitForExit()
         
-        if ($pairProc.ExitCode -ne 0) {
-            $errText = $pairProc.StandardError.ReadToEnd()
-            throw "Falha durante o pareamento (Código de saída $($pairProc.ExitCode)): $errText"
+        $errText = $stdErrTask.Result
+        if ($pairProc.ExitCode -ne 0 -and $errText) {
+            Write-WarnMessage "Processo de pareamento finalizou com código $($pairProc.ExitCode): $errText"
         }
-        Write-Success "Pareamento concluído com sucesso!"
 
-        # Aprovação automática do terminal PowerShell para uso imediato pelo ChatGPT
-        if ($FullComputer -or $AllowTerminal) {
-            $powerShellPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-            if (Test-Path -LiteralPath $powerShellPath) {
-                Write-Host "Configurando aprovação local do PowerShell para o terminal..." -ForegroundColor Gray
-                & "$taskAgent" --profile "$profileBase" --daemon "$taskDaemon" terminal-approve --program "$powerShellPath" --trust-unconfined
-                Write-Success "Terminal PowerShell aprovado para uso imediato pelo ChatGPT."
+        # Validação explícita se o arquivo agent.json foi de fato criado no diretório de perfil
+        if (Test-Path -LiteralPath $credentialsPath) {
+            Write-Success "Pareamento concluído com sucesso!"
+
+            # Aprovação automática do terminal PowerShell para uso imediato pelo ChatGPT
+            if ($FullComputer -or $AllowTerminal) {
+                $powerShellPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+                if (Test-Path -LiteralPath $powerShellPath) {
+                    Write-Host "Configurando aprovação local do PowerShell para o terminal..." -ForegroundColor Gray
+                    & "$taskAgent" --profile "$profileBase" --daemon "$taskDaemon" terminal-approve --program "$powerShellPath" --trust-unconfined
+                    Write-Success "Terminal PowerShell aprovado para uso imediato pelo ChatGPT."
+                }
             }
+        } else {
+            Write-Host ""
+            Write-Host "==========================================================" -ForegroundColor Red
+            Write-Host "   ALERTA: PAREAMENTO NÃO CONCLUÍDO NO NAVEGADOR!         " -ForegroundColor Yellow
+            Write-Host "==========================================================" -ForegroundColor Red
+            Write-Host "O arquivo de credenciais '$credentialsPath' não foi criado." -ForegroundColor Yellow
+            Write-Host "Possíveis causas: a janela do navegador foi fechada, o token expirou ou houve erro na confirmação." -ForegroundColor Yellow
+            Write-Host "O agente em segundo plano NÃO será iniciado até que o pareamento seja concluído." -ForegroundColor Yellow
+            Write-Host "`nPara concluir o pareamento quando estiver pronto, execute no PowerShell:" -ForegroundColor White
+            Write-Host "  $manualPairCommand`n" -ForegroundColor Cyan
         }
     }
 
     # 6. Consentimento de Autostart
     Write-Step "Inicialização Automática com o Windows"
-    $shouldAutostart = $false
-    if ($EnableAutostart) {
-        $shouldAutostart = $true
-    } elseif ($DisableAutostart) {
+    $isPaired = Test-Path -LiteralPath $credentialsPath
+    if ($isPaired) {
         $shouldAutostart = $false
-    } elseif ($NonInteractive) {
-        $shouldAutostart = $false
-    } else {
-        $respAuto = Read-Host "Deseja que o Remote Controller inicie automaticamente ao ligar o computador? (S/N) [Padrão: S]"
-        if (-not $respAuto -or $respAuto -match '^(s|sim|y|yes)$') {
+        if ($EnableAutostart) {
             $shouldAutostart = $true
+        } elseif ($DisableAutostart) {
+            $shouldAutostart = $false
+        } elseif ($NonInteractive) {
+            $shouldAutostart = $false
+        } else {
+            $respAuto = Read-Host "Deseja que o Remote Controller inicie automaticamente ao ligar o computador? (S/N) [Padrão: S]"
+            if (-not $respAuto -or $respAuto -match '^(s|sim|y|yes)$') {
+                $shouldAutostart = $true
+            }
         }
-    }
 
-    if ($shouldAutostart) {
-        & "$taskAgent" --profile "$profileBase" autostart enable
-        Write-Success "Inicialização automática ativada no registro do usuário (sem privilégios administrativos)."
+        if ($shouldAutostart) {
+            & "$taskAgent" --profile "$profileBase" autostart enable
+            Write-Success "Inicialização automática ativada no registro do usuário (sem privilégios administrativos)."
+        } else {
+            Write-Host "Inicialização automática não ativada. Você pode ativá-la quando quiser com: & '$taskAgent' autostart enable" -ForegroundColor Gray
+        }
     } else {
-        Write-Host "Inicialização automática não ativada. Você pode ativá-la quando quiser com: & '$taskAgent' autostart enable" -ForegroundColor Gray
+        Write-Host "Inicialização automática postergada: requer pareamento prévio concluído." -ForegroundColor Gray
     }
 
     # 7. Iniciar o Agente em Segundo Plano
-    Write-Step "Iniciando o agente em segundo plano..."
-    # Mata qualquer instância antiga presa antes de subir
-    Get-Process -Name 'device-agent', 'local-daemon' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Milliseconds 500
+    if ($isPaired) {
+        Write-Step "Iniciando o agente em segundo plano..."
+        # Mata qualquer instância antiga presa antes de subir
+        Get-Process -Name 'device-agent', 'local-daemon', 'rdc', 'mcp-gateway' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Milliseconds 500
 
-    $agentProcess = Start-Process -FilePath $taskAgent -ArgumentList @('--profile', ('"' + $profileBase + '"'), 'run') -WindowStyle Hidden -PassThru
-    Start-Sleep -Seconds 2
+        $agentProcess = Start-Process -FilePath $taskAgent -ArgumentList @('--profile', ('"' + $profileBase + '"'), 'run') -WindowStyle Hidden -PassThru
+        Start-Sleep -Seconds 2
 
-    if ($agentProcess.HasExited) {
-        Write-WarnMessage "O agente não continuou rodando. Para ver o log detalhado, execute: & '$taskAgent' --profile '$profileBase' run"
+        if ($agentProcess.HasExited) {
+            Write-WarnMessage "O agente não continuou rodando. Para ver o log detalhado, execute: & '$taskAgent' --profile '$profileBase' run"
+        } else {
+            Write-Success "Agente ativo em segundo plano (PID: $($agentProcess.Id))."
+        }
+
+        Write-Host "`n==========================================================" -ForegroundColor Green
+        Write-Host "        INSTALAÇÃO CONCLUÍDA COM SUCESSO!                 " -ForegroundColor White
+        Write-Host "==========================================================" -ForegroundColor Green
+        Write-Host "Seu computador agora está conectado ao Remote Controller." -ForegroundColor White
+        Write-Host "Você já pode fechar esta janela do PowerShell.`n" -ForegroundColor Cyan
+        Write-Host "Comandos úteis:" -ForegroundColor Gray
+        Write-Host "  Ver status:    & '$taskAgent' --profile '$profileBase' status" -ForegroundColor Gray
+        Write-Host "  Parar agente:  & '$taskAgent' --profile '$profileBase' stop" -ForegroundColor Gray
+        Write-Host "  Desinstalar:   powershell -File '$uninstallScriptPath'" -ForegroundColor Gray
     } else {
-        Write-Success "Agente ativo em segundo plano (PID: $($agentProcess.Id))."
+        Write-Host "`n==========================================================" -ForegroundColor Yellow
+        Write-Host "   INSTALAÇÃO PARCIAL - PAREAMENTO PENDENTE               " -ForegroundColor Yellow
+        Write-Host "==========================================================" -ForegroundColor Yellow
+        Write-Host "Os binários foram instalados com sucesso em '$versionRoot'." -ForegroundColor White
+        Write-Host "O agente em segundo plano NÃO foi iniciado pois o pareamento não foi concluído." -ForegroundColor Yellow
+        Write-Host "Assim que concluir o pareamento no portal, inicie o agente com:" -ForegroundColor White
+        Write-Host "  & '$taskAgent' --profile '$profileBase' run" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Comandos úteis:" -ForegroundColor Gray
+        if ($manualPairCommand) {
+            Write-Host "  Concluir pareamento: $manualPairCommand" -ForegroundColor Gray
+        }
+        Write-Host "  Desinstalar:         powershell -File '$uninstallScriptPath'" -ForegroundColor Gray
+        Write-Host ""
     }
-
-    Write-Host "`n==========================================================" -ForegroundColor Green
-    Write-Host "        INSTALAÇÃO CONCLUÍDA COM SUCESSO!                 " -ForegroundColor White
-    Write-Host "==========================================================" -ForegroundColor Green
-    Write-Host "Seu computador agora está conectado ao Remote Controller." -ForegroundColor White
-    Write-Host "Você já pode fechar esta janela do PowerShell.`n" -ForegroundColor Cyan
-    Write-Host "Comandos úteis:" -ForegroundColor Gray
-    Write-Host "  Ver status:    & '$taskAgent' --profile '$profileBase' status" -ForegroundColor Gray
-    Write-Host "  Parar agente:  & '$taskAgent' --profile '$profileBase' stop" -ForegroundColor Gray
-    Write-Host "  Desinstalar:   powershell -File '$uninstallScriptPath'" -ForegroundColor Gray
 
 } finally {
     if (Test-Path -LiteralPath $tempStaging) {

@@ -1,4 +1,4 @@
-﻿#requires -Version 5.1
+#requires -Version 5.1
 <#
 .SYNOPSIS
     Harness de teste automatizado para o instalador e desinstalador de distribuição.
@@ -42,11 +42,54 @@ try {
     $mockPkgDir = Join-Path $testRoot 'mock-package'
     New-Item -ItemType Directory -Path $mockPkgDir -Force | Out-Null
     
-    # Criar arquivos dummy representando executáveis
-    $daemonContent = "REM MOCK LOCAL DAEMON`r`nExit 0"
-    $agentContent = "REM MOCK DEVICE AGENT`r`nExit 0"
-    [IO.File]::WriteAllText((Join-Path $mockPkgDir 'local-daemon.exe'), $daemonContent, [Text.Encoding]::ASCII)
-    [IO.File]::WriteAllText((Join-Path $mockPkgDir 'device-agent.exe'), $agentContent, [Text.Encoding]::ASCII)
+    # Compilar executável mock em C# para simulação precisa de chamadas
+    $mockSource = @'
+using System;
+using System.IO;
+using System.Linq;
+
+class MockAgent {
+    static int Main(string[] args) {
+        string logFile = Environment.GetEnvironmentVariable("MOCK_AGENT_LOG");
+        if (!string.IsNullOrEmpty(logFile)) {
+            File.AppendAllText(logFile, string.Join(" ", args) + Environment.NewLine);
+        }
+        
+        if (args.Contains("pair")) {
+            Console.WriteLine("Abra https://example.com/pair e aprove o codigo ABCD-1234");
+            if (Environment.GetEnvironmentVariable("MOCK_SIMULATE_PAIR_SUCCESS") == "1") {
+                int profileIdx = Array.IndexOf(args, "--profile");
+                if (profileIdx >= 0 && profileIdx + 1 < args.Length) {
+                    string prof = args[profileIdx + 1];
+                    Directory.CreateDirectory(prof);
+                    File.WriteAllText(Path.Combine(prof, "agent.json"), "{\"mock\": true}");
+                }
+                return 0;
+            }
+            return 1;
+        }
+        if (args.Contains("run")) {
+            int profileIdx = Array.IndexOf(args, "--profile");
+            if (profileIdx >= 0 && profileIdx + 1 < args.Length) {
+                string prof = args[profileIdx + 1];
+                if (!File.Exists(Path.Combine(prof, "agent.json"))) {
+                    Console.Error.WriteLine("FATAL: agent.json nao encontrado");
+                    return 2;
+                }
+            }
+            return 0;
+        }
+        return 0;
+    }
+}
+'@
+    $mockCsPath = Join-Path $testRoot 'MockAgent.cs'
+    [IO.File]::WriteAllText($mockCsPath, $mockSource, [Text.Encoding]::UTF8)
+    $cscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+    $agentBin = Join-Path $mockPkgDir 'device-agent.exe'
+    $daemonBin = Join-Path $mockPkgDir 'local-daemon.exe'
+    & $cscPath /nologo /target:exe "/out:$agentBin" $mockCsPath | Out-Null
+    Copy-Item -LiteralPath $agentBin -Destination $daemonBin -Force
     [IO.File]::WriteAllText((Join-Path $mockPkgDir 'INSTALL.md'), "# Install Guide", [Text.Encoding]::ASCII)
 
     $filesHash = [ordered]@{}
@@ -136,7 +179,7 @@ try {
     # TESTE 4: Instalação segura a partir de pacote local
     # ----------------------------------------------------
     Assert-Test "Instalação bem-sucedida de executáveis e criação do desinstalador" {
-        $customInstallBase = Join-Path $testRoot 'installed_app'
+        $customInstallBase = Join-Path $testRoot 'installed_app\RemoteDesktopController'
         $customProfileBase = Join-Path $testRoot 'profile_app'
         $customWs = Join-Path $testRoot 'workspace_app'
         
@@ -162,7 +205,7 @@ try {
     # TESTE 5: Script de Desinstalação limpa
     # ----------------------------------------------------
     Assert-Test "Execução do desinstalador remove diretórios de instalação" {
-        $testUninstallApp = Join-Path $testRoot 'installed_app'
+        $testUninstallApp = Join-Path $testRoot 'installed_app\RemoteDesktopController'
         $testUninstallProfile = Join-Path $testRoot 'profile_app'
         if (-not (Test-Path $testUninstallApp)) { throw "Diretório de instalação de teste não encontrado." }
         
@@ -173,6 +216,185 @@ try {
         $remaining = @(Get-ChildItem -Path $testUninstallApp -Exclude 'uninstall.ps1' -ErrorAction SilentlyContinue)
         if ($remaining.Count -gt 0) {
             throw "Arquivos de aplicativo ainda restam após a desinstalação: $($remaining.Name -join ', ')"
+        }
+    }
+
+    # ----------------------------------------------------
+    # TESTE 6: Resolução Canônica (~/.remotecontroller/agent) vs Legado
+    # ----------------------------------------------------
+    Assert-Test "Resolução de perfil canônico e compatibilidade retroativa com legado" {
+        $testHome = Join-Path $testRoot 'home_profile_test'
+        $testLocalApp = Join-Path $testRoot 'localapp_profile_test'
+        New-Item -ItemType Directory -Path $testHome -Force | Out-Null
+        New-Item -ItemType Directory -Path $testLocalApp -Force | Out-Null
+        
+        $canonical = Join-Path $testHome '.remotecontroller\agent'
+        $legacy = Join-Path $testLocalApp 'RemoteDesktopController\agent'
+        
+        # Cenário A: Sem credenciais prévias -> resolve para canônico
+        $resolvedA = if ($legacy -and (Test-Path -LiteralPath (Join-Path $legacy 'agent.json')) -and -not (Test-Path -LiteralPath (Join-Path $canonical 'agent.json'))) { $legacy } else { $canonical }
+        if ($resolvedA -ne $canonical) { throw "Deveria resolver para canônico quando não há credenciais legadas." }
+        
+        # Cenário B: Legado possui agent.json e canônico não possui -> resolve para legado
+        New-Item -ItemType Directory -Path $legacy -Force | Out-Null
+        [IO.File]::WriteAllText((Join-Path $legacy 'agent.json'), '{"mock_legacy": true}')
+        
+        $resolvedB = if ($legacy -and (Test-Path -LiteralPath (Join-Path $legacy 'agent.json')) -and -not (Test-Path -LiteralPath (Join-Path $canonical 'agent.json'))) { $legacy } else { $canonical }
+        if ($resolvedB -ne $legacy) { throw "Deveria resolver para legado quando existem credenciais nele." }
+        
+        # Cenário C: Canônico já possui credenciais -> canônico tem prioridade
+        New-Item -ItemType Directory -Path $canonical -Force | Out-Null
+        [IO.File]::WriteAllText((Join-Path $canonical 'agent.json'), '{"mock_canonical": true}')
+        
+        $resolvedC = if ($legacy -and (Test-Path -LiteralPath (Join-Path $legacy 'agent.json')) -and -not (Test-Path -LiteralPath (Join-Path $canonical 'agent.json'))) { $legacy } else { $canonical }
+        if ($resolvedC -ne $canonical) { throw "Deveria resolver para canônico quando ambos possuem credenciais." }
+    }
+
+    # ----------------------------------------------------
+    # TESTE 7: Fluxo com Pareamento NÃO Concluído Aborta Boot e Exibe Alerta
+    # ----------------------------------------------------
+    Assert-Test "Fluxo com pareamento não concluído aborta boot em background e exibe comando manual" {
+        $testInstallDir = Join-Path $testRoot 'app_unpaired\RemoteDesktopController'
+        $testProfileDir = Join-Path $testRoot 'profile_unpaired'
+        $testLog = Join-Path $testRoot 'mock_agent_unpaired.log'
+        
+        $env:MOCK_AGENT_LOG = $testLog
+        $env:MOCK_SIMULATE_PAIR_SUCCESS = "0"
+        
+        if (Test-Path -LiteralPath $testLog) { Remove-Item -LiteralPath $testLog -Force }
+        
+        $installOut = powershell -ExecutionPolicy Bypass -File $installerScript -LocalPackagePath $mockPkgDir -InstallDir $testInstallDir -ProfileDir $testProfileDir -NonInteractive 2>&1
+        $outStr = ($installOut | Out-String)
+        
+        # 1. agent.json NÃO deve ter sido criado
+        $credPath = Join-Path $testProfileDir 'agent.json'
+        if (Test-Path -LiteralPath $credPath) {
+            throw "agent.json foi criado inesperadamente em fluxo não concluído."
+        }
+        
+        # 2. Saída deve alertar que o pareamento não foi concluído
+        if ($outStr -notmatch 'ALERTA:\s+PAREAMENTO' -or $outStr -notmatch 'NAVEGADOR') {
+            throw "Alerta destacado de pareamento não concluído não foi emitido. Saída: $outStr"
+        }
+        
+        # 3. Saída deve fornecer o comando exato que o usuário deve rodar
+        if ($outStr -notmatch 'pair\s+--server') {
+            throw "Comando manual de pareamento não foi fornecido. Saída: $outStr"
+        }
+        
+        # 4. device-agent run NÃO deve ter sido chamado em background
+        if (Test-Path -LiteralPath $testLog) {
+            $logContent = Get-Content -LiteralPath $testLog -Raw
+            if ($logContent -match '\brun\b') {
+                throw "device-agent run foi chamado indevidamente em segundo plano sem agent.json!"
+            }
+        }
+    }
+
+    # ----------------------------------------------------
+    # TESTE 8: Fluxo com Pareamento Concluído com Sucesso Inicia Agente
+    # ----------------------------------------------------
+    Assert-Test "Fluxo com pareamento concluído gera credenciais e prossegue com ativação" {
+        $testInstallDir = Join-Path $testRoot 'app_paired\RemoteDesktopController'
+        $testProfileDir = Join-Path $testRoot 'profile_paired'
+        $testLog = Join-Path $testRoot 'mock_agent_paired.log'
+        
+        $env:MOCK_AGENT_LOG = $testLog
+        $env:MOCK_SIMULATE_PAIR_SUCCESS = "1"
+        
+        if (Test-Path -LiteralPath $testLog) { Remove-Item -LiteralPath $testLog -Force }
+        
+        $installOut = powershell -ExecutionPolicy Bypass -File $installerScript -LocalPackagePath $mockPkgDir -InstallDir $testInstallDir -ProfileDir $testProfileDir -NonInteractive 2>&1
+        $outStr = ($installOut | Out-String)
+        
+        # 1. agent.json DEVE ter sido criado
+        $credPath = Join-Path $testProfileDir 'agent.json'
+        if (-not (Test-Path -LiteralPath $credPath)) {
+            throw "agent.json deveria ter sido criado com sucesso. Saída: $outStr"
+        }
+        
+        # 2. device-agent run DEVE ter sido iniciado
+        if (Test-Path -LiteralPath $testLog) {
+            $logContent = Get-Content -LiteralPath $testLog -Raw
+            if ($logContent -notmatch '\brun\b') {
+                throw "device-agent run deveria ter sido executado após pareamento concluído."
+            }
+        } else {
+            throw "Log do mock agent não foi registrado."
+        }
+    }
+
+    # ----------------------------------------------------
+    # TESTE 9: Desinstalador Harmonizado Remove Perfis
+    # ----------------------------------------------------
+    Assert-Test "Desinstalador remove dados de perfil especificado e canônico com -RemoveData" {
+        $testApp = Join-Path $testRoot 'app_remove_profiles\RemoteDesktopController'
+        New-Item -ItemType Directory -Path $testApp -Force | Out-Null
+        Copy-Item -LiteralPath $uninstallerScript -Destination (Join-Path $testApp 'uninstall.ps1')
+        
+        $mockProfile = Join-Path $testRoot 'profile_to_remove'
+        New-Item -ItemType Directory -Path $mockProfile -Force | Out-Null
+        [IO.File]::WriteAllText((Join-Path $mockProfile 'agent.json'), '{"delete_me": true}')
+        
+        powershell -ExecutionPolicy Bypass -File (Join-Path $testApp 'uninstall.ps1') -InstallPath $testApp -ProfilePath $mockProfile -NonInteractive -RemoveData
+        
+        if (Test-Path -LiteralPath $mockProfile) {
+            throw "Diretório de perfil $mockProfile não foi removido pelo desinstalador."
+        }
+    }
+
+    # ----------------------------------------------------
+    # TESTE 10: Desinstalador SEM -InstallPath respeita PSScriptRoot e não apaga pasta pai
+    # ----------------------------------------------------
+    Assert-Test "Desinstalador sem -InstallPath respeita PSScriptRoot e preserva diretório pai e vizinhos" {
+        $parentFolder = Join-Path $testRoot 'parent_programs'
+        $rdcFolder = Join-Path $parentFolder 'RemoteDesktopController'
+        $neighborFolder = Join-Path $parentFolder 'NeighborApp'
+        
+        New-Item -ItemType Directory -Path $rdcFolder -Force | Out-Null
+        New-Item -ItemType Directory -Path $neighborFolder -Force | Out-Null
+        
+        [IO.File]::WriteAllText((Join-Path $neighborFolder 'keep_me.txt'), 'NEIGHBOR_DATA')
+        [IO.File]::WriteAllText((Join-Path $rdcFolder 'device-agent.exe'), 'MOCK_AGENT')
+        Copy-Item -LiteralPath $uninstallerScript -Destination (Join-Path $rdcFolder 'uninstall.ps1')
+        
+        # Executa sem parâmetro -InstallPath (cenário padrão do usuário final)
+        powershell -ExecutionPolicy Bypass -File (Join-Path $rdcFolder 'uninstall.ps1') -NonInteractive
+        
+        # 1. Pasta vizinha DEVE estar intacta
+        if (-not (Test-Path -LiteralPath (Join-Path $neighborFolder 'keep_me.txt'))) {
+            throw "FALHA CRÍTICA: Desinstalador apagou pasta vizinha do diretório pai!"
+        }
+        
+        # 2. Executável do RDC deve ter sido removido
+        if (Test-Path -LiteralPath (Join-Path $rdcFolder 'device-agent.exe')) {
+            throw "Executável do RDC não foi removido pelo desinstalador."
+        }
+    }
+
+    # ----------------------------------------------------
+    # TESTE 11: Guardrail de Segurança Bloqueia Target Inválido / Sem Leaf RemoteDesktopController
+    # ----------------------------------------------------
+    Assert-Test "Guardrail de segurança bloqueia desinstalação se leaf não for RemoteDesktopController" {
+        $invalidTarget = Join-Path $testRoot 'unsafe_directory'
+        New-Item -ItemType Directory -Path $invalidTarget -Force | Out-Null
+        [IO.File]::WriteAllText((Join-Path $invalidTarget 'important.txt'), 'CRITICAL_DATA')
+        
+        $caught = $false
+        try {
+            $res = powershell -ExecutionPolicy Bypass -File $uninstallerScript -InstallPath $invalidTarget -NonInteractive 2>&1
+            if (($res | Out-String) -match 'ERRO CRÍTICO DE SEGURANÇA') {
+                $caught = $true
+            }
+        } catch {
+            $caught = $true
+        }
+        
+        if (-not $caught) {
+            throw "Desinstalador não bloqueou diretório com leaf inválido!"
+        }
+        if (-not (Test-Path -LiteralPath (Join-Path $invalidTarget 'important.txt'))) {
+            throw "FALHA DE SEGURANÇA: Dados foram apagados em diretório com leaf inválido!"
         }
     }
 
