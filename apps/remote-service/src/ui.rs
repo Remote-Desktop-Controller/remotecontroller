@@ -112,6 +112,8 @@ pub(crate) async fn register(
 pub(crate) struct HomeQuery {
     #[serde(default)]
     pub paired: Option<String>,
+    #[serde(default)]
+    pub code: Option<String>,
 }
 pub(crate) async fn home(
     State(state): State<AppState>,
@@ -161,8 +163,14 @@ pub(crate) async fn home(
     } else {
         ""
     };
+    let prefill_code = query.code.as_deref().unwrap_or_default();
+    let prefill_attr = if prefill_code.is_empty() {
+        String::new()
+    } else {
+        format!(" value=\"{}\"", security::escape(prefill_code))
+    };
     let body = format!(
-        "<h1>Seus computadores</h1><p>Conta: {}</p>{success_banner}<div class=grid>{cards}</div><section><h2>Parear computador</h2><p>No agente instalado, escolha conectar à conta. Confira o computador e digite o código de uso único. O código expira em dez minutos.</p><form id=pair-form method=post action=/pair><input type=hidden name=csrf value=\"{}\"><label for=code>Código de pareamento</label><input id=code name=code placeholder=ABCD-EFGH autocomplete=off maxlength=12 required><button id=pair-submit>Confirmar pareamento</button></form><script>(function(){{var f=document.getElementById('pair-form');if(f){{f.addEventListener('submit',function(e){{var b=document.getElementById('pair-submit');if(b){{if(b.disabled){{e.preventDefault();return false;}}b.disabled=true;b.textContent='Confirmando pareamento...';}}}});}}}})();</script></section><section><h2>Usar pelo ChatGPT</h2><p>Quando sua conexão estiver autorizada, peça ao ChatGPT para mostrar e escolher seu computador. O agente precisa continuar aberto nesse computador.</p><p><small>A conexão pública e a publicação em catálogo ainda precisam ser validadas. Não há aplicativo publicado para instalar pelo catálogo nesta etapa.</small></p><details><summary>Conexão de teste e configuração avançada</summary><p>Em uma conta do ChatGPT com acesso a conectores personalizados, adicione este endereço nas configurações e conclua a autorização entrando nesta conta:</p><p><code>{}</code></p><p>A disponibilidade depende da conta e das opções oferecidas pela plataforma.</p></details></section><section><h2>Conexões autorizadas</h2><div class=grid>{}</div></section><form method=post action=/logout><input type=hidden name=csrf value=\"{}\"><button class=secondary>Sair da conta</button></form>",
+        "<h1>Seus computadores</h1><p>Conta: {}</p>{success_banner}<div class=grid>{cards}</div><section><h2>Parear computador</h2><p>No agente instalado, escolha conectar à conta. Confira o computador e digite o código de uso único. O código expira em dez minutos.</p><form id=pair-form method=post action=/pair><input type=hidden name=csrf value=\"{}\"><label for=code>Código de pareamento</label><input id=code name=code{prefill_attr} placeholder=ABCD-EFGH autocomplete=off maxlength=12 required><button id=pair-submit>Confirmar pareamento</button></form><script>(function(){{var f=document.getElementById('pair-form');if(f){{var submitted=false;f.addEventListener('submit',function(e){{if(submitted){{e.preventDefault();return false;}}submitted=true;var b=document.getElementById('pair-submit');if(b){{b.disabled=true;b.textContent='Confirmando pareamento...';}}}});}}}})();</script></section><section><h2>Usar pelo ChatGPT</h2><p>Quando sua conexão estiver autorizada, peça ao ChatGPT para mostrar e escolher seu computador. O agente precisa continuar aberto nesse computador.</p><p><small>A conexão pública e a publicação em catálogo ainda precisam ser validadas. Não há aplicativo publicado para instalar pelo catálogo nesta etapa.</small></p><details><summary>Conexão de teste e configuração avançada</summary><p>Em uma conta do ChatGPT com acesso a conectores personalizados, adicione este endereço nas configurações e conclua a autorização entrando nesta conta:</p><p><code>{}</code></p><p>A disponibilidade depende da conta e das opções oferecidas pela plataforma.</p></details></section><section><h2>Conexões autorizadas</h2><div class=grid>{}</div></section><form method=post action=/logout><input type=hidden name=csrf value=\"{}\"><button class=secondary>Sair da conta</button></form>",
         security::escape(&session.email),
         session.csrf,
         security::escape(&state.config.resource()),

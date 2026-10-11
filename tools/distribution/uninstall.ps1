@@ -1,4 +1,4 @@
-﻿#requires -Version 5.1
+#requires -Version 5.1
 <#
 .SYNOPSIS
     Script de desinstalação segura do Remote Controller Windows.
@@ -19,12 +19,13 @@ Write-Host "==========================================================" -Foregro
 Write-Host "        Remote Controller - Desinstalador Windows         " -ForegroundColor White
 Write-Host "==========================================================" -ForegroundColor Cyan
 
+$canonicalInstall = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Programs\RemoteDesktopController')).TrimEnd('\', '/')
 $installRoot = if ($InstallPath) {
     $InstallPath
 } elseif (-not [string]::IsNullOrWhiteSpace($PSScriptRoot) -and (Split-Path -Path $PSScriptRoot -Leaf) -eq 'RemoteDesktopController') {
     $PSScriptRoot
 } else {
-    Join-Path $env:LOCALAPPDATA 'Programs\RemoteDesktopController'
+    $canonicalInstall
 }
 
 $installRoot = [IO.Path]::GetFullPath($installRoot).TrimEnd('\', '/')
@@ -67,9 +68,20 @@ $profileRoot = if ($ProfilePath) {
 
 # 1. Parar agentes e daemons ativos
 Write-Host "`n==> Encerrando processos em execução..." -ForegroundColor Gray
+$isCanonical = ($installRoot -eq $canonicalInstall)
 Get-Process -Name 'device-agent', 'local-daemon', 'rdc', 'mcp-gateway' -ErrorAction SilentlyContinue | ForEach-Object {
-    Write-Host "  Encerrando $($_.Name) (PID $($_.Id))..." -ForegroundColor Yellow
-    Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+    $shouldStop = $isCanonical
+    if (-not $shouldStop) {
+        try {
+            if ($_.Path -and $_.Path -like "*$installRoot*") {
+                $shouldStop = $true
+            }
+        } catch {}
+    }
+    if ($shouldStop) {
+        Write-Host "  Encerrando $($_.Name) (PID $($_.Id))..." -ForegroundColor Yellow
+        Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+    }
 }
 Start-Sleep -Seconds 1
 
@@ -80,9 +92,26 @@ try {
     if (Test-Path $runKey) {
         $props = Get-ItemProperty -Path $runKey -ErrorAction SilentlyContinue
         if ($props) {
+            $isCanonical = ($installRoot -eq $canonicalInstall)
             $props.PSObject.Properties | Where-Object { $_.Name -like 'remotecontroller-*' } | ForEach-Object {
-                Remove-ItemProperty -Path $runKey -Name $_.Name -Force -ErrorAction SilentlyContinue
-                Write-Host "  Chave $($_.Name) removida do registro." -ForegroundColor Green
+                $shouldRemove = $isCanonical
+                if (-not $shouldRemove) {
+                    $entryVal = [string]$_.Value
+                    if ($entryVal -like "*$installRoot*") {
+                        $shouldRemove = $true
+                    } elseif ($entryVal -match '-EncodedCommand\s+([A-Za-z0-9+/=]+)') {
+                        try {
+                            $decoded = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($Matches[1]))
+                            if ($decoded -like "*$installRoot*") {
+                                $shouldRemove = $true
+                            }
+                        } catch {}
+                    }
+                }
+                if ($shouldRemove) {
+                    Remove-ItemProperty -Path $runKey -Name $_.Name -Force -ErrorAction SilentlyContinue
+                    Write-Host "  Chave $($_.Name) removida do registro." -ForegroundColor Green
+                }
             }
         }
     }

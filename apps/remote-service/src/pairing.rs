@@ -152,6 +152,9 @@ async fn approve(state: &AppState, session: &account::WebSession, code: &str) ->
         .rate(format!("pair-approve:{}", session.user_id), 10)
         .await?;
     let code = code.replace(['-', ' '], "").to_ascii_uppercase();
+    if code.is_empty() {
+        return Err(ApiError::bad("Preencha o código de pareamento para continuar"));
+    }
     let connection = state.store.lock().await;
     let tx = connection
         .transaction_with_behavior(libsql::TransactionBehavior::Immediate)
@@ -162,7 +165,13 @@ async fn approve(state: &AppState, session: &account::WebSession, code: &str) ->
             params![security::hash(&code)],
         )
         .await?;
-    let row = rows.next().await?.ok_or_else(ApiError::not_found)?;
+    let row = rows.next().await?.ok_or_else(|| {
+        ApiError::new(
+            StatusCode::NOT_FOUND,
+            "not_found",
+            "Código de pareamento não encontrado ou expirado",
+        )
+    })?;
     drop(rows);
     let owner: Option<String> = row.get(1)?;
     if let Some(ref existing_owner) = owner {

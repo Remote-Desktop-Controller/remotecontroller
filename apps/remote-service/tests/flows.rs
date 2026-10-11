@@ -380,6 +380,21 @@ async fn pairing_poll_secrets_and_approval_are_single_use() {
     )
     .await;
     assert!(first["device_token"].is_string());
+    // Even AFTER poll delivery, duplicate approval by the same user remains idempotent
+    assert_eq!(
+        send(
+            &app,
+            "POST",
+            "/api/pairings/approve",
+            json!({"code":pairing["pairing_code"]}),
+            Some(&cookie),
+            Some(&csrf),
+            None
+        )
+        .await
+        .0,
+        StatusCode::OK
+    );
     let (_, second, _) = send(
         &app,
         "POST",
@@ -550,6 +565,12 @@ async fn account_form_errors_are_portuguese_html_and_connection_details_are_coll
         .await
         .unwrap();
     assert_eq!(res_home.status(), StatusCode::OK);
+    assert!(
+        res_home.headers()["content-security-policy"]
+            .to_str()
+            .unwrap()
+            .contains("script-src 'unsafe-inline'")
+    );
     let home_html = String::from_utf8(
         to_bytes(res_home.into_body(), 1024 * 1024)
             .await
@@ -562,6 +583,28 @@ async fn account_form_errors_are_portuguese_html_and_connection_details_are_coll
     assert!(home_html.contains("Conexão de teste"));
     assert!(!home_html.contains("device.list"));
     assert!(!home_html.contains("daemon"));
+
+    // GET /pair?code=WXYZ-1234 pre-fills the input field
+    let res_prefill = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/pair?code=WXYZ-1234")
+                .header("cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res_prefill.status(), StatusCode::OK);
+    let prefill_html = String::from_utf8(
+        to_bytes(res_prefill.into_body(), 1024 * 1024)
+            .await
+            .unwrap()
+            .to_vec(),
+    )
+    .unwrap();
+    assert!(prefill_html.contains("value=\"WXYZ-1234\""));
 }
 
 #[tokio::test]

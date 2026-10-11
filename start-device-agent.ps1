@@ -72,7 +72,13 @@ if (-not $agentExe) {
 $profileArg = if ($ProfilePath -and (Test-Path -LiteralPath $ProfilePath)) {
     (Resolve-Path -LiteralPath $ProfilePath).Path
 } else {
-    $userHome = if ($HOME) { $HOME } else { $env:USERPROFILE }
+    $null
+}
+
+$userHome = if ($HOME) { $HOME } else { $env:USERPROFILE }
+$detectedProfile = if ($profileArg) {
+    $profileArg
+} else {
     $pCandidates = @(
         (Join-Path $env:LOCALAPPDATA 'RemoteDesktopController\agent\agent.json'),
         (Join-Path $userHome '.remotecontroller\agent\agent.json')
@@ -146,7 +152,7 @@ if ($Autostart) {
 if ($Status) {
     Write-Info "Consultando status do device-agent..."
     Write-Host "Binario : $agentExe" -ForegroundColor Gray
-    Write-Host "Perfil  : $profileArg" -ForegroundColor Gray
+    Write-Host "Perfil  : $(if ($profileArg) { $profileArg } else { $detectedProfile + ' (auto-detectado)' })" -ForegroundColor Gray
     if ($profileArg) {
         & $agentExe --profile $profileArg status
     } else {
@@ -165,16 +171,17 @@ Write-Host "============================================================" -Foreg
 Write-Host "     Remote Desktop Controller - Inicializador do Agente    " -ForegroundColor White
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "Binario: $agentExe"
-Write-Host "Perfil : $(if ($profileArg) { $profileArg } else { 'Auto-detectado pelo agente' })"
+Write-Host "Perfil : $(if ($profileArg) { $profileArg } else { $detectedProfile + ' (auto-detectado)' })"
 
 # Validar se o perfil existe antes de iniciar
-if ($profileArg) {
-    $statJson = & $agentExe --profile $profileArg status | ConvertFrom-Json -ErrorAction SilentlyContinue
-    if ($statJson -and -not $statJson.paired) {
-        Write-Err "Dispositivo nao esta pareado!"
-        Write-Host $statJson.instructions -ForegroundColor Yellow
-        exit 1
-    }
+$statOutput = if ($profileArg) { & $agentExe --profile $profileArg status } else { & $agentExe status }
+$statJson = $statOutput | ConvertFrom-Json -ErrorAction SilentlyContinue
+if ($statJson -and -not $statJson.paired) {
+    Write-Err "Dispositivo nao esta pareado!"
+    Write-Host $statJson.instructions -ForegroundColor Yellow
+    exit 1
+}
+if ($statJson) {
     Write-Success "Dispositivo pareado com $($statJson.server) (Device ID: $($statJson.device_id))"
 }
 
@@ -194,15 +201,24 @@ $agentArgs += 'run'
 
 if ($Background) {
     Write-Info "Iniciando device-agent em segundo plano (Background/Hidden)..."
-    $argList = if ($profileArg) {
-        @('--profile', "`"$profileArg`"", 'run')
+    $fullCmd = if ($profileArg) {
+        "`"$agentExe`" --profile `"$profileArg`" run"
     } else {
-        @('run')
+        "`"$agentExe`" run"
     }
-    $proc = Start-Process -FilePath $agentExe -ArgumentList $argList -WindowStyle Hidden -PassThru
+    # Cria processo desacoplado via WMI Win32_Process para desvincular do Job Object do terminal
+    $wmiResult = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $fullCmd } -ErrorAction SilentlyContinue
+    $bgPid = if ($wmiResult -and $wmiResult.ReturnValue -eq 0 -and $wmiResult.ProcessId) {
+        $wmiResult.ProcessId
+    } else {
+        $argList = if ($profileArg) { @('--profile', $profileArg, 'run') } else { @('run') }
+        $proc = Start-Process -FilePath $agentExe -ArgumentList $argList -WindowStyle Hidden -PassThru
+        $proc.Id
+    }
     Start-Sleep -Seconds 3
-    if (-not $proc.HasExited) {
-        Write-Success "Agente iniciado com sucesso em segundo plano (PID: $($proc.Id))!"
+    $running = Get-Process -Id $bgPid -ErrorAction SilentlyContinue
+    if ($running) {
+        Write-Success "Agente iniciado com sucesso em segundo plano (PID: $bgPid)!"
         Write-Info "Enviando heartbeats a cada 15 segundos para a VPS."
         Write-Info "Use '.\start-device-agent.ps1 -Status' para monitorar ou '.\start-device-agent.ps1 -Stop' para encerrar."
     } else {

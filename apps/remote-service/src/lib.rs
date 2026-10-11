@@ -303,7 +303,7 @@ async fn boundary(State(state): State<AppState>, request: Request, next: Next) -
     headers.insert("x-content-type-options", "nosniff".parse().unwrap());
     // no-referrer makes browser POST navigations send Origin:null. Keep origin-only privacy while preserving same-origin form verification.
     headers.insert("referrer-policy", "strict-origin".parse().unwrap());
-    headers.entry("content-security-policy").or_insert("default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'".parse().unwrap());
+    headers.entry("content-security-policy").or_insert("default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'".parse().unwrap());
     response
 }
 pub(crate) fn bearer(headers: &HeaderMap) -> ApiResult<&str> {
