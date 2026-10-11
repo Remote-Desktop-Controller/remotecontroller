@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Desinstalador Canônico e Seguro do Remote Desktop Controller (RDC).
 .DESCRIPTION
@@ -202,19 +202,28 @@ if (-not $Force) {
 
 Write-Output "[AGENT-SECOPS] Verificando e finalizando processos ativos do Remote Desktop Controller..."
 
+$canonicalProgramPath = [System.IO.Path]::GetFullPath((Join-Path ([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::LocalApplicationData)) "Programs\RemoteDesktopController")).TrimEnd('\', '/')
+$isCanonicalTarget = ($resolvedTarget -eq $canonicalProgramPath)
 $agentProcessNames = @("rdc", "local-daemon", "mcp-gateway", "device-agent")
 foreach ($procName in $agentProcessNames) {
     $activeProcs = Get-Process -Name $procName -ErrorAction SilentlyContinue
     if ($activeProcs) {
-        Write-Output "[AGENT-SECOPS] Encerrando processo ativo: $procName (PIDs: $($activeProcs.Id -join ', '))"
-        $activeProcs | Stop-Process -Force -ErrorAction SilentlyContinue
+        $procsToStop = $activeProcs | Where-Object {
+            $isCanonicalTarget -or ($_.Path -and [System.IO.Path]::GetFullPath($_.Path).StartsWith($resolvedTarget, [System.StringComparison]::OrdinalIgnoreCase))
+        }
+        if ($procsToStop) {
+            Write-Output "[AGENT-SECOPS] Encerrando processo ativo: $procName (PIDs: $(($procsToStop | Select-Object -ExpandProperty Id) -join ', '))"
+            $procsToStop | Stop-Process -Force -ErrorAction SilentlyContinue
+        }
     }
 }
 
 # Aguarda até 5 segundos para que as handles sejam totalmente liberadas pelo SO
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 while ($sw.ElapsedMilliseconds -lt 5000) {
-    $remaining = Get-Process -Name $agentProcessNames -ErrorAction SilentlyContinue
+    $remaining = Get-Process -Name $agentProcessNames -ErrorAction SilentlyContinue | Where-Object {
+        $isCanonicalTarget -or ($_.Path -and [System.IO.Path]::GetFullPath($_.Path).StartsWith($resolvedTarget, [System.StringComparison]::OrdinalIgnoreCase))
+    }
     if (-not $remaining) { break }
     Start-Sleep -Milliseconds 100
 }
@@ -250,10 +259,14 @@ if ($ParentProcessId -gt 0) {
     } catch {}
 }
 
-# 2. Garante novamente que processos do agente estão mortos
+# 2. Garante novamente que processos do agente estão mortos se pertencerem ao alvo ou se for canônico
+$canonicalProg = [System.IO.Path]::GetFullPath((Join-Path ([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::LocalApplicationData)) "Programs\RemoteDesktopController")).TrimEnd('\', '/')
+$isTargetCanonical = ($cleanTarget -eq $canonicalProg)
 $agentProcs = @("rdc", "local-daemon", "mcp-gateway", "device-agent")
 foreach ($p in $agentProcs) {
-    Get-Process -Name $p -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Get-Process -Name $p -ErrorAction SilentlyContinue | Where-Object {
+        $isTargetCanonical -or ($_.Path -and [System.IO.Path]::GetFullPath($_.Path).StartsWith($cleanTarget, [System.StringComparison]::OrdinalIgnoreCase))
+    } | Stop-Process -Force -ErrorAction SilentlyContinue
 }
 Start-Sleep -Milliseconds 200
 
