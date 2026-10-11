@@ -15,6 +15,14 @@ pub async fn serve(
 ) -> runtime_transport::Result<()> {
     let slots = Arc::new(Semaphore::new(kernel.config.ipc_connections));
     let mut clients = JoinSet::new();
+
+    // Start background telemetry broadcast service
+    let telemetry_server = crate::observer::TelemetryServer::new(
+        kernel.telemetry.as_ref().clone(),
+        crate::observer::DEFAULT_TELEMETRY_PIPE,
+    );
+    let telemetry_cancel = telemetry_server.cancel_token();
+    let _telemetry_task = telemetry_server.start();
     loop {
         let permit = tokio::select! {_ = stop.cancelled()=>break,_=kernel.shutdown.cancelled()=>break,p=slots.clone().acquire_owned()=>p.map_err(|_|runtime_transport::IpcError::Unexpected)?};
         let stream = tokio::select! {_ = stop.cancelled()=>break,_=kernel.shutdown.cancelled()=>break,r=listener.accept()=>r?};
@@ -29,6 +37,7 @@ pub async fn serve(
         while clients.try_join_next().is_some() {}
     }
     kernel.executor.shutdown().await;
+    telemetry_cancel.cancel();
     clients.abort_all();
     while clients.join_next().await.is_some() {}
     Ok(())

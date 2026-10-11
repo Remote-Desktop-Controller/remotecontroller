@@ -15,6 +15,14 @@ use std::{
 };
 use tokio::sync::Semaphore;
 
+pub mod atomic;
+pub mod layout;
+pub mod vault;
+
+pub use atomic::AtomicCheckpointManager;
+pub use layout::StateLayout;
+pub use vault::Vault;
+
 pub(crate) fn storage_error(e: impl std::fmt::Display) -> PortError {
     PortError::Storage(e.to_string())
 }
