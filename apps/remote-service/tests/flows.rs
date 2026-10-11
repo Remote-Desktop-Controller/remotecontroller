@@ -338,6 +338,7 @@ async fn pairing_poll_secrets_and_approval_are_single_use() {
         .0,
         StatusCode::OK
     );
+    // Duplicate approval by the SAME owner is idempotent (returns OK, no conflict / already_used)
     assert_eq!(
         send(
             &app,
@@ -346,6 +347,22 @@ async fn pairing_poll_secrets_and_approval_are_single_use() {
             json!({"code":pairing["pairing_code"]}),
             Some(&cookie),
             Some(&csrf),
+            None
+        )
+        .await
+        .0,
+        StatusCode::OK
+    );
+    // But approval by another user on an already claimed pairing is rejected with CONFLICT
+    let (other_cookie, other_csrf) = account(&app, "other-user@example.test").await;
+    assert_eq!(
+        send(
+            &app,
+            "POST",
+            "/api/pairings/approve",
+            json!({"code":pairing["pairing_code"]}),
+            Some(&other_cookie),
+            Some(&other_csrf),
             None
         )
         .await
@@ -443,19 +460,27 @@ async fn account_form_errors_are_portuguese_html_and_connection_details_are_coll
         assert!(html.contains("Voltar e tentar novamente"));
         assert!(!html.contains("invalid_request"));
     }
-    let (cookie, _csrf) = account(&app, "ui@example.test").await;
+    let (cookie, csrf) = account(&app, "ui@example.test").await;
     let response = app
         .clone()
         .oneshot(
             Request::builder()
-                .uri("/")
-                .header("cookie", cookie)
-                .body(Body::empty())
+                .method("POST")
+                .uri("/pair")
+                .header("cookie", &cookie)
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(Body::from("code=INVALID&csrf=wrong"))
                 .unwrap(),
         )
         .await
         .unwrap();
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert!(
+        response.headers()["content-type"]
+            .to_str()
+            .unwrap()
+            .starts_with("text/html")
+    );
     let html = String::from_utf8(
         to_bytes(response.into_body(), 1024 * 1024)
             .await
@@ -463,10 +488,80 @@ async fn account_form_errors_are_portuguese_html_and_connection_details_are_coll
             .to_vec(),
     )
     .unwrap();
-    assert!(html.contains("<details>"));
-    assert!(html.contains("Conexão de teste"));
-    assert!(!html.contains("device.list"));
-    assert!(!html.contains("daemon"));
+    assert!(html.contains("Este formulário expirou"));
+    assert!(html.contains("Voltar e tentar novamente"));
+
+    // Verify /pair form submission redirects to /?paired=1
+    let (_, pair_item, _) = send(
+        &app,
+        "POST",
+        "/api/pairings",
+        json!({"name":"UI-PC","workspace_id":uuid::Uuid::new_v4().to_string(),"tools":[]}),
+        None,
+        None,
+        None,
+    )
+    .await;
+    let code = pair_item["pairing_code"].as_str().unwrap();
+    let pair_form_body = format!("code={code}&csrf={csrf}");
+    let res1 = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/pair")
+                .header("cookie", &cookie)
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(Body::from(pair_form_body.clone()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res1.status(), StatusCode::SEE_OTHER);
+    assert_eq!(res1.headers()["location"], "/?paired=1");
+
+    // Duplicate submit by same user is idempotent and redirects to /?paired=1
+    let res2 = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/pair")
+                .header("cookie", &cookie)
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(Body::from(pair_form_body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res2.status(), StatusCode::SEE_OTHER);
+    assert_eq!(res2.headers()["location"], "/?paired=1");
+
+    // GET /?paired=1 renders the success notice banner
+    let res_home = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/?paired=1")
+                .header("cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res_home.status(), StatusCode::OK);
+    let home_html = String::from_utf8(
+        to_bytes(res_home.into_body(), 1024 * 1024)
+            .await
+            .unwrap()
+            .to_vec(),
+    )
+    .unwrap();
+    assert!(home_html.contains("Computador pareado com sucesso!"));
+    assert!(home_html.contains("<details>"));
+    assert!(home_html.contains("Conexão de teste"));
+    assert!(!home_html.contains("device.list"));
+    assert!(!home_html.contains("daemon"));
 }
 
 #[tokio::test]

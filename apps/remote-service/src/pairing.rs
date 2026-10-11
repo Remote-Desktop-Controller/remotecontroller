@@ -1,9 +1,9 @@
-use crate::{ApiError, ApiResult, AppState, account, security, store};
+use crate::{ApiError, ApiResult, AppState, account, security, store, ui};
 use axum::{
     Form, Json,
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
-    response::Redirect,
+    response::{IntoResponse, Redirect, Response},
 };
 use libsql::params;
 use runtime_protocol::ToolDescriptor;
@@ -164,16 +164,22 @@ async fn approve(state: &AppState, session: &account::WebSession, code: &str) ->
         .await?;
     let row = rows.next().await?.ok_or_else(ApiError::not_found)?;
     drop(rows);
-    if store::integer(&row, 0)? <= security::now() {
-        return Err(ApiError::bad("Código de pareamento expirado"));
-    }
     let owner: Option<String> = row.get(1)?;
-    if owner.is_some() {
+    if let Some(ref existing_owner) = owner {
+        if existing_owner == &session.user_id {
+            // Already claimed and approved by this exact user!
+            // Tolerates double-clicks, duplicate submits, and page refreshes.
+            tx.commit().await?;
+            return Ok(());
+        }
         return Err(ApiError::new(
             StatusCode::CONFLICT,
             "already_used",
-            "Código já utilizado",
+            "Código já utilizado por outra conta",
         ));
+    }
+    if store::integer(&row, 0)? <= security::now() {
+        return Err(ApiError::bad("Código de pareamento expirado"));
     }
     let mut count = tx
         .query(
@@ -206,12 +212,28 @@ pub(crate) async fn approve_json(
 pub(crate) async fn approve_form(
     State(state): State<AppState>,
     headers: HeaderMap,
-    Form(input): Form<ApproveInput>,
-) -> ApiResult<Redirect> {
-    let session = account::session(&state, &headers).await?;
-    account::check_csrf(&session, Some(&input.csrf))?;
-    approve(&state, &session, &input.code).await?;
-    Ok(Redirect::to("/"))
+    form: Result<Form<ApproveInput>, axum::extract::rejection::FormRejection>,
+) -> Response {
+    let input = match form {
+        Ok(Form(input)) => input,
+        Err(_) => {
+            return ui::form_error(
+                ApiError::bad("Preencha o código de pareamento para continuar"),
+                "/pair",
+            );
+        }
+    };
+    let session = match account::session(&state, &headers).await {
+        Ok(session) => session,
+        Err(err) => return ui::form_error(err, "/login"),
+    };
+    if let Err(err) = account::check_csrf(&session, Some(&input.csrf)) {
+        return ui::form_error(err, "/pair");
+    }
+    match approve(&state, &session, &input.code).await {
+        Ok(()) => Redirect::to("/?paired=1").into_response(),
+        Err(err) => ui::form_error(err, "/pair"),
+    }
 }
 pub(crate) async fn devices(state: &AppState, owner: &str) -> ApiResult<Vec<Value>> {
     let connection = state.store.lock().await;
