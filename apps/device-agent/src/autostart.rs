@@ -4,7 +4,11 @@ use std::{path::Path, process::Command};
 
 pub fn configure(profile: &Path, enable: bool) -> Result<()> {
     let executable = std::env::current_exe()?.canonicalize()?;
-    let profile = profile.canonicalize()?;
+    let profile = if profile.exists() {
+        profile.canonicalize()?
+    } else {
+        std::path::absolute(profile)?
+    };
     let identity = format!(
         "remotecontroller-{:x}",
         Sha256::digest(profile.to_string_lossy().as_bytes())
@@ -45,10 +49,12 @@ pub fn configure(profile: &Path, enable: bool) -> Result<()> {
         use std::os::windows::process::CommandExt;
         command.creation_flags(0x08000000);
         let output = command.output()?;
-        ensure!(
-            output.status.success(),
-            "Não foi possível atualizar inicialização automática"
-        );
+        if enable {
+            ensure!(
+                output.status.success(),
+                "Não foi possível atualizar inicialização automática"
+            );
+        }
     }
     #[cfg(target_os = "linux")]
     {

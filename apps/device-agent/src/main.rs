@@ -81,18 +81,6 @@ enum Action {
     },
 }
 
-fn default_profile() -> Result<PathBuf> {
-    let root = if cfg!(windows) {
-        PathBuf::from(
-            std::env::var_os("LOCALAPPDATA").context("LOCALAPPDATA indisponível; use --profile")?,
-        )
-        .join("RemoteDesktopController")
-    } else {
-        PathBuf::from(std::env::var_os("HOME").context("HOME indisponível; use --profile")?)
-            .join(".local/share/remotecontroller")
-    };
-    Ok(root.join("agent"))
-}
 fn endpoint(root: &Path) -> String {
     let hash = format!("{:x}", Sha256::digest(root.to_string_lossy().as_bytes()));
     if cfg!(windows) {
@@ -115,12 +103,26 @@ async fn main() -> Result<()> {
         .with_ansi(false)
         .init();
     let args = Args::parse();
-    let root = args
+    let raw_profile = args
         .profile
         .clone()
         .map(Ok)
-        .unwrap_or_else(default_profile)?;
-    let credential = root.join("agent.json");
+        .unwrap_or_else(profile::default_profile)?;
+    let (root, credential) = if raw_profile.is_file()
+        || raw_profile.file_name().is_some_and(|f| f == "agent.json")
+    {
+        (
+            raw_profile
+                .parent()
+                .map(|p| if p.as_os_str().is_empty() { Path::new(".") } else { p })
+                .unwrap_or(Path::new("."))
+                .to_path_buf(),
+            raw_profile,
+        )
+    } else {
+        let cred = raw_profile.join("agent.json");
+        (raw_profile, cred)
+    };
     match args.command {
         Action::Pair {
             server,
@@ -220,7 +222,15 @@ async fn main() -> Result<()> {
             result?;
         }
         Action::Run => {
-            let config = profile::load(&credential)?;
+            let config = match profile::load(&credential) {
+                Ok(config) => config,
+                Err(err) if profile::is_not_found(&err) => {
+                    anyhow::bail!(
+                        "Dispositivo não pareado. Execute o comando de pareamento antes de iniciar o agente: device-agent pair --server <URL> --workspace <PASTA>"
+                    );
+                }
+                Err(err) => return Err(err),
+            };
             runtime_transport::private_directory(&root)?;
             let lock = std::fs::OpenOptions::new()
                 .create(true)
@@ -268,7 +278,23 @@ async fn main() -> Result<()> {
             result?;
         }
         Action::Status => {
-            let config = profile::load(&credential)?;
+            let config = match profile::load(&credential) {
+                Ok(config) => config,
+                Err(err) if profile::is_not_found(&err) => {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&serde_json::json!({
+                            "status": "unpaired",
+                            "paired": false,
+                            "profile_path": credential,
+                            "message": "Dispositivo não pareado. Execute o comando de pareamento antes de usar o agente.",
+                            "instructions": "device-agent pair --server <URL> --workspace <PASTA>"
+                        }))?
+                    );
+                    return Ok(());
+                }
+                Err(err) => return Err(err),
+            };
             let daemon_online = match read_secret(&config.state_dir.join("ipc.secret")) {
                 Ok(secret) => {
                     let client = Client::new(config.endpoint.clone(), secret);
@@ -289,6 +315,8 @@ async fn main() -> Result<()> {
                 "{}",
                 serde_json::to_string_pretty(
                     &serde_json::json!({
+                        "status": "paired",
+                        "paired": true,
                         "server": config.server,
                         "device_id": config.device_id,
                         "workspace": config.workspace,
@@ -304,7 +332,16 @@ async fn main() -> Result<()> {
             );
         }
         Action::Stop => {
-            let config = profile::load(&credential)?;
+            let config = match profile::load(&credential) {
+                Ok(config) => config,
+                Err(err) if profile::is_not_found(&err) => {
+                    anyhow::bail!(
+                        "Dispositivo não pareado. Perfil não encontrado em '{}'. Nenhum agente em execução para encerrar.",
+                        credential.display()
+                    );
+                }
+                Err(err) => return Err(err),
+            };
             if !root.join("stop.request").exists() {
                 profile::write_private(&root.join("stop.request"), b"stop")?;
             }
@@ -338,6 +375,19 @@ async fn main() -> Result<()> {
             println!("Agente encerrado.");
         }
         Action::Autostart { action } => {
+            if !profile::has_profile(&root) {
+                if action == "enable" {
+                    anyhow::bail!(
+                        "Dispositivo não pareado. Perfil não encontrado em '{}'. Execute o comando de pareamento antes de configurar inicialização automática: device-agent pair --server <URL> --workspace <PASTA>",
+                        credential.display()
+                    );
+                } else {
+                    anyhow::bail!(
+                        "Dispositivo não pareado. Perfil não encontrado em '{}'. Nenhuma inicialização automática ativa para desativar.",
+                        credential.display()
+                    );
+                }
+            }
             device_agent::autostart::configure(&root, action == "enable")?;
             println!("Inicialização automática atualizada.");
         }
@@ -347,7 +397,16 @@ async fn main() -> Result<()> {
             args: argv,
         } => {
             ensure!(trust_unconfined, "Autorização local explícita necessária");
-            let config = profile::load(&credential)?;
+            let config = match profile::load(&credential) {
+                Ok(config) => config,
+                Err(err) if profile::is_not_found(&err) => {
+                    anyhow::bail!(
+                        "Dispositivo não pareado. Perfil não encontrado em '{}'. Execute o comando de pareamento antes de aprovar programas: device-agent pair --server <URL> --workspace <PASTA>",
+                        credential.display()
+                    );
+                }
+                Err(err) => return Err(err),
+            };
             let mut command = tokio::process::Command::new(device_agent::daemon::executable(
                 args.daemon.as_deref(),
             )?);
@@ -373,7 +432,16 @@ async fn main() -> Result<()> {
             args: argv,
         } => {
             ensure!(trust_unconfined, "Autorização local explícita necessária");
-            let mut config = profile::load(&credential)?;
+            let mut config = match profile::load(&credential) {
+                Ok(config) => config,
+                Err(err) if profile::is_not_found(&err) => {
+                    anyhow::bail!(
+                        "Dispositivo não pareado. Perfil não encontrado em '{}'. Execute o comando de pareamento antes de aprovar o terminal: device-agent pair --server <URL> --workspace <PASTA>",
+                        credential.display()
+                    );
+                }
+                Err(err) => return Err(err),
+            };
             let lock = std::fs::OpenOptions::new()
                 .create(true)
                 .truncate(false)

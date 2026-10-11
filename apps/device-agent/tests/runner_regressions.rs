@@ -534,13 +534,17 @@ async fn temporary_result_backlog_does_not_starve_a_later_healthy_delivery() -> 
         stop.clone(),
     ));
     wait_until(|| {
-        fixture
+        let delivered = fixture
             .observed
             .control_results
             .lock()
             .unwrap()
             .iter()
-            .any(|result| result.request_id == healthy.request_id)
+            .any(|result| result.request_id == healthy.request_id);
+        let outbox_drained = std::fs::read_dir(fixture.root.join("outbox"))
+            .map(|r| r.count() == 6)
+            .unwrap_or(false);
+        delivered && outbox_drained
     })
     .await?;
     assert!(fixture.observed.heartbeats.load(Ordering::SeqCst) > 0);
