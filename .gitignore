@@ -7,3 +7,6 @@
 *.db-shm
 /deployment/.env
 /docs/product/*.log
+__pycache__/
+*.pyc
+.temp/
