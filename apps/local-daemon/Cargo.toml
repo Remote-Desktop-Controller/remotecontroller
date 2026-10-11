@@ -25,3 +25,12 @@ toml_edit = "0.22"
 [dev-dependencies]
 portable-pty = "0.9"
 tempfile.workspace = true
+
+[[bin]]
+name = "local-daemon"
+path = "src/main.rs"
+
+[[bin]]
+name = "rdc-monitor"
+path = "src/monitor_main.rs"
+

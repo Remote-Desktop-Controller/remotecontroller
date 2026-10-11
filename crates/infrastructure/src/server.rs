@@ -13,6 +13,13 @@ pub async fn serve(
     secret: Vec<u8>,
     stop: CancellationToken,
 ) -> runtime_transport::Result<()> {
+    let telemetry_server = crate::observer::TelemetryServer::new(
+        kernel.telemetry.as_ref().clone(),
+        crate::observer::DEFAULT_TELEMETRY_PIPE,
+    );
+    let telemetry_cancel = telemetry_server.cancel_token();
+    let _telemetry_task = telemetry_server.start();
+
     let slots = Arc::new(Semaphore::new(kernel.config.ipc_connections));
     let mut clients = JoinSet::new();
     loop {
@@ -28,6 +35,7 @@ pub async fn serve(
         });
         while clients.try_join_next().is_some() {}
     }
+    telemetry_cancel.cancel();
     if let Some(terminal) = &kernel.services.terminal {
         terminal.shutdown().await;
     }

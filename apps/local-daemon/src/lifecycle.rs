@@ -59,6 +59,12 @@ pub enum Action {
         #[arg(long)]
         backup: Option<PathBuf>,
     },
+    Monitor {
+        #[arg(long, default_value = runtime_infrastructure::observer::DEFAULT_TELEMETRY_PIPE)]
+        pipe: String,
+        #[arg(long)]
+        no_color: bool,
+    },
 }
 #[derive(Subcommand)]
 pub enum Policy {
@@ -605,8 +611,32 @@ pub async fn dispatch(args: &Args) -> Result<bool> {
                 )?
             );
         }
+        Action::Monitor { pipe, no_color } => {
+            run_monitor(pipe, !*no_color).await?;
+        }
     }
     Ok(true)
+}
+
+pub async fn run_monitor(endpoint: &str, use_ansi: bool) -> Result<()> {
+    println!("Connecting to RDC telemetry stream at: {endpoint}...");
+    #[cfg(windows)]
+    {
+        use runtime_infrastructure::observer::server::connect_telemetry_client;
+        let mut rx = connect_telemetry_client(endpoint)
+            .await
+            .context(format!("Failed to connect to Named Pipe at '{endpoint}'. Ensure RDC daemon is running."))?;
+        println!("Connected. Awaiting events... (Press Ctrl+C to exit)\n");
+        while let Some(event) = rx.recv().await {
+            println!("{}", event.format_display(use_ansi));
+        }
+        println!("\nTelemetry connection closed.");
+    }
+    #[cfg(not(windows))]
+    {
+        println!("Named pipe telemetry monitor is only supported on Windows.");
+    }
+    Ok(())
 }
 pub fn add_args(cmd: &mut Command, args: &Args) {
     cmd.arg("--profile")

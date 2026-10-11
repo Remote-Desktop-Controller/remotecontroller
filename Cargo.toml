@@ -36,6 +36,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4", features = ["derive", "env"] }
 tempfile = "3"
 criterion = { version = "0.7", features = ["async_tokio"] }
+similar = "2"
+regex = "1"
+windows = { version = "0.61", features = ["Win32_Security_Cryptography", "Win32_Foundation"] }
 
 [profile.release]
 lto = "thin"
