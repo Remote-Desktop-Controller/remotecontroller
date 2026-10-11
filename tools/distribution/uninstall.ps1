@@ -69,7 +69,7 @@ $profileRoot = if ($ProfilePath) {
 # 1. Parar agentes e daemons ativos
 Write-Host "`n==> Encerrando processos em execução..." -ForegroundColor Gray
 $isCanonical = ($installRoot -eq $canonicalInstall)
-Get-Process -Name 'device-agent', 'local-daemon', 'rdc', 'mcp-gateway' -ErrorAction SilentlyContinue | ForEach-Object {
+Get-Process -Name 'device-agent', 'local-daemon', 'rdc', 'mcp-gateway', 'rdc-monitor' -ErrorAction SilentlyContinue | ForEach-Object {
     $shouldStop = $isCanonical
     if (-not $shouldStop) {
         try {

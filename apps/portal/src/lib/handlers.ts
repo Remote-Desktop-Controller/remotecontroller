@@ -442,3 +442,31 @@ export async function callback(r: Request) {
     303,
   );
 }
+export async function devices(r: Request) {
+  let user: { id: string } | null = null;
+  try {
+    user = await authenticatedUser();
+  } catch {
+    return response({ devices: [] });
+  }
+  const c = getConfig();
+  const s = new Store();
+  await s.rate("devices:" + user.id, 60);
+
+  if (c.remoteOrigin && c.mcpSecret) {
+    try {
+      const res = await fetch(`${c.remoteOrigin}/api/devices`, {
+        headers: {
+          Authorization: `Bearer ${c.mcpSecret}`,
+          "X-User-Id": user.id,
+        },
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return response(data);
+      }
+    } catch {}
+  }
+  return response({ devices: [] });
+}

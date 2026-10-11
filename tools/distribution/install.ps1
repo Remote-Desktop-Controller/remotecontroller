@@ -1,4 +1,4 @@
-﻿#requires -Version 5.1
+#requires -Version 5.1
 <#
 .SYNOPSIS
     Instalador oficial do Remote Controller Windows.
@@ -143,8 +143,8 @@ try {
                 $releaseInfo = Invoke-RestMethod -Uri $releaseApiUrl -Headers $headers -TimeoutSec 15
                 $resolvedTag = $releaseInfo.tag_name
             } catch {
-                Write-WarnMessage "Consulta à API do GitHub indisponível; usando versão padrão estável v0.4.0"
-                $resolvedTag = "v0.4.0"
+                Write-WarnMessage "Consulta à API do GitHub indisponível; usando versão padrão estável v0.5.0"
+                $resolvedTag = "v0.5.0"
             }
         }
         
@@ -226,6 +226,7 @@ try {
     
     $taskAgent = Join-Path $versionRoot 'device-agent.exe'
     $taskDaemon = Join-Path $versionRoot 'local-daemon.exe'
+    $taskMonitor = Join-Path $versionRoot 'rdc-monitor.exe'
     
     if (-not (Test-Path -LiteralPath $taskAgent) -or -not (Test-Path -LiteralPath $taskDaemon)) {
         throw "Executáveis essenciais não encontrados após a instalação."
@@ -291,7 +292,7 @@ $profileRoot = if ($ProfilePath) {
 }
 
 # 1. Parar agentes ativos
-Get-Process -Name 'device-agent', 'local-daemon', 'rdc', 'mcp-gateway' -ErrorAction SilentlyContinue | ForEach-Object {
+Get-Process -Name 'device-agent', 'local-daemon', 'rdc', 'mcp-gateway', 'rdc-monitor' -ErrorAction SilentlyContinue | ForEach-Object {
     Write-Host "Encerrando processo $($_.Name) (PID $($_.Id))..." -ForegroundColor Yellow
     Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
 }
@@ -644,7 +645,7 @@ Write-Host ""
     if ($isPaired) {
         Write-Step "Iniciando o agente em segundo plano..."
         # Mata qualquer instância antiga presa antes de subir
-        Get-Process -Name 'device-agent', 'local-daemon', 'rdc', 'mcp-gateway' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        Get-Process -Name 'device-agent', 'local-daemon', 'rdc', 'mcp-gateway', 'rdc-monitor' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
         Start-Sleep -Milliseconds 500
 
         $agentProcess = Start-Process -FilePath $taskAgent -ArgumentList @('--profile', ('"' + $profileBase + '"'), 'run') -WindowStyle Hidden -PassThru
@@ -662,9 +663,12 @@ Write-Host ""
         Write-Host "Seu computador agora está conectado ao Remote Controller." -ForegroundColor White
         Write-Host "Você já pode fechar esta janela do PowerShell.`n" -ForegroundColor Cyan
         Write-Host "Comandos úteis:" -ForegroundColor Gray
-        Write-Host "  Ver status:    & '$taskAgent' --profile '$profileBase' status" -ForegroundColor Gray
-        Write-Host "  Parar agente:  & '$taskAgent' --profile '$profileBase' stop" -ForegroundColor Gray
-        Write-Host "  Desinstalar:   powershell -File '$uninstallScriptPath'" -ForegroundColor Gray
+        Write-Host "  Ver status:            & '$taskAgent' --profile '$profileBase' status" -ForegroundColor Gray
+        Write-Host "  Parar agente:          & '$taskAgent' --profile '$profileBase' stop" -ForegroundColor Gray
+        if (Test-Path -LiteralPath $taskMonitor) {
+            Write-Host "  Monitor em tempo real: & '$taskMonitor'" -ForegroundColor Gray
+        }
+        Write-Host "  Desinstalar:           powershell -File '$uninstallScriptPath'" -ForegroundColor Gray
     } else {
         Write-Host "`n==========================================================" -ForegroundColor Yellow
         Write-Host "   INSTALAÇÃO PARCIAL - PAREAMENTO PENDENTE               " -ForegroundColor Yellow
@@ -676,9 +680,12 @@ Write-Host ""
         Write-Host ""
         Write-Host "Comandos úteis:" -ForegroundColor Gray
         if ($manualPairCommand) {
-            Write-Host "  Concluir pareamento: $manualPairCommand" -ForegroundColor Gray
+            Write-Host "  Concluir pareamento:   $manualPairCommand" -ForegroundColor Gray
         }
-        Write-Host "  Desinstalar:         powershell -File '$uninstallScriptPath'" -ForegroundColor Gray
+        if (Test-Path -LiteralPath $taskMonitor) {
+            Write-Host "  Monitor em tempo real: & '$taskMonitor'" -ForegroundColor Gray
+        }
+        Write-Host "  Desinstalar:           powershell -File '$uninstallScriptPath'" -ForegroundColor Gray
         Write-Host ""
     }
 

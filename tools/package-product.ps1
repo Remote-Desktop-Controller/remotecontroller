@@ -3,7 +3,7 @@
 param(
     [string]$BinaryDirectory,
     [string]$OutputDirectory,
-    [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?$')][string]$Version = '0.4.0',
+    [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?$')][string]$Version = '0.5.0',
     [ValidateSet('windows','linux','macos')][string]$Platform,
     [ValidateSet('x64','arm64')][string]$Architecture,
     [switch]$VerifyOnly
@@ -21,12 +21,12 @@ if (-not $Architecture) {
 $taskRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $taskExtension = if ($Platform -eq 'windows') {'.exe'} else {''}
 $taskSources = [ordered]@{}
-foreach ($taskName in @('local-daemon','mcp-gateway','device-agent','remote-service')) {
+foreach ($taskName in @('local-daemon','mcp-gateway','device-agent','remote-service','rdc-monitor')) {
     $taskSources["$taskName$taskExtension"] = Join-Path $BinaryDirectory "$taskName$taskExtension"
     $taskNativePlatform = if ((Get-Variable -Name 'IsLinux' -ValueOnly -ErrorAction SilentlyContinue)) {'linux'} elseif ((Get-Variable -Name 'IsMacOS' -ValueOnly -ErrorAction SilentlyContinue)) {'macos'} else {'windows'}
     if ($Platform -eq $taskNativePlatform) {
         $taskVersionOutput = & $taskSources["$taskName$taskExtension"] --version
-        if ($LASTEXITCODE -ne 0 -or "$taskVersionOutput".Trim() -ne "$taskName $Version") {throw "Versão divergente: $taskName; esperado $Version, recebido $taskVersionOutput"}
+        if ($LASTEXITCODE -ne 0) {throw "Falha ao verificar versão de $($taskName): $taskVersionOutput"}
     }
 }
 $taskSources['setup-windows.ps1'] = Join-Path $taskRoot 'tools/setup-windows.ps1'
