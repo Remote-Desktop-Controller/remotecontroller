@@ -394,14 +394,28 @@ impl MaestroEngine {
             format!("Missão {mission_id} iniciada. Injetando prompt nas sessões ocultas..."),
         );
 
-        // 1. Injeção simultânea do prompt nas WebViews ocultas.
+        // 1. Injeção escalonada com jitter estocástico nas WebViews ocultas.
         let mut injected: Vec<String> = Vec::new();
         let mut missing: Vec<String> = Vec::new();
-        for config in PROVIDERS {
+        let schedule = compute_stochastic_jitter_schedule(PROVIDERS.len(), 200, 600);
+        let mut prev_delay = Duration::from_millis(0);
+
+        for (idx, config) in PROVIDERS.iter().enumerate() {
+            let delay = schedule.get(idx).copied().unwrap_or(Duration::from_millis(0));
+            let delta = delay.saturating_sub(prev_delay);
+            if !delta.is_zero() {
+                tokio::time::sleep(delta).await;
+            }
+            prev_delay = delay;
+
             match Self::inject_prompt(app, config, &mission_id, prompt) {
                 Ok(()) => {
                     injected.push(config.id.to_string());
-                    info!("Prompt injetado com sucesso na sessão [{}]", config.name);
+                    info!(
+                        "Prompt injetado com sucesso na sessão [{}] (jitter acumulado: {}ms)",
+                        config.name,
+                        delay.as_millis()
+                    );
                 }
                 Err(err) => {
                     warn!("Falha ao injetar prompt em [{}]: {}", config.name, err);
@@ -955,6 +969,39 @@ fn jaccard(a: &BTreeSet<String>, b: &BTreeSet<String>) -> f64 {
     let intersection = a.intersection(b).count() as f64;
     let union = a.union(b).count() as f64;
     if union == 0.0 { 0.0 } else { intersection / union }
+}
+
+/// Calcula um cronograma de atrasos estocásticos para escalonar as injeções entre múltiplos provedores,
+/// evitando rajadas (bursts) simultâneas no mesmo milissegundo que acionam defesas de correlação de tráfego.
+pub fn compute_stochastic_jitter_schedule(
+    count: usize,
+    min_delay_ms: u64,
+    max_delay_ms: u64,
+) -> Vec<Duration> {
+    if count == 0 {
+        return Vec::new();
+    }
+    let mut schedule = Vec::with_capacity(count);
+    schedule.push(Duration::from_millis(0));
+
+    let mut accumulated_ms = 0u64;
+    let mut seed = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos() as u64)
+        .unwrap_or(0xCAFE_BABE);
+
+    for _ in 1..count {
+        seed ^= seed << 13;
+        seed ^= seed >> 7;
+        seed ^= seed << 17;
+
+        let span = (max_delay_ms - min_delay_ms).max(1);
+        let jitter = min_delay_ms + (seed % span);
+        accumulated_ms += jitter;
+        schedule.push(Duration::from_millis(accumulated_ms));
+    }
+
+    schedule
 }
 
 /// Stopwords PT-BR + EN usadas para reduzir ruído na comparação de enunciados.
