@@ -7,6 +7,8 @@
 //! - Observer IPC Named Pipe broadcasting and live event formatting.
 //! - Kernel execution interception emitting real-time telemetry.
 
+#![allow(unused_imports)]
+
 use runtime_domain::ExecutionPolicy;
 use runtime_infrastructure::{
     config::RuntimeConfig,
