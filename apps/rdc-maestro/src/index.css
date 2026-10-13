@@ -1,0 +1,89 @@
+/* Detecção automática desligada: o Tailwind varre apenas os fontes do frontend,
+   evitando ler `src-tauri/` (Rust) e `node_modules`. */
+@import "tailwindcss" source(none);
+@source "../index.html";
+@source "./**/*.tsx";
+@source "./**/*.ts";
+
+@theme {
+  --color-rdc-bg: #0a0d14;
+  --color-rdc-panel: #121622;
+  --color-rdc-card: #181d2c;
+  --color-rdc-border: #272f45;
+  --color-rdc-accent: #00d2ff;
+  --font-mono: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background-color: var(--color-rdc-bg);
+  color: #f0f4fc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Feed e consoles: texto sempre selecionável mesmo com o resto da UI sem seleção. */
+.selectable {
+  user-select: text;
+}
+
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: #2f3a55 transparent;
+}
+
+.scroll-slim::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scroll-slim::-webkit-scrollbar-thumb {
+  background-color: #2f3a55;
+  border-radius: 999px;
+}
+
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Botão de aprovação: brilho neon pulsante exigido para o gatilho físico. */
+@keyframes neon-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 16px rgba(16, 185, 129, 0.55),
+      0 0 40px rgba(16, 185, 129, 0.22);
+  }
+  50% {
+    box-shadow:
+      0 0 28px rgba(16, 185, 129, 0.9),
+      0 0 66px rgba(16, 185, 129, 0.45);
+  }
+}
+
+.neon-approve {
+  animation: neon-pulse 1.9s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(1.25);
+  }
+}
+
+.dot-thinking {
+  animation: dot-pulse 1s ease-in-out infinite;
+}

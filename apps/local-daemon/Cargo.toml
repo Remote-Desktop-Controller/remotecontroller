@@ -3,6 +3,9 @@ name = "local-daemon"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+# Com dois binários (`local-daemon` e `rdc-monitor`), `cargo run -p local-daemon`
+# precisa saber qual executar por padrão.
+default-run = "local-daemon"
 [dependencies]
 runtime-infrastructure.workspace = true
 runtime-protocol.workspace = true

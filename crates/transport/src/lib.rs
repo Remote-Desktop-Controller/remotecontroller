@@ -89,6 +89,24 @@ pub async fn authenticate<S: AsyncRead + AsyncWrite + Unpin>(
 pub use runtime_ports::IpcTransportPort as Stream;
 pub type LocalStream = Box<dyn Stream>;
 
+/// Creates a hardened Named Pipe instance for an auxiliary local channel.
+///
+/// The pipe inherits the same protection as the daemon IPC listener: DACL restricted to
+/// the owning user and SYSTEM, and remote clients rejected. Callers own the accept loop.
+#[cfg(windows)]
+pub fn create_private_pipe(
+    endpoint: &str,
+    first: bool,
+) -> std::io::Result<tokio::net::windows::named_pipe::NamedPipeServer> {
+    if !endpoint.starts_with(r"\\.\pipe\") {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "named pipe endpoint must start with \\\\.\\pipe\\",
+        ));
+    }
+    windows::create_pipe(endpoint, first)
+}
+
 #[cfg(windows)]
 pub struct Listener {
     endpoint: String,

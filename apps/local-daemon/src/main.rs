@@ -2,6 +2,7 @@ mod host;
 mod install;
 mod lifecycle;
 mod logs;
+mod maestro;
 use anyhow::{Context, Result};
 use clap::Parser;
 use runtime_domain::ExecutionPolicy;
@@ -25,6 +26,13 @@ struct Args {
     state_dir: Option<PathBuf>,
     #[arg(long, global = true)]
     endpoint: Option<String>,
+    #[arg(
+        long,
+        global = true,
+        default_value = maestro::MAESTRO_PIPE,
+        help = "Named pipe where the RDC Maestro dispatches operator-approved plans"
+    )]
+    maestro_pipe: String,
     #[arg(long, global = true)]
     config: Option<PathBuf>,
     #[arg(long, global = true)]
@@ -47,6 +55,18 @@ struct Args {
         help = "Allow network effects of trusted child programs"
     )]
     allow_process_network: bool,
+    #[arg(
+        long,
+        global = true,
+        help = "Grant write, process, network and outside-workspace capabilities in one switch"
+    )]
+    full_computer: bool,
+    #[arg(
+        long,
+        global = true,
+        help = "Request an interactive terminal; accepted for device-agent compatibility, not implemented in this build"
+    )]
+    allow_terminal: bool,
     #[arg(long, global = true, default_value = "info")]
     log_level: String,
 }
@@ -134,6 +154,19 @@ async fn main() -> Result<()> {
             signal_stop.cancel();
         }
     });
+
+    // Canal de ordens do RDC Maestro (Fase 4/5). Roda em paralelo ao IPC principal e
+    // encaminha cada passo do plano aprovado pelo operador para `Kernel::dispatch`,
+    // portanto a política de execução e a telemetria continuam valendo integralmente.
+    let maestro_kernel = kernel.clone();
+    let maestro_stop = stop.clone();
+    let maestro_pipe = args.maestro_pipe.clone();
+    tokio::spawn(async move {
+        if let Err(error) = maestro::serve(maestro_kernel, &maestro_pipe, maestro_stop).await {
+            tracing::error!(%error, "maestro order channel stopped unexpectedly");
+        }
+    });
+
     serve(listener, kernel, secret, stop).await?;
     drop(lock);
     Ok(())
@@ -181,5 +214,18 @@ mod endpoint_tests {
             super::unix_endpoint(std::path::Path::new("/tmp/state")),
             "/tmp/state/daemon.sock"
         );
+    }
+}
+
+#[cfg(test)]
+mod args_tests {
+    use super::*;
+
+    /// O canal de ordens do Maestro precisa escutar exatamente o pipe combinado com o app.
+    #[test]
+    fn maestro_pipe_defaults_to_the_agent_channel() {
+        let args = Args::parse_from(["local-daemon", "serve"]);
+        assert_eq!(args.maestro_pipe, maestro::MAESTRO_PIPE);
+        assert_eq!(args.maestro_pipe, r"\\.\pipe\rdc-agent-maestro");
     }
 }

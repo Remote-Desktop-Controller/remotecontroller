@@ -162,10 +162,29 @@ impl WebviewManager {
             .parse()
             .map_err(|e| format!("URL inválida para {}: {}", config.id, e))?;
 
+        let profile_dir = app
+            .path()
+            .app_local_data_dir()
+            .map_err(|e| format!("Falha ao resolver diretório local de dados: {}", e))?
+            .join("EBWebView");
+
+        if let Err(e) = std::fs::create_dir_all(&profile_dir) {
+            warn!(
+                "Não foi possível assegurar diretório de perfil persistente {:?}: {}",
+                profile_dir, e
+            );
+        }
+
         let window = WebviewWindowBuilder::new(app, config.label, WebviewUrl::External(parsed_url))
             .title(config.title)
             .inner_size(1080.0, 780.0)
             .visible(initially_visible)
+            .data_directory(profile_dir)
+            .general_autofill_enabled(true)
+            .on_new_window(|url, _features| {
+                info!("Popup/Nova janela autorizada para OAuth/SSO: {}", url);
+                tauri::webview::NewWindowResponse::Allow
+            })
             .initialization_script(PRELOAD_SCRIPT)
             .build()
             .map_err(|e| format!("Falha ao construir WebviewWindow para {}: {}", config.id, e))?;
@@ -183,6 +202,7 @@ impl WebviewManager {
             .ok_or_else(|| format!("Provedor não reconhecido: {}", provider_id))?;
 
         let window = self.get_or_create_window(app, config, true)?;
+        let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
 
@@ -246,6 +266,7 @@ impl WebviewManager {
             .ok_or_else(|| format!("Provedor não reconhecido: {}", provider_id))?;
 
         let window = self.get_or_create_window(app, config, true)?;
+        let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
 

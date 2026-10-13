@@ -230,17 +230,20 @@ fn config_crosses_workspace(path: &Path, canonical_root: &Path) -> Result<bool> 
 }
 pub fn capabilities(args: &Args) -> Vec<Capability> {
     let mut c = vec![Capability::ReadWorkspace, Capability::GitRead];
-    if args.allow_write {
+    if args.allow_write || args.full_computer {
         c.push(Capability::WriteWorkspace);
     }
-    if args.allow_process {
+    if args.allow_process || args.full_computer {
         c.extend([Capability::SpawnProcess, Capability::KillProcess]);
     }
-    if args.allow_process_outside_workspace {
+    if args.allow_process_outside_workspace || args.full_computer {
         c.push(Capability::OutsideWorkspaceAccess);
     }
-    if args.allow_process_network {
+    if args.allow_process_network || args.full_computer {
         c.push(Capability::NetworkAccess);
+    }
+    if args.allow_terminal {
+        eprintln!("warning: --allow-terminal accepted but interactive terminal is not available in this build");
     }
     c
 }
@@ -550,6 +553,8 @@ pub fn add_args(cmd: &mut Command, args: &Args) {
             "--allow-process-outside-workspace",
         ),
         (args.allow_process_network, "--allow-process-network"),
+        (args.full_computer, "--full-computer"),
+        (args.allow_terminal, "--allow-terminal"),
     ] {
         if enabled {
             cmd.arg(flag);

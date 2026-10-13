@@ -6,6 +6,15 @@
 //         blackboard via o comando IPC `maestro_receive_reply`.
 
 (function () {
+  // 1. Executa exclusivamente na janela raiz (top-level). Jamais em iframes ou sub-frames.
+  try {
+    if (window !== window.top) {
+      return;
+    }
+  } catch (_) {
+    return;
+  }
+
   const INIT_SYM = Symbol.for("rdc.maestro.init");
   if (window[INIT_SYM]) {
     return;
@@ -36,12 +45,22 @@
     provider = "chatgpt";
   } else if (hostname.includes("claude.ai") || hostname.includes("anthropic.com")) {
     provider = "claude";
-  } else if (hostname.includes("google.com") || hostname.includes("aistudio")) {
+  } else if (
+    hostname.includes("gemini.google.com") ||
+    hostname.includes("aistudio.google.com") ||
+    (hostname.includes("google.com") && window.location.pathname.startsWith("/app"))
+  ) {
     provider = "gemini";
   } else if (hostname.includes("deepseek.com")) {
     provider = "deepseek";
   } else if (hostname.includes("qwen.ai") || hostname.includes("qwenlm.ai")) {
     provider = "qwen";
+  }
+
+  // Se não for um dos provedores suportados (ex: tela de OAuth do Google ou redirects externos),
+  // encerra a execução do preload para não interferir no fluxo de autenticação nem poluir o console.
+  if (provider === "unknown") {
+    return;
   }
 
   // Ajustes do ciclo de captura de resposta (Fase 3).
@@ -507,7 +526,7 @@
       const previousState = this.authState;
       this.authState = res.authenticated ? "authenticated" : "authenticating";
 
-      if (previousState !== this.authState) {
+      if (previousState !== this.authState && this.provider !== "unknown") {
         console.log(`[RDC-MAESTRO] Transição de Auth para ${this.provider}: ${this.authState}`);
       }
 

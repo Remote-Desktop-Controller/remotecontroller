@@ -1,0 +1,30 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "provider-bridge",
+  "description": "Fase 3: autoriza as WebViews remotas dos provedores (ChatGPT, Claude e Gemini) a devolverem, via maestro_receive_reply, apenas o texto lido do último turno do agente para o motor blackboard. Nenhum outro comando é exposto a origens remotas.",
+  "local": false,
+  "windows": [
+    "provider-chatgpt",
+    "provider-claude",
+    "provider-gemini",
+    "provider-deepseek",
+    "provider-qwen"
+  ],
+  "remote": {
+    "urls": [
+      "https://chatgpt.com",
+      "https://*.chatgpt.com",
+      "https://*.openai.com",
+      "https://claude.ai",
+      "https://*.claude.ai",
+      "https://*.anthropic.com",
+      "https://gemini.google.com",
+      "https://*.google.com",
+      "https://chat.deepseek.com",
+      "https://*.deepseek.com",
+      "https://chat.qwen.ai",
+      "https://*.qwen.ai"
+    ]
+  },
+  "permissions": ["allow-maestro-receive-reply", "allow-set-provider-connected"]
+}

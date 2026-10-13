@@ -1,0 +1,30 @@
+[package]
+name = "rdc-maestro"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "rdc_maestro_lib"
+# Somente `rlib`: o Maestro é um app desktop (Windows/WebView2) e o binário linka a
+# biblioteca diretamente. Os alvos `staticlib`/`cdylib` do template Tauri existem para
+# iOS/Android e, na toolchain GNU deste projeto (MinGW 16.1.0), o `cdylib` falha com
+# `ld: export ordinal too large` — o que impedia `tauri dev`/`tauri build`.
+# Reintroduza-os apenas se o alvo mobile voltar ao escopo.
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.2", features = [] }
+
+[dependencies]
+tauri = { version = "2.2", features = [] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+url = "2"
+
+[[bin]]
+name = "rdc-maestro"
+path = "src/main.rs"

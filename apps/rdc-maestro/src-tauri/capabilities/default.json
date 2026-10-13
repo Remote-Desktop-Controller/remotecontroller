@@ -1,0 +1,19 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capability for RDC Maestro main window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:event:default",
+    "allow-open-provider-login",
+    "allow-hide-provider-window",
+    "allow-show-provider-window",
+    "allow-set-provider-connected",
+    "allow-get-all-providers-status",
+    "allow-maestro-start-mission",
+    "allow-maestro-execute-plan",
+    "allow-maestro-get-last-consensus",
+    "allow-maestro-get-mission"
+  ]
+}

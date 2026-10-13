@@ -113,7 +113,12 @@ impl Kernel {
             payload: self.dispatch(request, progress).await.map_err(wire_error),
         }
     }
-    async fn dispatch(
+    /// Executes a request through the kernel: policy, checkpointing, telemetry and the
+    /// tool registry all apply exactly as in the main IPC path.
+    ///
+    /// Public so auxiliary local ingress channels (for example the Maestro order pipe)
+    /// reuse the same execution track instead of reimplementing dispatch.
+    pub async fn dispatch(
         self: &Arc<Self>,
         request: RequestEnvelope,
         progress: Arc<dyn ProgressPort>,
