@@ -251,7 +251,9 @@ pub async fn connect_telemetry_client(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::observer::event::{AuditDiffMetrics, AuditEventType, AuditStatus};
+    #[cfg(windows)]
+    use crate::observer::event::AuditDiffMetrics;
+    use crate::observer::event::{AuditEventType, AuditStatus};
 
     #[tokio::test]
     async fn test_telemetry_hub_broadcast() {
