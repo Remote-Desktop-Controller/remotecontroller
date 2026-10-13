@@ -1,7 +1,7 @@
 param(
     [string]$BinaryDirectory = (Join-Path $PSScriptRoot '../target/release'),
     [string]$OutputDirectory = (Join-Path $PSScriptRoot '../dist'),
-    [string]$Version = '0.2.0'
+    [string]$Version = '0.5.0'
 )
 $ErrorActionPreference = 'Stop'
 $platform = if ($IsLinux) { 'linux' } elseif ($IsMacOS) { 'macos' } else { 'windows' }
