@@ -18,7 +18,10 @@ fn generates_increasing_jitter_delays_for_providers() {
     // Os provedores subsequentes devem ter atrasos crescentes e dentro da janela estocástica
     let mut prev = Duration::from_millis(0);
     for delay in &schedule[1..] {
-        assert!(*delay > prev, "Atraso deve ser estritamente crescente para escalonamento temporal");
+        assert!(
+            *delay > prev,
+            "Atraso deve ser estritamente crescente para escalonamento temporal"
+        );
         let delta = (*delay - prev).as_millis() as u64;
         assert!(
             delta >= min_delay && delta <= max_delay,

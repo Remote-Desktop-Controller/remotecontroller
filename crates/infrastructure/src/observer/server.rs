@@ -279,7 +279,10 @@ mod tests {
     #[cfg(windows)]
     #[tokio::test]
     async fn test_named_pipe_telemetry_server_client_roundtrip() {
-        let pipe_name = format!(r"\\.\pipe\rdc-test-telemetry-{}", uuid::Uuid::new_v4().simple());
+        let pipe_name = format!(
+            r"\\.\pipe\rdc-test-telemetry-{}",
+            uuid::Uuid::new_v4().simple()
+        );
         let hub = TelemetryHub::new(32);
         let server = TelemetryServer::new(hub.clone(), &pipe_name);
         let cancel = server.cancel_token();
@@ -301,7 +304,13 @@ mod tests {
 
         assert_eq!(received.target, "src/test.rs");
         assert_eq!(received.status, AuditStatus::Success);
-        assert_eq!(received.diff, Some(AuditDiffMetrics { added: 5, removed: 1 }));
+        assert_eq!(
+            received.diff,
+            Some(AuditDiffMetrics {
+                added: 5,
+                removed: 1
+            })
+        );
 
         cancel.cancel();
     }

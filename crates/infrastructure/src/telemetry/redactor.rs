@@ -109,7 +109,10 @@ impl Redactor {
                     if is_sensitive_key(k) {
                         match v {
                             serde_json::Value::String(_) => {
-                                cleaned.insert(k.clone(), serde_json::Value::String(REDACTION_MASK.to_string()));
+                                cleaned.insert(
+                                    k.clone(),
+                                    serde_json::Value::String(REDACTION_MASK.to_string()),
+                                );
                             }
                             _ => {
                                 cleaned.insert(k.clone(), self.redact_json(v));
@@ -151,7 +154,8 @@ mod tests {
 
     #[test]
     fn test_redact_anthropic_key() {
-        let text = "Configured ANTHROPIC_API_KEY=sk-ant-api03-abcdef1234567890abcdef1234567890 in env";
+        let text =
+            "Configured ANTHROPIC_API_KEY=sk-ant-api03-abcdef1234567890abcdef1234567890 in env";
         let cleaned = redact_text(text);
         assert!(!cleaned.contains("sk-ant-"));
         assert!(cleaned.contains("[REDACTED_ANTHROPIC_KEY]"));
@@ -199,7 +203,10 @@ mod tests {
         let s = cleaned.to_string();
         assert!(!s.contains("sk-proj-"));
         assert!(!s.contains("mytoken1234"));
-        assert!(!s.contains("mysecretpassword123"), "Secret password value MUST be redacted");
+        assert!(
+            !s.contains("mysecretpassword123"),
+            "Secret password value MUST be redacted"
+        );
         assert_eq!(cleaned["safe_counter"], 42);
     }
 

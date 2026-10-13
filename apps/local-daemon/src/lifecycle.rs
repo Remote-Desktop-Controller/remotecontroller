@@ -88,9 +88,7 @@ pub fn resolve(args: &mut Args) -> Result<()> {
     let profile = match &args.profile {
         Some(p) => p.clone(),
         None if args.state_dir.is_some() => args.state_dir.clone().unwrap(),
-        None => {
-            runtime_infrastructure::storage::StateLayout::default_root()
-        }
+        None => runtime_infrastructure::storage::StateLayout::default_root(),
     };
     private_directory(&profile)?;
     args.profile = Some(profile.canonicalize()?);
@@ -243,7 +241,9 @@ pub fn capabilities(args: &Args) -> Vec<Capability> {
         c.push(Capability::NetworkAccess);
     }
     if args.allow_terminal {
-        eprintln!("warning: --allow-terminal accepted but interactive terminal is not available in this build");
+        eprintln!(
+            "warning: --allow-terminal accepted but interactive terminal is not available in this build"
+        );
     }
     c
 }
@@ -518,9 +518,9 @@ pub async fn run_monitor(endpoint: &str, use_ansi: bool) -> Result<()> {
     #[cfg(windows)]
     {
         use runtime_infrastructure::observer::server::connect_telemetry_client;
-        let mut rx = connect_telemetry_client(endpoint)
-            .await
-            .context(format!("Failed to connect to Named Pipe at '{endpoint}'. Ensure RDC daemon is running."))?;
+        let mut rx = connect_telemetry_client(endpoint).await.context(format!(
+            "Failed to connect to Named Pipe at '{endpoint}'. Ensure RDC daemon is running."
+        ))?;
         println!("Connected. Awaiting events... (Press Ctrl+C to exit)\n");
         while let Some(event) = rx.recv().await {
             println!("{}", event.format_display(use_ansi));

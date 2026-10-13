@@ -59,7 +59,9 @@ impl AtomicCheckpointManager {
         content: &[u8],
     ) -> Result<CheckpointRecord> {
         let canonical_target = if target_path.exists() {
-            target_path.canonicalize().unwrap_or_else(|_| target_path.to_path_buf())
+            target_path
+                .canonicalize()
+                .unwrap_or_else(|_| target_path.to_path_buf())
         } else {
             target_path.to_path_buf()
         };
@@ -239,7 +241,10 @@ mod tests {
 
         // 2. Rollback newly created file
         manager.rollback_checkpoint(&record).unwrap();
-        assert!(!workspace_file.exists(), "Rollback of created file must delete it");
+        assert!(
+            !workspace_file.exists(),
+            "Rollback of created file must delete it"
+        );
     }
 
     #[test]

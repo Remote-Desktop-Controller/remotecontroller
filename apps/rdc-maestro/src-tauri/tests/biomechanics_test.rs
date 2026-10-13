@@ -1,7 +1,7 @@
 //! Testes para o motor de biomecânica e curvas de Bézier cúbicas
 
 use rdc_maestro_lib::stealth::biomechanics::{
-    generate_bezier_trajectory, ease_in_out, BoxMullerRng,
+    BoxMullerRng, ease_in_out, generate_bezier_trajectory,
 };
 
 #[test]
@@ -80,7 +80,10 @@ fn ease_in_out_is_bounded_and_monotonic() {
     for i in 1..=100 {
         let s = i as f64 / 100.0;
         let t = ease_in_out(s);
-        assert!(t >= prev, "Curva ease_in_out deve ser monotonicamente não-decrescente");
+        assert!(
+            t >= prev,
+            "Curva ease_in_out deve ser monotonicamente não-decrescente"
+        );
         assert!(t <= 1.0);
         prev = t;
     }
@@ -97,7 +100,13 @@ fn box_muller_generates_bounded_gaussian_delays() {
     let mut samples = Vec::new();
     for _ in 0..500 {
         let delay = rng.sample_delay_ms(mean, std_dev, min, max);
-        assert!(delay >= min && delay <= max, "Delay {} fora dos limites [{}, {}]", delay, min, max);
+        assert!(
+            delay >= min && delay <= max,
+            "Delay {} fora dos limites [{}, {}]",
+            delay,
+            min,
+            max
+        );
         samples.push(delay);
     }
 

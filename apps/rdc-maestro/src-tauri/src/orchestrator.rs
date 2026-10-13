@@ -10,17 +10,17 @@
 //      ordem física aprovada pelo operador para o `local-daemon`.
 
 use std::collections::{BTreeSet, HashMap, HashSet};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::sync::{mpsc, Mutex, RwLock};
+use tokio::sync::{Mutex, RwLock, mpsc};
 use tracing::{info, warn};
 
-use crate::webview_manager::{provider_names_joined, ProviderConfig, WebviewManager, PROVIDERS};
+use crate::webview_manager::{PROVIDERS, ProviderConfig, WebviewManager, provider_names_joined};
 
 // --------------------------------------------------------------------------------------
 // Constantes de operação
@@ -70,7 +70,8 @@ pub const MAX_MISSION_HISTORY: usize = 64;
 /// O envelope enviado é JSON-lines (`rdc.maestro.order.v1`). Enquanto o daemon não
 /// consumir o canal dedicado, a ordem é entregue ao pipe disponível e fica registrada
 /// no `PlanExecutionReceipt`, sem execução física pelo daemon.
-pub const DAEMON_COMMAND_PIPES: &[&str] = &[r"\\.\pipe\rdc-agent-maestro", r"\\.\pipe\rdc-telemetry"];
+pub const DAEMON_COMMAND_PIPES: &[&str] =
+    &[r"\\.\pipe\rdc-agent-maestro", r"\\.\pipe\rdc-telemetry"];
 
 /// Tentativas de conexão ao pipe antes de desistir (o daemon pode estar inicializando).
 pub const DAEMON_CONNECT_ATTEMPTS: usize = 10;
@@ -365,13 +366,20 @@ impl MaestroEngine {
                     LogLevel::Success,
                     format!(
                         "Consenso [{}] gerado com {} de {} agentes em {} ms.",
-                        outcome.mission_id, outcome.coverage, PROVIDERS.len(), outcome.elapsed_ms
+                        outcome.mission_id,
+                        outcome.coverage,
+                        PROVIDERS.len(),
+                        outcome.elapsed_ms
                     ),
                 );
                 let _ = app.emit("maestro-consensus-ready", outcome);
             }
             Err(err) => {
-                emit_log(app, LogLevel::Error, format!("Ciclo de debate falhou: {err}"));
+                emit_log(
+                    app,
+                    LogLevel::Error,
+                    format!("Ciclo de debate falhou: {err}"),
+                );
                 let _ = app.emit("maestro-debate-failed", err.clone());
             }
         }
@@ -401,7 +409,10 @@ impl MaestroEngine {
         let mut prev_delay = Duration::from_millis(0);
 
         for (idx, config) in PROVIDERS.iter().enumerate() {
-            let delay = schedule.get(idx).copied().unwrap_or(Duration::from_millis(0));
+            let delay = schedule
+                .get(idx)
+                .copied()
+                .unwrap_or(Duration::from_millis(0));
             let delta = delay.saturating_sub(prev_delay);
             if !delta.is_zero() {
                 tokio::time::sleep(delta).await;
@@ -559,7 +570,9 @@ impl MaestroEngine {
             emit_log(
                 app,
                 LogLevel::Warn,
-                format!("{late_replies} resposta(s) tardia(s) de missões anteriores foram descartadas."),
+                format!(
+                    "{late_replies} resposta(s) tardia(s) de missões anteriores foram descartadas."
+                ),
             );
         }
 
@@ -640,7 +653,10 @@ impl MaestroEngine {
     // ----------------------------------------------------------------------------------
 
     /// Conecta ao Named Pipe nativo do RDC e envia a ordem física aprovada ao daemon.
-    pub async fn execute_approved_plan(&self, payload: &str) -> Result<PlanExecutionReceipt, String> {
+    pub async fn execute_approved_plan(
+        &self,
+        payload: &str,
+    ) -> Result<PlanExecutionReceipt, String> {
         let endpoints = daemon_pipe_candidates();
         self.execute_approved_plan_on(payload, &endpoints).await
     }
@@ -758,7 +774,9 @@ fn build_outcome(
 }
 
 /// Extrai pontos convergentes (sustentados por 2+ agentes) e divergentes (isolados).
-fn compute_consensus_points(replies: &[ProviderReply]) -> (Vec<ConsensusPoint>, Vec<ConsensusPoint>) {
+fn compute_consensus_points(
+    replies: &[ProviderReply],
+) -> (Vec<ConsensusPoint>, Vec<ConsensusPoint>) {
     struct Candidate {
         provider: String,
         text: String,
@@ -895,7 +913,11 @@ fn render_consensus(
         out.push_str("Nenhuma divergência relevante entre os agentes.\n");
     } else {
         for point in divergences.iter() {
-            out.push_str(&format!("- [{}] {}\n", point.providers.join(" + "), point.text));
+            out.push_str(&format!(
+                "- [{}] {}\n",
+                point.providers.join(" + "),
+                point.text
+            ));
         }
     }
 
@@ -968,7 +990,11 @@ fn jaccard(a: &BTreeSet<String>, b: &BTreeSet<String>) -> f64 {
     }
     let intersection = a.intersection(b).count() as f64;
     let union = a.union(b).count() as f64;
-    if union == 0.0 { 0.0 } else { intersection / union }
+    if union == 0.0 {
+        0.0
+    } else {
+        intersection / union
+    }
 }
 
 /// Calcula um cronograma de atrasos estocásticos para escalonar as injeções entre múltiplos provedores,
@@ -1015,10 +1041,10 @@ const STOPWORDS: &[&str] = &[
     "sem", "ser", "seu", "só", "sua", "também", "te", "tem", "ter", "tu", "um", "uma", "você",
     "vocês", "ainda", "assim", "após", "cada", "sobre", "todo", "toda", "todos", "todas", "onde",
     // Inglês
-    "and", "the", "for", "are", "but", "not", "you", "your", "with", "this", "that", "from",
-    "have", "has", "will", "can", "should", "would", "there", "their", "they", "them", "was",
-    "were", "been", "into", "than", "then", "when", "which", "while", "about", "also", "its",
-    "it's", "our", "out", "use", "using", "all", "any", "may", "must", "one", "two", "how",
+    "and", "the", "for", "are", "but", "not", "you", "your", "with", "this", "that", "from", "have",
+    "has", "will", "can", "should", "would", "there", "their", "they", "them", "was", "were",
+    "been", "into", "than", "then", "when", "which", "while", "about", "also", "its", "it's",
+    "our", "out", "use", "using", "all", "any", "may", "must", "one", "two", "how",
 ];
 
 fn truncate_chars(text: &str, max: usize) -> String {
@@ -1132,7 +1158,9 @@ async fn connect_daemon_pipe(
 }
 
 #[cfg(not(windows))]
-async fn connect_daemon_pipe(endpoints: &[String]) -> Result<(String, tokio::net::UnixStream), String> {
+async fn connect_daemon_pipe(
+    endpoints: &[String],
+) -> Result<(String, tokio::net::UnixStream), String> {
     let _ = endpoints;
     Err(
         "O canal de ordens do daemon usa Named Pipe do Windows; nenhum transporte local equivalente foi configurado nesta plataforma."
@@ -1255,7 +1283,11 @@ pub fn iso8601_utc(epoch_ms: u64) -> String {
     let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
     let month_prime = (5 * day_of_year + 2) / 153;
     let day = day_of_year - (153 * month_prime + 2) / 5 + 1;
-    let month = if month_prime < 10 { month_prime + 3 } else { month_prime - 9 };
+    let month = if month_prime < 10 {
+        month_prime + 3
+    } else {
+        month_prime - 9
+    };
     let year = if month <= 2 { year + 1 } else { year };
 
     format!("{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}Z")
@@ -1321,16 +1353,29 @@ mod tests {
         ];
 
         let (convergences, divergences) = compute_consensus_points(&replies);
-        assert!(!convergences.is_empty(), "esperava convergência entre dois agentes");
+        assert!(
+            !convergences.is_empty(),
+            "esperava convergência entre dois agentes"
+        );
         assert!(convergences[0].support >= 2);
-        assert!(divergences.iter().any(|d| d.providers.contains(&"gemini".to_string())));
+        assert!(
+            divergences
+                .iter()
+                .any(|d| d.providers.contains(&"gemini".to_string()))
+        );
     }
 
     #[test]
     fn outcome_marks_quorum_and_confidence() {
         let replies = vec![
-            reply("chatgpt", "Aplicar patch de segurança no servidor de borda imediatamente."),
-            reply("claude", "Aplicar patch de segurança no servidor de borda imediatamente agora."),
+            reply(
+                "chatgpt",
+                "Aplicar patch de segurança no servidor de borda imediatamente.",
+            ),
+            reply(
+                "claude",
+                "Aplicar patch de segurança no servidor de borda imediatamente agora.",
+            ),
         ];
         let outcome = build_outcome(
             "m-1".to_string(),
@@ -1427,7 +1472,10 @@ mod tests {
 
         let server_task = tokio::spawn(async move {
             let connected = server;
-            connected.connect().await.expect("nenhum cliente conectou ao pipe");
+            connected
+                .connect()
+                .await
+                .expect("nenhum cliente conectou ao pipe");
 
             let mut reader = BufReader::new(connected);
             let mut line = String::new();
@@ -1446,7 +1494,8 @@ mod tests {
         });
 
         let engine = MaestroEngine::new();
-        let payload = r#"{"mission_id":"m-pipe","steps":[{"action":"restart","target":"spooler"}]}"#;
+        let payload =
+            r#"{"mission_id":"m-pipe","steps":[{"action":"restart","target":"spooler"}]}"#;
         let receipt = engine
             .execute_approved_plan_on(payload, std::slice::from_ref(&endpoint))
             .await

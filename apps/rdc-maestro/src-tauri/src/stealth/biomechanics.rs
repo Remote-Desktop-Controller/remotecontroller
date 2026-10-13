@@ -12,7 +12,11 @@ pub struct BoxMullerRng {
 impl BoxMullerRng {
     pub fn new(seed: u64) -> Self {
         Self {
-            state: if seed == 0 { 0x5465_7374_5F53_6565 } else { seed },
+            state: if seed == 0 {
+                0x5465_7374_5F53_6565
+            } else {
+                seed
+            },
             spare: None,
         }
     }
@@ -25,7 +29,13 @@ impl BoxMullerRng {
         self.state ^= self.state >> 27;
         let value = self.state.wrapping_mul(0x2545_F491_4F6C_DD1D);
         let u = (value >> 11) as f64 / (1u64 << 53) as f64;
-        if u <= 0.0 { 1e-7 } else if u >= 1.0 { 1.0 - 1e-7 } else { u }
+        if u <= 0.0 {
+            1e-7
+        } else if u >= 1.0 {
+            1.0 - 1e-7
+        } else {
+            u
+        }
     }
 
     /// Amostra um valor segundo a distribuição normal padrão N(0, 1)

@@ -17,7 +17,7 @@ use runtime_infrastructure::{
 use runtime_ports::ProgressPort;
 use runtime_protocol::{Metadata, Request, RequestEnvelope, now_ms};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 #[cfg(windows)]
@@ -223,7 +223,11 @@ pub async fn process_order(kernel: &Arc<Kernel>, raw: &str) -> Value {
     let steps = match plan_steps(&order) {
         Ok(steps) => steps,
         Err(reason) => {
-            tracing::warn!(mission = order.mission_id.as_deref().unwrap_or("-"), reason, "maestro plan refused");
+            tracing::warn!(
+                mission = order.mission_id.as_deref().unwrap_or("-"),
+                reason,
+                "maestro plan refused"
+            );
             return rejected_ack(order.mission_id.clone(), &reason);
         }
     };
@@ -319,7 +323,11 @@ pub async fn process_order(kernel: &Arc<Kernel>, raw: &str) -> Value {
         }
     }
 
-    let status = if failure.is_some() { "failed" } else { "completed" };
+    let status = if failure.is_some() {
+        "failed"
+    } else {
+        "completed"
+    };
     let mut ack = json!({
         "schema": ACK_SCHEMA,
         "order_schema": order.schema.clone().unwrap_or_else(|| ORDER_SCHEMA.to_string()),
@@ -744,8 +752,10 @@ mod tests {
         let read = plan_steps(&order(json!({"steps": [{"path": "src/main.rs"}]}))).unwrap();
         assert_eq!(read[0].tool, "filesystem.read");
 
-        let write =
-            plan_steps(&order(json!({"steps": [{"path": "a.txt", "content": "ok"}]}))).unwrap();
+        let write = plan_steps(&order(
+            json!({"steps": [{"path": "a.txt", "content": "ok"}]}),
+        ))
+        .unwrap();
         assert_eq!(write[0].tool, "filesystem.write");
     }
 
@@ -805,7 +815,11 @@ mod tests {
         });
 
         let encoded = encode_ack(&ack);
-        assert!(encoded.len() <= MAX_ACK_BYTES, "ack excedeu o teto: {}", encoded.len());
+        assert!(
+            encoded.len() <= MAX_ACK_BYTES,
+            "ack excedeu o teto: {}",
+            encoded.len()
+        );
         let parsed: Value = serde_json::from_str(&encoded).unwrap();
         assert_eq!(parsed["truncated"], true);
         assert!(parsed["steps"][0].get("result").is_none());

@@ -242,10 +242,8 @@ impl Kernel {
                             .map(|s| s.as_bytes())
                             .unwrap_or_default();
                         let target_path = self.services.files.root().join(path_str);
-                        let diff = crate::telemetry::diff::compute_file_diff(
-                            &target_path,
-                            content_bytes,
-                        );
+                        let diff =
+                            crate::telemetry::diff::compute_file_diff(&target_path, content_bytes);
                         Some((path_str.to_string(), diff))
                     } else {
                         None
@@ -267,10 +265,8 @@ impl Kernel {
                         } else {
                             Vec::new()
                         };
-                        let diff = crate::telemetry::diff::compute_content_diff(
-                            &old_bytes,
-                            &new_bytes,
-                        );
+                        let diff =
+                            crate::telemetry::diff::compute_content_diff(&old_bytes, &new_bytes);
                         Some((path_str.to_string(), diff))
                     } else {
                         None
@@ -294,7 +290,10 @@ impl Kernel {
                                     .and_then(|v| v.as_str())
                                     .map(|s| s.as_bytes())
                                     .unwrap_or_default();
-                                let diff = crate::telemetry::diff::compute_content_diff(&old_bytes, content_bytes);
+                                let diff = crate::telemetry::diff::compute_content_diff(
+                                    &old_bytes,
+                                    content_bytes,
+                                );
                                 total_added += diff.lines_added;
                                 total_removed += diff.lines_removed;
                             }
@@ -302,7 +301,11 @@ impl Kernel {
                         let summary_name = if paths_summary.len() == 1 {
                             paths_summary[0].clone()
                         } else {
-                            format!("batch[{} files: {}]", paths_summary.len(), paths_summary.join(", "))
+                            format!(
+                                "batch[{} files: {}]",
+                                paths_summary.len(),
+                                paths_summary.join(", ")
+                            )
                         };
                         Some((
                             summary_name,
@@ -339,64 +342,63 @@ impl Kernel {
 
                 // Real-time interception & audit event broadcast
                 if let Some((path_str, diff)) = pre_diff {
-                    self.telemetry.broadcast(
-                        crate::observer::event::AuditEvent::file_modified(
+                    self.telemetry
+                        .broadcast(crate::observer::event::AuditEvent::file_modified(
                             path_str,
                             diff.lines_added,
                             diff.lines_removed,
                             elapsed_ms,
                             audit_status,
-                        ),
-                    );
-                } else if tool.starts_with("filesystem.") && (tool == "filesystem.write" || tool == "filesystem.patch" || tool == "filesystem.batch_edit") {
+                        ));
+                } else if tool.starts_with("filesystem.")
+                    && (tool == "filesystem.write"
+                        || tool == "filesystem.patch"
+                        || tool == "filesystem.batch_edit")
+                {
                     let path_str = input
                         .get("path")
                         .and_then(|v| v.as_str())
                         .unwrap_or("unknown");
-                    self.telemetry.broadcast(
-                        crate::observer::event::AuditEvent::file_modified(
+                    self.telemetry
+                        .broadcast(crate::observer::event::AuditEvent::file_modified(
                             path_str,
                             0,
                             0,
                             elapsed_ms,
                             audit_status,
-                        ),
-                    );
+                        ));
                 } else if tool == "process.spawn" || tool == "process.run" {
-                    let cmd_display = if let Some(prog) =
-                        input.get("program").and_then(|v| v.as_str())
-                    {
-                        let args_str = input
-                            .get("args")
-                            .and_then(|v| v.as_array())
-                            .map(|arr| {
-                                arr.iter()
-                                    .filter_map(|x| x.as_str())
-                                    .collect::<Vec<_>>()
-                                    .join(" ")
-                            })
-                            .unwrap_or_default();
-                        format!("{prog} {args_str}")
-                    } else {
-                        tool.clone()
-                    };
-                    self.telemetry.broadcast(
-                        crate::observer::event::AuditEvent::command_executed(
+                    let cmd_display =
+                        if let Some(prog) = input.get("program").and_then(|v| v.as_str()) {
+                            let args_str = input
+                                .get("args")
+                                .and_then(|v| v.as_array())
+                                .map(|arr| {
+                                    arr.iter()
+                                        .filter_map(|x| x.as_str())
+                                        .collect::<Vec<_>>()
+                                        .join(" ")
+                                })
+                                .unwrap_or_default();
+                            format!("{prog} {args_str}")
+                        } else {
+                            tool.clone()
+                        };
+                    self.telemetry
+                        .broadcast(crate::observer::event::AuditEvent::command_executed(
                             &cmd_display,
                             elapsed_ms,
                             audit_status,
                             Some(input.clone()),
-                        ),
-                    );
+                        ));
                 } else {
-                    self.telemetry.broadcast(
-                        crate::observer::event::AuditEvent::tool_invoked(
+                    self.telemetry
+                        .broadcast(crate::observer::event::AuditEvent::tool_invoked(
                             &tool,
                             elapsed_ms,
                             audit_status,
                             Some(input.clone()),
-                        ),
-                    );
+                        ));
                 }
 
                 Ok(operation_json(&exec_result?))

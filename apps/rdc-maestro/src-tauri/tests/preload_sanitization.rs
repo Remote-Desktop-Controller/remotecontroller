@@ -67,7 +67,8 @@ fn preload_uses_web_messaging_listener_for_commands() {
 
     // Deve escutar comandos via message event padrão HTML5
     assert!(
-        script.contains("addEventListener(\"message\"") || script.contains("addEventListener('message'"),
+        script.contains("addEventListener(\"message\"")
+            || script.contains("addEventListener('message'"),
         "PRELOAD_SCRIPT deve escutar via window.addEventListener('message', ...)"
     );
 }

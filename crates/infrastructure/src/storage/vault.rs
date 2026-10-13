@@ -65,7 +65,9 @@ pub fn dpapi_encrypt(data: &[u8], entropy: Option<&[u8]>) -> Result<Vec<u8>> {
         .map_err(|e| VaultError::Encryption(format!("CryptProtectData failed: {e}")))?;
 
         if out_blob.pbData.is_null() {
-            return Err(VaultError::Encryption("CryptProtectData returned null pointer".into()));
+            return Err(VaultError::Encryption(
+                "CryptProtectData returned null pointer".into(),
+            ));
         }
 
         let slice = std::slice::from_raw_parts(out_blob.pbData, out_blob.cbData as usize);
@@ -116,7 +118,9 @@ pub fn dpapi_decrypt(cipher: &[u8], entropy: Option<&[u8]>) -> Result<Vec<u8>> {
         .map_err(|e| VaultError::Decryption(format!("CryptUnprotectData failed: {e}")))?;
 
         if out_blob.pbData.is_null() {
-            return Err(VaultError::Decryption("CryptUnprotectData returned null pointer".into()));
+            return Err(VaultError::Decryption(
+                "CryptUnprotectData returned null pointer".into(),
+            ));
         }
 
         let slice = std::slice::from_raw_parts(out_blob.pbData, out_blob.cbData as usize);
@@ -230,7 +234,10 @@ mod tests {
         assert_ne!(encrypted, secret, "Ciphertext must not match plaintext");
 
         let decrypted = dpapi_decrypt(&encrypted, None).unwrap();
-        assert_eq!(decrypted, secret, "Decrypted text must match original plaintext");
+        assert_eq!(
+            decrypted, secret,
+            "Decrypted text must match original plaintext"
+        );
     }
 
     #[test]

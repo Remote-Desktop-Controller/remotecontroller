@@ -24,10 +24,9 @@ fn main() {
     // o texto lido ao motor blackboard (Fase 3).
     let attrs = tauri_build::Attributes::new()
         .app_manifest(tauri_build::AppManifest::new().commands(&APP_COMMANDS))
-        .windows_attributes(
-            tauri_build::WindowsAttributes::new()
-                .window_icon_path("C:/Users/Notebook/Documents/REMOTE~1/apps/rdc-maestro/src-tauri/icons/icon.ico"),
-        );
+        .windows_attributes(tauri_build::WindowsAttributes::new().window_icon_path(
+            "C:/Users/Notebook/Documents/REMOTE~1/apps/rdc-maestro/src-tauri/icons/icon.ico",
+        ));
 
     tauri_build::try_build(attrs).expect("Falha ao executar tauri-build para RDC Maestro");
 

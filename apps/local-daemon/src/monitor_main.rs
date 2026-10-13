@@ -76,14 +76,26 @@ async fn main() -> Result<()> {
 
 fn render_header(pipe: &str, use_ansi: bool) {
     if use_ansi {
-        println!("\x1b[1;34m╔══════════════════════════════════════════════════════════════════════════════╗\x1b[0m");
-        println!("\x1b[1;34m║\x1b[1;37m        REMOTE DESKTOP CONTROLLER — REAL-TIME AI AUDIT MONITOR               \x1b[1;34m║\x1b[0m");
-        println!("\x1b[1;34m╚══════════════════════════════════════════════════════════════════════════════╝\x1b[0m");
+        println!(
+            "\x1b[1;34m╔══════════════════════════════════════════════════════════════════════════════╗\x1b[0m"
+        );
+        println!(
+            "\x1b[1;34m║\x1b[1;37m        REMOTE DESKTOP CONTROLLER — REAL-TIME AI AUDIT MONITOR               \x1b[1;34m║\x1b[0m"
+        );
+        println!(
+            "\x1b[1;34m╚══════════════════════════════════════════════════════════════════════════════╝\x1b[0m"
+        );
         println!("\x1b[90mTarget Pipe:\x1b[0m \x1b[33m{pipe}\x1b[0m\n");
     } else {
-        println!("================================================================================");
-        println!("        REMOTE DESKTOP CONTROLLER — REAL-TIME AI AUDIT MONITOR                  ");
-        println!("================================================================================");
+        println!(
+            "================================================================================"
+        );
+        println!(
+            "        REMOTE DESKTOP CONTROLLER — REAL-TIME AI AUDIT MONITOR                  "
+        );
+        println!(
+            "================================================================================"
+        );
         println!("Target Pipe: {pipe}\n");
     }
 }

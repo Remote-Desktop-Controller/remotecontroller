@@ -17,11 +17,11 @@ use runtime_infrastructure::{
     storage::{
         atomic::AtomicCheckpointManager,
         layout::StateLayout,
-        vault::{dpapi_decrypt, dpapi_encrypt, Vault},
+        vault::{Vault, dpapi_decrypt, dpapi_encrypt},
     },
     telemetry::{
-        diff::{compute_content_diff, compute_file_diff, is_binary_payload, MAX_DIFF_TEXT_SIZE},
-        redactor::{redact_value, Redactor},
+        diff::{MAX_DIFF_TEXT_SIZE, compute_content_diff, compute_file_diff, is_binary_payload},
+        redactor::{Redactor, redact_value},
     },
 };
 use runtime_protocol::{Metadata, Request, RequestEnvelope};
@@ -43,7 +43,10 @@ fn test_state_layout_contract_and_purge_protection() {
     assert_eq!(layout.checkpoints_dir(), state_root.join("checkpoints"));
     assert_eq!(layout.logs_dir(), state_root.join("logs"));
     assert_eq!(layout.vault_dir(), state_root.join(".vault"));
-    assert_eq!(layout.secrets_path(), state_root.join(".vault").join("secrets.bin"));
+    assert_eq!(
+        layout.secrets_path(),
+        state_root.join(".vault").join("secrets.bin")
+    );
 
     // Ensure directory creation
     layout.ensure_dirs().unwrap();
@@ -55,7 +58,10 @@ fn test_state_layout_contract_and_purge_protection() {
 
     // Inviolable Rule: Accidental purge without confirmation flag is strictly forbidden
     let refusal = layout.purge_data(false);
-    assert!(refusal.is_err(), "Purge without explicit confirmation must fail");
+    assert!(
+        refusal.is_err(),
+        "Purge without explicit confirmation must fail"
+    );
     assert_eq!(
         refusal.unwrap_err().kind(),
         std::io::ErrorKind::PermissionDenied
@@ -64,7 +70,10 @@ fn test_state_layout_contract_and_purge_protection() {
 
     // Intentional purge with explicit confirmation succeeds
     layout.purge_data(true).unwrap();
-    assert!(!state_root.exists(), "State directory should be removed when confirmed");
+    assert!(
+        !state_root.exists(),
+        "State directory should be removed when confirmed"
+    );
 }
 
 #[test]
@@ -83,13 +92,28 @@ fn test_dpapi_vault_encryption_integrity() {
     // 2. High-level Vault storage
     {
         let mut vault = Vault::open(&vault_file).unwrap();
-        vault.set("OPENAI_KEY", "sk-proj-openai-credential-secret").unwrap();
-        vault.set("ANTHROPIC_KEY", "sk-ant-anthropic-credential-secret").unwrap();
-        vault.set("SSH_PASSPHRASE", "super-secure-passphrase-value").unwrap();
+        vault
+            .set("OPENAI_KEY", "sk-proj-openai-credential-secret")
+            .unwrap();
+        vault
+            .set("ANTHROPIC_KEY", "sk-ant-anthropic-credential-secret")
+            .unwrap();
+        vault
+            .set("SSH_PASSPHRASE", "super-secure-passphrase-value")
+            .unwrap();
 
-        assert_eq!(vault.get("OPENAI_KEY"), Some("sk-proj-openai-credential-secret"));
-        assert_eq!(vault.get("ANTHROPIC_KEY"), Some("sk-ant-anthropic-credential-secret"));
-        assert_eq!(vault.get("SSH_PASSPHRASE"), Some("super-secure-passphrase-value"));
+        assert_eq!(
+            vault.get("OPENAI_KEY"),
+            Some("sk-proj-openai-credential-secret")
+        );
+        assert_eq!(
+            vault.get("ANTHROPIC_KEY"),
+            Some("sk-ant-anthropic-credential-secret")
+        );
+        assert_eq!(
+            vault.get("SSH_PASSPHRASE"),
+            Some("super-secure-passphrase-value")
+        );
         assert_eq!(
             vault.list_keys(),
             vec!["ANTHROPIC_KEY", "OPENAI_KEY", "SSH_PASSPHRASE"]
@@ -107,8 +131,14 @@ fn test_dpapi_vault_encryption_integrity() {
     // 4. Persistence across process re-instantiation
     {
         let mut vault = Vault::open(&vault_file).unwrap();
-        assert_eq!(vault.get("OPENAI_KEY"), Some("sk-proj-openai-credential-secret"));
-        assert_eq!(vault.get("ANTHROPIC_KEY"), Some("sk-ant-anthropic-credential-secret"));
+        assert_eq!(
+            vault.get("OPENAI_KEY"),
+            Some("sk-proj-openai-credential-secret")
+        );
+        assert_eq!(
+            vault.get("ANTHROPIC_KEY"),
+            Some("sk-ant-anthropic-credential-secret")
+        );
 
         // Remove key
         assert!(vault.remove("OPENAI_KEY").unwrap());
@@ -120,7 +150,10 @@ fn test_dpapi_vault_encryption_integrity() {
     {
         let vault = Vault::open(&vault_file).unwrap();
         assert_eq!(vault.get("OPENAI_KEY"), None);
-        assert_eq!(vault.get("ANTHROPIC_KEY"), Some("sk-ant-anthropic-credential-secret"));
+        assert_eq!(
+            vault.get("ANTHROPIC_KEY"),
+            Some("sk-ant-anthropic-credential-secret")
+        );
     }
 }
 
@@ -146,7 +179,10 @@ fn test_atomic_checkpoints_and_session_rollback() {
         .unwrap();
 
     assert!(!record1.was_created);
-    assert_eq!(std::fs::read(&workspace_file1).unwrap(), updated_service_content);
+    assert_eq!(
+        std::fs::read(&workspace_file1).unwrap(),
+        updated_service_content
+    );
 
     // Mutation 2: Create brand new file
     let new_config_content = b"[server]\nport = 8080\n";
@@ -281,7 +317,10 @@ fn test_secret_redactor_comprehensive() {
     let json_str = cleaned_json.to_string();
     assert!(!json_str.contains("sk-proj-"));
     assert!(!json_str.contains("sk-ant-"));
-    assert!(!json_str.contains("supersecretpassword123"), "Secret password MUST be redacted");
+    assert!(
+        !json_str.contains("supersecretpassword123"),
+        "Secret password MUST be redacted"
+    );
     assert_eq!(cleaned_json["count"], 10);
 }
 
@@ -305,7 +344,8 @@ async fn test_observer_ipc_streaming_and_interception() {
     tokio::time::sleep(Duration::from_millis(100)).await;
 
     // 1. Broadcast FILE_MODIFIED
-    let file_event = AuditEvent::file_modified("crates/domain/src/lib.rs", 15, 3, 45, AuditStatus::Success);
+    let file_event =
+        AuditEvent::file_modified("crates/domain/src/lib.rs", 15, 3, 45, AuditStatus::Success);
     hub.broadcast(file_event);
 
     let rec1 = tokio::time::timeout(Duration::from_secs(3), rx.recv())
@@ -314,7 +354,13 @@ async fn test_observer_ipc_streaming_and_interception() {
         .expect("channel closed");
     assert_eq!(rec1.event_type, AuditEventType::FileModified);
     assert_eq!(rec1.target, "crates/domain/src/lib.rs");
-    assert_eq!(rec1.diff, Some(AuditDiffMetrics { added: 15, removed: 3 }));
+    assert_eq!(
+        rec1.diff,
+        Some(AuditDiffMetrics {
+            added: 15,
+            removed: 3
+        })
+    );
     assert_eq!(rec1.status, AuditStatus::Success);
 
     // 2. Broadcast COMMAND_EXECUTED with secret to verify on-the-fly redaction
@@ -398,7 +444,13 @@ async fn test_kernel_execution_emits_telemetry() {
     assert_eq!(audit_event.event_type, AuditEventType::FileModified);
     assert_eq!(audit_event.target, target_file);
     assert_eq!(audit_event.status, AuditStatus::Success);
-    assert_eq!(audit_event.diff, Some(AuditDiffMetrics { added: 2, removed: 0 }));
+    assert_eq!(
+        audit_event.diff,
+        Some(AuditDiffMetrics {
+            added: 2,
+            removed: 0
+        })
+    );
 
     // 2. Execute filesystem.patch through kernel and verify real-time Myers diff
     let patch_payload = json!({
@@ -420,7 +472,11 @@ async fn test_kernel_execution_emits_telemetry() {
         meta: patch_meta,
     });
     let patch_response = kernel.handle(patch_request, p_progress).await;
-    assert!(patch_response.payload.is_ok(), "{:?}", patch_response.payload);
+    assert!(
+        patch_response.payload.is_ok(),
+        "{:?}",
+        patch_response.payload
+    );
 
     let patch_event = tokio::time::timeout(Duration::from_secs(2), telemetry_rx.recv())
         .await
@@ -430,7 +486,13 @@ async fn test_kernel_execution_emits_telemetry() {
     assert_eq!(patch_event.event_type, AuditEventType::FileModified);
     assert_eq!(patch_event.target, target_file);
     assert_eq!(patch_event.status, AuditStatus::Success);
-    assert_eq!(patch_event.diff, Some(AuditDiffMetrics { added: 2, removed: 1 }));
+    assert_eq!(
+        patch_event.diff,
+        Some(AuditDiffMetrics {
+            added: 2,
+            removed: 1
+        })
+    );
 
     // 3. Verify audit log was persisted to disk under ~/.remotecontroller/logs/audit-<date>.jsonl
     tokio::time::sleep(Duration::from_millis(100)).await;

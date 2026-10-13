@@ -352,14 +352,18 @@ impl WebviewManager {
             };
 
             // Solicita verificação de autenticação ao script de preload via Web Messaging
-            let eval_result =
-                window.eval(r#"window.postMessage({ source: "rdc-maestro", action: "check_auth" }, "*");"#);
+            let eval_result = window.eval(
+                r#"window.postMessage({ source: "rdc-maestro", action: "check_auth" }, "*");"#,
+            );
             if let Err(e) = eval_result {
                 warn!("Erro ao avaliar eval em {}: {}", label, e);
                 continue;
             }
         }
 
-        info!("Finalizado ciclo de monitoramento de autenticação para [{}]", name);
+        info!(
+            "Finalizado ciclo de monitoramento de autenticação para [{}]",
+            name
+        );
     }
 }

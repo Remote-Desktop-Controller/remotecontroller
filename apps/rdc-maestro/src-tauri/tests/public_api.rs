@@ -47,7 +47,11 @@ fn exposes_the_blackboard_engine_surface() {
 #[test]
 fn exposes_daemon_channel_and_provider_catalog() {
     let pipes = daemon_pipe_candidates();
-    assert!(pipes.iter().any(|pipe| pipe == r"\\.\pipe\rdc-agent-maestro"));
+    assert!(
+        pipes
+            .iter()
+            .any(|pipe| pipe == r"\\.\pipe\rdc-agent-maestro")
+    );
     assert!(WebviewManager::find_config("chatgpt").is_some());
     assert!(WebviewManager::find_config("inexistente").is_none());
     assert_eq!(new_mission_id().starts_with("m-"), true);

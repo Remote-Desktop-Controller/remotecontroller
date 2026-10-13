@@ -192,7 +192,10 @@ mod tests {
         assert_eq!(layout.root(), &base);
         assert_eq!(layout.config_path(), base.join("config.json"));
         assert_eq!(layout.sessions_dir(), base.join("sessions"));
-        assert_eq!(layout.session_dir("sess-1"), base.join("sessions").join("sess-1"));
+        assert_eq!(
+            layout.session_dir("sess-1"),
+            base.join("sessions").join("sess-1")
+        );
         assert_eq!(layout.checkpoints_dir(), base.join("checkpoints"));
         assert_eq!(
             layout.session_checkpoints_dir("sess-1"),
@@ -204,7 +207,10 @@ mod tests {
             base.join("logs").join("audit-2026-10-10.jsonl")
         );
         assert_eq!(layout.vault_dir(), base.join(".vault"));
-        assert_eq!(layout.secrets_path(), base.join(".vault").join("secrets.bin"));
+        assert_eq!(
+            layout.secrets_path(),
+            base.join(".vault").join("secrets.bin")
+        );
     }
 
     #[test]

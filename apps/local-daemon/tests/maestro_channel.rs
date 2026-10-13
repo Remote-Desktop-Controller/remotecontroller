@@ -49,8 +49,14 @@ impl TestDaemon {
 fn spawn_daemon(root: &Path, extra: &[&str]) -> TestDaemon {
     let workspace = root.join("workspace");
     let state_dir = root.join("state");
-    let ipc_endpoint = format!(r"\\.\pipe\rdc-test-maestro-ipc-{}", uuid::Uuid::new_v4().simple());
-    let pipe = format!(r"\\.\pipe\rdc-test-maestro-{}", uuid::Uuid::new_v4().simple());
+    let ipc_endpoint = format!(
+        r"\\.\pipe\rdc-test-maestro-ipc-{}",
+        uuid::Uuid::new_v4().simple()
+    );
+    let pipe = format!(
+        r"\\.\pipe\rdc-test-maestro-{}",
+        uuid::Uuid::new_v4().simple()
+    );
     std::fs::create_dir_all(&workspace).unwrap();
 
     let child = Command::new(binary())

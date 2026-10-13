@@ -39,23 +39,36 @@ pub struct ChallengeNotification {
 pub fn detect_challenge_in_html(html: &str) -> Option<ChallengeType> {
     let lower = html.to_lowercase();
 
-    if lower.contains("challenges.cloudflare.com") || lower.contains("cf-turnstile") || lower.contains("/challenge-platform/") {
+    if lower.contains("challenges.cloudflare.com")
+        || lower.contains("cf-turnstile")
+        || lower.contains("/challenge-platform/")
+    {
         return Some(ChallengeType::CloudflareTurnstile);
     }
 
-    if lower.contains("google.com/recaptcha") || lower.contains("recaptcha/api") || lower.contains("g-recaptcha") {
+    if lower.contains("google.com/recaptcha")
+        || lower.contains("recaptcha/api")
+        || lower.contains("g-recaptcha")
+    {
         return Some(ChallengeType::GoogleRecaptcha);
     }
 
-    if lower.contains("geetest_holder") || lower.contains("geetest_wind") || lower.contains("gt_holder") {
+    if lower.contains("geetest_holder")
+        || lower.contains("geetest_wind")
+        || lower.contains("gt_holder")
+    {
         return Some(ChallengeType::GeetestSlider);
     }
 
-    if lower.contains("arkoselabs") || lower.contains("arkose-box") || lower.contains("funcaptcha") {
+    if lower.contains("arkoselabs") || lower.contains("arkose-box") || lower.contains("funcaptcha")
+    {
         return Some(ChallengeType::ArkoseFunCaptcha);
     }
 
-    if lower.contains("security check") || lower.contains("human verification") || lower.contains("verificação de segurança") {
+    if lower.contains("security check")
+        || lower.contains("human verification")
+        || lower.contains("verificação de segurança")
+    {
         return Some(ChallengeType::GenericChallenge);
     }
 

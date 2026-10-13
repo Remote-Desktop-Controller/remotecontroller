@@ -1,8 +1,6 @@
 //! Testes para o sentinela de desafios e detecção de CAPTCHAs
 
-use rdc_maestro_lib::stealth::challenge_sentinel::{
-    detect_challenge_in_html, ChallengeType,
-};
+use rdc_maestro_lib::stealth::challenge_sentinel::{ChallengeType, detect_challenge_in_html};
 
 #[test]
 fn detects_cloudflare_turnstile_iframe() {
