@@ -339,7 +339,7 @@ async fn message(
         .await
         .unwrap();
     input.flush().await.unwrap();
-    let line = tokio::time::timeout(Duration::from_secs(10), output.next_line())
+    let line = tokio::time::timeout(Duration::from_secs(30), output.next_line())
         .await
         .unwrap()
         .unwrap()

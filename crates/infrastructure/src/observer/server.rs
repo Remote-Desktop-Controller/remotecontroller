@@ -7,6 +7,7 @@
 //! - Non-blocking event streaming to external observer TUIs/CLIs (`rdc-monitor`).
 
 use super::event::AuditEvent;
+#[cfg(windows)]
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
@@ -96,7 +97,9 @@ impl TelemetryHub {
 
 /// Telemetry streaming server serving connected IPC observers.
 pub struct TelemetryServer {
+    #[allow(dead_code)]
     hub: TelemetryHub,
+    #[allow(dead_code)]
     endpoint: String,
     cancel_token: CancellationToken,
 }
