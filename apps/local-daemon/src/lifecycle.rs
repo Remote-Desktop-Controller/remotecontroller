@@ -514,6 +514,7 @@ pub async fn dispatch(args: &Args) -> Result<bool> {
 }
 
 pub async fn run_monitor(endpoint: &str, use_ansi: bool) -> Result<()> {
+    let _ = use_ansi;
     println!("Connecting to RDC telemetry stream at: {endpoint}...");
     #[cfg(windows)]
     {
