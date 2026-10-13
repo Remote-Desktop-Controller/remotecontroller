@@ -4,7 +4,11 @@
 //! an unbuffered, colorized stream of AI activity including tool invocations, commands,
 //! diffs, and execution latencies.
 
-use anyhow::{Context, Result};
+#![allow(unused_imports)]
+
+#[cfg(windows)]
+use anyhow::Context;
+use anyhow::Result;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
