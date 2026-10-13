@@ -9,6 +9,8 @@
 //! Ao final, um `Ack` (`rdc.maestro.ack.v1`) é escrito de volta no pipe para o Maestro
 //! saber o que foi fisicamente executado.
 
+#![allow(dead_code, unused_imports)]
+
 use anyhow::{Context, Result};
 use runtime_infrastructure::{
     kernel::{Kernel, wire_error},
