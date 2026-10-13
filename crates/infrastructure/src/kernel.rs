@@ -90,7 +90,7 @@ impl Kernel {
         let checkpoints = Arc::new(crate::storage::AtomicCheckpointManager::new(
             (*layout).clone(),
         ));
-        let _ = telemetry.attach_audit_logger((*layout).clone(), shutdown.clone());
+        std::mem::drop(telemetry.attach_audit_logger((*layout).clone(), shutdown.clone()));
         Ok(Arc::new(Self {
             shutdown,
             workspace,

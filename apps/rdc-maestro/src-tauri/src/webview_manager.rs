@@ -103,6 +103,12 @@ pub struct WebviewManager {
     statuses: Arc<RwLock<HashMap<String, ProviderStatus>>>,
 }
 
+impl Default for WebviewManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WebviewManager {
     pub fn new() -> Self {
         let mut map = HashMap::new();
@@ -334,6 +340,7 @@ impl WebviewManager {
 
             {
                 let lock = statuses.read().await;
+                #[allow(clippy::collapsible_if)]
                 if let Some(status) = lock.get(&provider_id) {
                     if status.state == ProviderState::Connected {
                         info!(

@@ -16,7 +16,9 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+#[cfg(windows)]
+use tokio::io::AsyncReadExt;
+use tokio::io::AsyncWriteExt;
 use tokio::sync::{Mutex, RwLock, mpsc};
 use tracing::{info, warn};
 
@@ -445,6 +447,7 @@ impl MaestroEngine {
         {
             let mut missions = self.missions.write().await;
             // Histórico limitado: descarta a missão mais antiga ao atingir o teto.
+            #[allow(clippy::collapsible_if)]
             if missions.len() >= MAX_MISSION_HISTORY {
                 if let Some(oldest) = missions
                     .values()
@@ -583,6 +586,7 @@ impl MaestroEngine {
 
         let received_ids: Vec<String> = replies.iter().map(|r| r.provider.clone()).collect();
         for provider in &injected {
+            #[allow(clippy::collapsible_if)]
             if !received_ids.contains(provider) {
                 if let Some(config) = WebviewManager::find_config(provider) {
                     missing.push(config.id.to_string());
@@ -853,7 +857,7 @@ fn compute_consensus_points(
             .cmp(&a.support)
             .then_with(|| a.text.len().cmp(&b.text.len()))
     });
-    divergences.sort_by(|a, b| a.text.len().cmp(&b.text.len()));
+    divergences.sort_by_key(|a| a.text.len());
 
     convergences.truncate(MAX_CONSENSUS_ITEMS);
     divergences.truncate(MAX_CONSENSUS_ITEMS);
@@ -956,9 +960,9 @@ fn split_statements(text: &str) -> Vec<String> {
 fn push_statement(statements: &mut Vec<String>, raw: &str) {
     let cleaned = raw
         .trim()
-        .trim_start_matches(|c: char| matches!(c, '-' | '*' | '#' | '>' | ')' | '(' | '[' | ']'))
+        .trim_start_matches(['-', '*', '#', '>', ')', '(', '[', ']'])
         .trim_start_matches(|c: char| c.is_ascii_digit())
-        .trim_start_matches(|c: char| matches!(c, '.' | ')' | ':' | ' '))
+        .trim_start_matches(['.', ')', ':', ' '])
         .trim();
 
     let words = cleaned.split_whitespace().count();
@@ -1052,7 +1056,7 @@ fn truncate_chars(text: &str, max: usize) -> String {
         return text.to_string();
     }
     let mut truncated: String = text.chars().take(max).collect();
-    truncated.push_str("…");
+    truncated.push('…');
     truncated
 }
 

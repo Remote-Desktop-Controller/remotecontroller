@@ -224,11 +224,10 @@ pub async fn connect_telemetry_client(
         let mut lines = BufReader::new(client).lines();
         while let Ok(Some(line)) = lines.next_line().await {
             let trimmed = line.trim();
-            if !trimmed.is_empty() {
-                if let Ok(event) = serde_json::from_str::<AuditEvent>(trimmed) {
-                    if tx.send(event).await.is_err() {
-                        break;
-                    }
+            #[allow(clippy::collapsible_if)]
+            if let Ok(event) = serde_json::from_str::<AuditEvent>(trimmed) {
+                if tx.send(event).await.is_err() {
+                    break;
                 }
             }
         }

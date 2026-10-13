@@ -350,6 +350,7 @@ pub async fn process_order(kernel: &Arc<Kernel>, raw: &str) -> Value {
 }
 
 /// Valida o cabeçalho da ordem antes de qualquer execução física.
+#[allow(clippy::collapsible_if)]
 fn validate_header(order: &MaestroOrder) -> Result<(), String> {
     if let Some(schema) = order.schema.as_deref() {
         if schema != ORDER_SCHEMA {

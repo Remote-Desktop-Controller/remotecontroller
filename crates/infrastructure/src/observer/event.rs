@@ -165,11 +165,7 @@ impl AuditEvent {
 
         format!(
             "[{color_type}{:<16}{color_reset}] target='{}'{} ({}ms) -> {color_status}{}{color_reset}",
-            self.event_type.to_string(),
-            self.target,
-            diff_str,
-            self.execution_time_ms,
-            self.status.to_string()
+            self.event_type, self.target, diff_str, self.execution_time_ms, self.status
         )
     }
 }

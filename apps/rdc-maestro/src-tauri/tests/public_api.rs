@@ -10,7 +10,7 @@ use rdc_maestro_lib::webview_manager::WebviewManager;
 #[test]
 fn exposes_the_blackboard_engine_surface() {
     let engine = MaestroEngine::new();
-    assert!(engine.reply_sender().is_closed() == false);
+    assert!(!engine.reply_sender().is_closed());
 
     // Os tipos devolvidos pelo motor precisam ser serializáveis para o IPC do Tauri.
     let outcome = DebateOutcome {
@@ -54,6 +54,6 @@ fn exposes_daemon_channel_and_provider_catalog() {
     );
     assert!(WebviewManager::find_config("chatgpt").is_some());
     assert!(WebviewManager::find_config("inexistente").is_none());
-    assert_eq!(new_mission_id().starts_with("m-"), true);
+    assert!(new_mission_id().starts_with("m-"));
     assert_eq!(iso8601_utc(0), "1970-01-01T00:00:00Z");
 }

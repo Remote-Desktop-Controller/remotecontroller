@@ -1,3 +1,5 @@
+#![allow(clippy::collapsible_if)]
+
 fn main() {
     // Normaliza caminhos com espaços para o formato 8.3 do Windows antes do windres (GNU toolchain)
     if let Ok(out_dir) = std::env::var("OUT_DIR") {
@@ -23,7 +25,21 @@ fn main() {
     // incluindo a capability remota que autoriza as WebViews de provedores a devolverem
     // o texto lido ao motor blackboard (Fase 3).
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".into());
-    let icon_path = std::path::PathBuf::from(manifest_dir).join("icons/icon.ico");
+    let icon_path = std::path::PathBuf::from(&manifest_dir).join("icons/icon.ico");
+
+    // Garante que o diretório `frontendDist` ("../dist") e um index.html existam
+    // caso o bundle do frontend ainda não tenha sido compilado (ex: em ambientes de CI).
+    let dist_dir = std::path::Path::new(&manifest_dir).join("../dist");
+    if !dist_dir.exists() {
+        let _ = std::fs::create_dir_all(&dist_dir);
+    }
+    let fallback_html = dist_dir.join("index.html");
+    if !fallback_html.exists() {
+        let _ = std::fs::write(
+            &fallback_html,
+            "<!doctype html><html><head><meta charset=\"UTF-8\"/><title>RDC Maestro</title></head><body><div id=\"root\"></div></body></html>",
+        );
+    }
 
     let attrs = tauri_build::Attributes::new()
         .app_manifest(tauri_build::AppManifest::new().commands(&APP_COMMANDS))
