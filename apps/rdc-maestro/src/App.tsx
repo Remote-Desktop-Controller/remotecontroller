@@ -13,6 +13,7 @@ import {
   useTauriEvent,
 } from "./lib/maestro";
 import type {
+  AutoReadStartedEvent,
   DebateOutcome,
   DebateProgress,
   MaestroLog,
@@ -47,6 +48,8 @@ export default function App() {
   const [planText, setPlanText] = useState("");
   const [busy, setBusy] = useState(false);
   const [sendingPlan, setSendingPlan] = useState(false);
+  const [rollingBack, setRollingBack] = useState(false);
+  const [compacting, setCompacting] = useState(false);
   const [receipt, setReceipt] = useState<PlanExecutionReceipt | null>(null);
 
   const pushFeed = useCallback((item: Omit<FeedItem, "id" | "ts"> & { ts?: number }) => {
@@ -178,8 +181,9 @@ export default function App() {
     setPlanText(outcome.consensus);
     setActiveMission(outcome.mission_id);
     setRoundActive(false);
+    const turnSuffix = outcome.turns_count ? ` · ${outcome.turns_count} turnos ReAct` : "";
     setMissionStatus(
-      `Síntese final · ${outcome.coverage}/${PROVIDER_IDS.length} agentes · confiança ${(outcome.confidence * 100).toFixed(0)}%`
+      `Síntese final · ${outcome.coverage}/${PROVIDER_IDS.length} agentes · confiança ${(outcome.confidence * 100).toFixed(0)}%${turnSuffix}`
     );
 
     setFeed((current) => [
@@ -187,7 +191,8 @@ export default function App() {
       {
         id: nextId(),
         kind: "agent",
-        title: "Rodada 1 · respostas completas",
+        title: `Respostas completas · ${outcome.turns_count ? `Turno ${outcome.turns_count}` : "Rodada 1"}`,
+        turn: outcome.turns_count,
         text: outcome.replies
           .map(
             (reply) =>
@@ -199,11 +204,45 @@ export default function App() {
       {
         id: nextId(),
         kind: "consensus",
-        title: `síntese final · ${outcome.mission_id}`,
+        title: `síntese final · ${outcome.mission_id}${outcome.turns_count ? ` (${outcome.turns_count} turnos)` : ""}`,
+        turn: outcome.turns_count,
         text: outcome.consensus,
+        context_log: outcome.context_log,
         ts: outcome.finished_at,
       },
     ]);
+  });
+
+  useTauriEvent<AutoReadStartedEvent>(MAESTRO_EVENTS.autoReadStarted, (autoRead) => {
+    pushFeed({
+      kind: "autoread",
+      title: `Leitura Autônoma · Turno ${autoRead.turn}/3`,
+      turn: autoRead.turn,
+      text: `Inspecionando arquivos do workspace no PC para realimentar os agentes:\n${autoRead.steps
+        .map((s) => `- ${s.tool}: ${JSON.stringify(s.input ?? {})}`)
+        .join("\n")}`,
+    });
+  });
+
+  useTauriEvent<string>(MAESTRO_EVENTS.sessionsReset, (header) => {
+    setConsensus(null);
+    setPlanText("");
+    setReceipt(null);
+    setMissionStatus("Sessões limpas · Novo chat iniciado");
+    pushFeed({
+      kind: "system",
+      title: "Compact & Reset",
+      text: `Histórico compactado com sucesso no disco. Novo chat limpo iniciado em todos os provedores.\n\n${header}`,
+    });
+  });
+
+  useTauriEvent<PlanExecutionReceipt>(MAESTRO_EVENTS.rollbackCompleted, (dispatched) => {
+    setReceipt(dispatched);
+    pushFeed({
+      kind: "system",
+      title: "Rollback Concluído",
+      text: `Checkpoint revertido com sucesso no PC (${dispatched.endpoint}). Resposta: ${dispatched.response ?? "OK"}`,
+    });
   });
 
   useTauriEvent<string>(MAESTRO_EVENTS.failed, (message) => {
@@ -349,6 +388,53 @@ export default function App() {
     [providers, pushFeed]
   );
 
+  const handleRollback = useCallback(
+    async (checkpointId: string) => {
+      setRollingBack(true);
+      pushFeed({
+        kind: "system",
+        title: "maestro_rollback_checkpoint",
+        text: `Solicitando reversão do checkpoint ${checkpointId} no daemon…`,
+      });
+
+      try {
+        const dispatched = await maestroApi.rollbackCheckpoint(checkpointId);
+        setReceipt(dispatched);
+      } catch (error) {
+        pushFeed({ kind: "error", title: "maestro_rollback_checkpoint", text: formatError(error) });
+      } finally {
+        setRollingBack(false);
+      }
+    },
+    [pushFeed]
+  );
+
+  const handleCompactAndReset = useCallback(async () => {
+    setCompacting(true);
+    pushFeed({
+      kind: "system",
+      title: "maestro_compact_and_reset_sessions",
+      text: "Compactando histórico das missões e reiniciando chats nos navegadores…",
+    });
+
+    try {
+      const header = await maestroApi.compactAndResetSessions();
+      setConsensus(null);
+      setPlanText("");
+      setReceipt(null);
+      setMissionStatus("Sessões limpas · Novo chat iniciado");
+      pushFeed({
+        kind: "system",
+        title: "Compact & Reset Concluído",
+        text: `Histórico compactado com sucesso. Cabeçalho mantido:\n\n${header}`,
+      });
+    } catch (error) {
+      pushFeed({ kind: "error", title: "maestro_compact_and_reset_sessions", text: formatError(error) });
+    } finally {
+      setCompacting(false);
+    }
+  }, [pushFeed]);
+
   const connected = useMemo(
     () => providers.filter((status) => status.state === "connected").length,
     [providers]
@@ -364,6 +450,8 @@ export default function App() {
         onShow={handleShow}
         onHide={handleHide}
         onConfirmLogin={handleConfirmLogin}
+        onCompactAndReset={handleCompactAndReset}
+        compacting={compacting}
       />
 
       <main className="flex min-w-0 flex-1 flex-col">
@@ -401,6 +489,8 @@ export default function App() {
           receipt={receipt}
           onSubmit={handleSubmit}
           onApprove={handleApprove}
+          onRollback={handleRollback}
+          rollingBack={rollingBack}
         />
       </main>
     </div>

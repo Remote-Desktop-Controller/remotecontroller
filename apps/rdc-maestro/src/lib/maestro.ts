@@ -47,6 +47,12 @@ export interface ProviderReply {
   latency_ms: number;
 }
 
+export interface ContextLog {
+  intent: string;
+  files_inspected: string[];
+  verification_plan: string;
+}
+
 export interface DebateOutcome {
   mission_id: string;
   prompt: string;
@@ -62,6 +68,8 @@ export interface DebateOutcome {
   elapsed_ms: number;
   started_at: number;
   finished_at: number;
+  turns_count?: number;
+  context_log?: ContextLog | null;
 }
 
 export interface DebateProgress {
@@ -84,6 +92,25 @@ export interface PlanExecutionReceipt {
   response: string | null;
 }
 
+export interface PersistedMission {
+  mission_id: string;
+  prompt: string;
+  status: string;
+  turns_count: number;
+  started_at: number;
+  finished_at: number | null;
+  consensus?: string | null;
+  last_checkpoint_id?: string | null;
+  context_log?: ContextLog | null;
+  execution_ack?: unknown;
+}
+
+export interface AutoReadStartedEvent {
+  mission_id: string;
+  turn: number;
+  steps: Array<{ tool: string; input?: unknown }>;
+}
+
 export interface MaestroLog {
   level: "system" | "info" | "success" | "warn" | "error";
   message: string;
@@ -97,6 +124,16 @@ export const maestroApi = {
   executePlan: (payload: string) =>
     invoke<PlanExecutionReceipt>("maestro_execute_plan", { payload }),
   lastConsensus: () => invoke<DebateOutcome | null>("maestro_get_last_consensus"),
+  getMissionHistory: () =>
+    invoke<PersistedMission[]>("maestro_get_mission_history"),
+  rollbackCheckpoint: (checkpointId: string) =>
+    invoke<PlanExecutionReceipt>("maestro_rollback_checkpoint", {
+      checkpointId,
+    }),
+  compactAndResetSessions: (summaryOverride?: string) =>
+    invoke<string>("maestro_compact_and_reset_sessions", {
+      summaryOverride: summaryOverride ?? null,
+    }),
   providerStatuses: () => invoke<ProviderStatus[]>("get_all_providers_status"),
   openLogin: (provider: ProviderId) =>
     invoke<ProviderStatus>("open_provider_login", { provider }),
@@ -117,6 +154,9 @@ export const MAESTRO_EVENTS = {
   failed: "maestro-debate-failed",
   dispatched: "maestro-plan-dispatched",
   log: "maestro-log",
+  autoReadStarted: "maestro-auto-read-started",
+  rollbackCompleted: "maestro-rollback-completed",
+  sessionsReset: "maestro-sessions-reset",
 } as const;
 
 /// Assina um evento Tauri mantendo o handler sempre atualizado e desinscrevendo no unmount.

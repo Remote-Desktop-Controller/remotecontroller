@@ -12,6 +12,8 @@ interface MissionComposerProps {
   receipt: PlanExecutionReceipt | null;
   onSubmit: (prompt: string) => void;
   onApprove: () => void;
+  onRollback?: (checkpointId: string) => void;
+  rollingBack?: boolean;
 }
 
 export default function MissionComposer({
@@ -22,6 +24,8 @@ export default function MissionComposer({
   receipt,
   onSubmit,
   onApprove,
+  onRollback,
+  rollingBack,
 }: MissionComposerProps) {
   const [prompt, setPrompt] = useState("");
 
@@ -74,6 +78,8 @@ export default function MissionComposer({
             receipt={receipt}
             disabled={busy}
             onApprove={onApprove}
+            onRollback={onRollback}
+            rollingBack={rollingBack}
           />
         </div>
       </div>

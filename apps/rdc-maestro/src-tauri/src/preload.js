@@ -594,6 +594,7 @@
       if (this.provider === "chatgpt") {
         selectorGroups = [
           'button[data-testid="send-button"]',
+          'button[data-testid*="send"]',
           'button[aria-label="Send prompt"]',
           'button[aria-label*="Send"], button[aria-label*="Enviar"]'
         ];
@@ -605,7 +606,10 @@
       } else if (this.provider === "gemini") {
         selectorGroups = [
           "button.send-button",
-          'button[aria-label*="Send"], button[aria-label*="Enviar"]'
+          'button[aria-label*="Send"], button[aria-label*="Enviar"]',
+          '.send-button-container button',
+          'button[data-test-id*="send"]',
+          'button.send-button-mat'
         ];
       } else if (this.provider === "deepseek") {
         selectorGroups = [
@@ -714,9 +718,11 @@
       }
       if (this.provider === "gemini") {
         return [
-          "model-response message-content .markdown",
-          ".model-response-text",
+          "model-response message-content",
+          "model-response .markdown",
+          "model-response .response-container-content",
           "model-response",
+          "message-content",
           "[data-message-author-role='assistant']"
         ];
       }
@@ -730,10 +736,14 @@
       }
       if (this.provider === "qwen") {
         return [
-          ".markdown",
-          ".qwen-chat-message",
           "[data-message-author-role='assistant']",
-          ".message-content"
+          ".qwen-chat-message-assistant",
+          ".chat-message-assistant",
+          ".assistant-message",
+          ".bot-message",
+          ".qwen-chat-message:not(.qwen-chat-message-user)",
+          ".message-content:not(.user-message-content)",
+          ".markdown:not(.user-message .markdown)"
         ];
       }
       return ["[data-message-author-role='assistant']"];
@@ -794,85 +804,39 @@
      * ou `[data-message-author-role="assistant"]`.
      */
     extractChatGptResponse() {
-      const articles = Array.from(
-        document.querySelectorAll('article[data-testid^="conversation-turn-"]')
+      // 1. Procura diretamente elementos marcados explicitamente como resposta do assistente
+      const directAssistantNodes = Array.from(
+        document.querySelectorAll(
+          '[data-message-author-role="assistant"], div.agent-turn, article[data-turn="assistant"]'
+        )
       );
-
-      let stoppedAtUserTurn = false;
-      for (let index = articles.length - 1; index >= 0; index -= 1) {
-        const article = articles[index];
-        if (this.isChatGptUserTurn(article)) {
-          // Não retrocede além do último turno do usuário: qualquer resposta acima dele
-          // pertence a um turno anterior da conversa.
-          stoppedAtUserTurn = true;
-          break;
-        }
-
-        const turnAttr =
-          typeof article.getAttribute === "function" ? article.getAttribute("data-turn") : null;
-        const roleAttr =
-          typeof article.getAttribute === "function"
-            ? article.getAttribute("data-message-author-role")
-            : null;
-        const assistantNodes =
-          typeof article.querySelectorAll === "function"
-            ? Array.from(article.querySelectorAll('[data-message-author-role="assistant"]'))
-            : [];
-
-        if (assistantNodes.length > 0) {
-          const parts = assistantNodes
-            .map((node) => textOf(node))
-            .filter((part) => part.length > 0);
-          if (parts.length > 0) {
-            return parts.join("\n\n");
-          }
-        }
-
-        const markdownNode =
-          typeof article.querySelector === "function"
-            ? article.querySelector(".markdown, div.agent-turn .markdown")
-            : null;
-        if (markdownNode) {
-          const mdText = textOf(markdownNode);
-          if (mdText.length > 0) {
-            return mdText;
-          }
-        }
-
-        const rawArticleText = cleanTurnText(article);
-        const isExplicitAssistant =
-          turnAttr === "assistant" ||
-          roleAttr === "assistant" ||
-          assistantNodes.length > 0 ||
-          (typeof article.querySelector === "function" &&
-            Boolean(article.querySelector(".agent-turn")));
-
-        if (
-          rawArticleText.length > 0 &&
-          (isExplicitAssistant ||
-            !this.lastPromptText ||
-            compactText(rawArticleText) !== compactText(this.lastPromptText))
-        ) {
-          return rawArticleText;
-        }
-      }
-
-      if (stoppedAtUserTurn) {
-        return "";
-      }
-
-      const directAssistantNodes = document.querySelectorAll('[data-message-author-role="assistant"]');
       for (let index = directAssistantNodes.length - 1; index >= 0; index -= 1) {
-        const text = textOf(directAssistantNodes[index]);
-        if (text.length > 0) {
+        const node = directAssistantNodes[index];
+        const md = node.querySelector ? node.querySelector(".markdown") : null;
+        const text = cleanTurnText(md || node);
+        if (
+          text.length > 0 &&
+          (!this.lastPromptText || compactText(text) !== compactText(this.lastPromptText))
+        ) {
           return text;
         }
       }
 
-      const agentMarkdownNodes = document.querySelectorAll("div.agent-turn .markdown");
-      for (let index = agentMarkdownNodes.length - 1; index >= 0; index -= 1) {
-        const text = textOf(agentMarkdownNodes[index]);
-        if (text.length > 0) {
+      // 2. Inspeciona artigos do ChatGPT ignorando turnos de usuário
+      const articles = Array.from(
+        document.querySelectorAll('article[data-testid^="conversation-turn-"], article')
+      );
+      for (let index = articles.length - 1; index >= 0; index -= 1) {
+        const article = articles[index];
+        if (this.isChatGptUserTurn(article)) {
+          continue;
+        }
+        const md = article.querySelector ? article.querySelector(".markdown") : null;
+        const text = cleanTurnText(md || article);
+        if (
+          text.length > 0 &&
+          (!this.lastPromptText || compactText(text) !== compactText(this.lastPromptText))
+        ) {
           return text;
         }
       }
@@ -896,8 +860,22 @@
           continue;
         }
         for (let index = nodes.length - 1; index >= 0; index -= 1) {
-          const text = textOf(nodes[index]);
+          const node = nodes[index];
+          // Ignora se o elemento for pertencente a uma bolha de usuário
+          if (
+            node.closest &&
+            node.closest(
+              "user-query, .user-query, [data-message-author-role='user'], .qwen-chat-message-user, [data-turn='user']"
+            )
+          ) {
+            continue;
+          }
+          const text = textOf(node);
           if (text.length > 0) {
+            // Rejeita categoricamente se for o próprio texto do prompt do usuário
+            if (this.lastPromptText && compactText(text) === compactText(this.lastPromptText)) {
+              continue;
+            }
             return text;
           }
         }
@@ -918,6 +896,14 @@
           document.querySelectorAll('[data-is-streaming="true"]')
         );
         if (streamingNodes.some((node) => isElementActive(node))) {
+          return true;
+        }
+      }
+      if (this.provider === "gemini") {
+        const stopBtn = Array.from(
+          document.querySelectorAll('button[aria-label*="Stop"], button[aria-label*="Parar"], .stop-button, mat-icon[data-mat-icon-name="stop"]')
+        );
+        if (stopBtn.some((btn) => isElementActive(btn))) {
           return true;
         }
       }
@@ -1069,7 +1055,6 @@
         capture.idleSince = now;
       }
       const idleSettled =
-        (this.provider === "chatgpt" || this.provider === "deepseek" || this.provider === "qwen") &&
         text.length > CAPTURE.idleMinChars &&
         now - capture.idleSince >= CAPTURE.idleSettleMs;
 
@@ -1123,12 +1108,119 @@
     },
 
     /**
+     * Medição de telemetria do DOM e quantidade de turnos da conversa.
+     */
+    getDomMetrics() {
+      const bodyText = (document.body && (document.body.innerText || document.body.textContent)) || "";
+      const domChars = bodyText.length;
+      let turnCount = 0;
+      try {
+        if (this.provider === "chatgpt") {
+          turnCount = document.querySelectorAll('[data-message-author-role], article').length;
+        } else if (this.provider === "claude") {
+          turnCount = document.querySelectorAll('[data-test-render-count], .font-claude-message').length;
+        } else if (this.provider === "gemini") {
+          turnCount = document.querySelectorAll('message-content, .model-response-text').length;
+        } else if (this.provider === "deepseek") {
+          turnCount = document.querySelectorAll('.ds-message, [data-role]').length;
+        } else if (this.provider === "qwen") {
+          turnCount = document.querySelectorAll('.message-item, .chat-message').length;
+        }
+        if (turnCount === 0) {
+          turnCount = document.querySelectorAll('article, [data-message-author-role]').length || 1;
+        }
+      } catch (_) {
+        turnCount = 1;
+      }
+      return { domChars, turnCount };
+    },
+
+    /**
+     * Inicia uma nova conversa limpa (Compact & Reset) clicando no botão da UI do SPA
+     * ou navegando para a URL raiz como fallback.
+     */
+    startFreshChat() {
+      console.log(`[RDC-MAESTRO] Reiniciando sessão e criando novo chat limpo para ${this.provider}...`);
+      this.stopCapture();
+      this.activeMission = null;
+
+      let clicked = false;
+      let selectors = [];
+      if (this.provider === "chatgpt") {
+        selectors = [
+          'a[href="/"]',
+          'button[aria-label="New chat"]',
+          'button[aria-label="Novo chat"]',
+          '[data-testid="create-new-chat-button"]'
+        ];
+      } else if (this.provider === "claude") {
+        selectors = [
+          'a[href="/new"]',
+          'button[aria-label="Start new chat"]',
+          '[data-testid="new-chat-button"]',
+          'a[href^="/chat/"]'
+        ];
+      } else if (this.provider === "gemini") {
+        selectors = [
+          'button[aria-label*="New chat"]',
+          'button[aria-label*="Nova conversa"]',
+          'a[href="/app"]'
+        ];
+      } else if (this.provider === "deepseek") {
+        selectors = [
+          'a[href="/"]',
+          'button[aria-label*="New Chat"]',
+          'button[aria-label*="Novo Chat"]',
+          '.ds-new-chat'
+        ];
+      } else if (this.provider === "qwen") {
+        selectors = [
+          'a[href="/"]',
+          'button[aria-label*="New chat"]',
+          'button[aria-label*="Novo chat"]'
+        ];
+      }
+
+      for (const sel of selectors) {
+        try {
+          const btn = document.querySelector(sel);
+          if (btn && typeof btn.click === "function") {
+            btn.click();
+            clicked = true;
+            console.log(`[RDC-MAESTRO] Botão de novo chat acionado via seletor: ${sel}`);
+            break;
+          }
+        } catch (_) {}
+      }
+
+      if (!clicked) {
+        console.log(`[RDC-MAESTRO] Fallback de navegação SPA para novo chat em ${this.provider}.`);
+        const origin = window.location.origin;
+        if (this.provider === "gemini") {
+          window.location.href = `${origin}/app`;
+        } else if (this.provider === "claude") {
+          window.location.href = `${origin}/new`;
+        } else {
+          window.location.href = `${origin}/`;
+        }
+      }
+    },
+
+    /**
      * Devolve o texto lido ao motor blackboard do Maestro (comando IPC).
      */
     submitCapture(text, partial) {
       const textoFinal = String(text || "").slice(0, CAPTURE.maxChars);
       if (!textoFinal.trim()) {
         return;
+      }
+
+      // Telemetria de DOM bloat (> 100KB)
+      const metrics = this.getDomMetrics();
+      if (metrics.domChars > 100000) {
+        console.warn(
+          `[RDC-MAESTRO] ALERTA: DOM Bloat excessivo detectado em ${this.provider} (${metrics.domChars} caracteres, ${metrics.turnCount} turnos). Recomendado acionar 'Compact & Novo Chat'.`
+        );
       }
 
       const missionId = this.capture.mission || this.activeMission || null;
@@ -1171,6 +1263,12 @@
       }
     } else if (data.action === "check_auth") {
       MaestroBridge.checkAuth();
+    } else if (data.action === "start_fresh_chat" || data.action === "reset_chat") {
+      try {
+        MaestroBridge.startFreshChat();
+      } catch (err) {
+        console.warn("[RDC-MAESTRO] Falha ao iniciar novo chat:", err);
+      }
     }
   });
 
@@ -1207,6 +1305,18 @@
       }
       MaestroBridge.checkAuth();
     });
+  }
+
+  // Exposição de API interna do Maestro para controle via WebView eval
+  try {
+    Object.defineProperty(window, "__MAESTRO_BRIDGE__", {
+      value: MaestroBridge,
+      enumerable: false,
+      configurable: true,
+      writable: true
+    });
+  } catch (_) {
+    window.__MAESTRO_BRIDGE__ = MaestroBridge;
   }
 
   // Verificação inicial

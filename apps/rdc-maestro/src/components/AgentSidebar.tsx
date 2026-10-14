@@ -9,6 +9,8 @@ interface AgentSidebarProps {
   onShow: (provider: ProviderId) => void;
   onHide: (provider: ProviderId) => void;
   onConfirmLogin: (provider: ProviderId) => void;
+  onCompactAndReset?: () => void;
+  compacting?: boolean;
 }
 
 type DotTone = "connected" | "thinking" | "authenticating" | "offline";
@@ -45,19 +47,34 @@ export default function AgentSidebar({
   onShow,
   onHide,
   onConfirmLogin,
+  onCompactAndReset,
+  compacting,
 }: AgentSidebarProps) {
   const byProvider = new Map(providers.map((status) => [status.id, status]));
 
   return (
     <aside className="flex w-[272px] shrink-0 flex-col border-r border-rdc-border bg-rdc-panel">
-      <div className="flex items-center gap-3 border-b border-rdc-border px-4 py-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 text-[0.7rem] font-bold text-slate-950">
-          RDC
+      <div className="flex items-center justify-between border-b border-rdc-border px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 text-[0.65rem] font-bold text-slate-950">
+            RDC
+          </div>
+          <div className="leading-tight">
+            <p className="text-sm font-semibold tracking-wide">MAESTRO</p>
+            <p className="text-[0.65rem] text-slate-500">Orquestrador</p>
+          </div>
         </div>
-        <div className="leading-tight">
-          <p className="text-sm font-semibold tracking-wide">MAESTRO</p>
-          <p className="text-[0.68rem] text-slate-500">Orquestrador Multi-Agente</p>
-        </div>
+        {onCompactAndReset ? (
+          <button
+            type="button"
+            onClick={onCompactAndReset}
+            disabled={compacting}
+            title="Compactar histórico de missões e abrir novo chat limpo em todos os provedores"
+            className="rounded border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 text-[0.62rem] font-semibold text-cyan-300 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 disabled:opacity-50"
+          >
+            {compacting ? "..." : "Compactar"}
+          </button>
+        ) : null}
       </div>
 
       <div className="px-4 pt-4">
@@ -135,8 +152,21 @@ export default function AgentSidebar({
       </div>
 
       <div className="border-t border-rdc-border px-4 py-3">
-        <p className="text-[0.62rem] uppercase tracking-[0.12em] text-slate-500">Blackboard</p>
-        <p className="mt-1 font-mono text-[0.66rem] text-slate-400">
+        <div className="mb-1.5 flex items-center justify-between">
+          <p className="text-[0.62rem] uppercase tracking-[0.12em] text-slate-500">Blackboard</p>
+          {onCompactAndReset ? (
+            <button
+              type="button"
+              onClick={onCompactAndReset}
+              disabled={compacting}
+              title="Compactar histórico de missões e abrir novo chat limpo em todos os provedores"
+              className="rounded border border-cyan-500/40 bg-cyan-500/10 px-2 py-0.5 text-[0.62rem] font-semibold text-cyan-300 transition-colors hover:border-cyan-400 hover:bg-cyan-500/20 disabled:opacity-50"
+            >
+              {compacting ? "Compactando…" : "Compactar & Novo Chat"}
+            </button>
+          ) : null}
+        </div>
+        <p className="font-mono text-[0.66rem] text-slate-400">
           {activeMission ? `missão ${activeMission}` : "nenhuma missão ativa"}
         </p>
         <p className="mt-2 text-[0.6rem] leading-snug text-slate-600">
@@ -146,3 +176,4 @@ export default function AgentSidebar({
     </aside>
   );
 }
+

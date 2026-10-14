@@ -15,28 +15,31 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 #[cfg(windows)]
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::sync::{Mutex, RwLock, mpsc};
 use tracing::{info, warn};
 
+use crate::state_store::{PersistedMission, StateStore};
 use crate::webview_manager::{PROVIDERS, ProviderConfig, WebviewManager, provider_names_joined};
 
 // --------------------------------------------------------------------------------------
 // Constantes de operação
 // --------------------------------------------------------------------------------------
 
+/// Limite máximo de turnos de leitura autônoma (ReAct loop).
+pub const MAX_AUTO_READ_TURNS: usize = 3;
+
 /// Capacidade do canal de blackboard (respostas pendentes das WebViews).
 pub const REPLY_CHANNEL_CAPACITY: usize = 64;
 
-/// Janela máxima de espera pelas respostas dos agentes antes de consolidar parcialmente.
-pub const DEBATE_TIMEOUT: Duration = Duration::from_secs(120);
+/// Janela máxima de espera pelas respostas dos agentes antes de consolidar parcialmente (15 minutos).
+pub const DEBATE_TIMEOUT: Duration = Duration::from_secs(900);
 
-/// Após o quórum ser atingido, janela extra para aguardar respostas remanescentes
-/// (evita travar o ciclo por 2 minutos quando um agente não responde).
-pub const POST_QUORUM_GRACE: Duration = Duration::from_secs(25);
+/// Após o quórum ser atingido, janela extra generosa para aguardar agentes lentos ou pensando (Extended Thinking).
+pub const POST_QUORUM_GRACE: Duration = Duration::from_secs(300);
 
 /// Número mínimo de agentes que precisam responder para o consenso ser considerado quórum.
 pub const REPLY_QUORUM: usize = 2;
@@ -185,6 +188,14 @@ pub struct DebateOutcome {
     pub elapsed_ms: u64,
     pub started_at: u64,
     pub finished_at: u64,
+    #[serde(default = "default_turn_count")]
+    pub turns_count: usize,
+    #[serde(default)]
+    pub context_log: Option<serde_json::Value>,
+}
+
+fn default_turn_count() -> usize {
+    1
 }
 
 /// Recibo do despacho da ordem física ao `local-daemon` via Named Pipe.
@@ -215,6 +226,7 @@ pub struct MaestroEngine {
     last_outcome: Arc<RwLock<Option<DebateOutcome>>>,
     last_dispatch: Arc<RwLock<Option<PlanExecutionReceipt>>>,
     debate_active: Arc<AtomicBool>,
+    state_store: Arc<StateStore>,
 }
 
 /// Libera a trava de ciclo único mesmo quando a tarefa é cancelada ou entra em panico.
@@ -243,7 +255,27 @@ impl MaestroEngine {
             last_outcome: Arc::new(RwLock::new(None)),
             last_dispatch: Arc::new(RwLock::new(None)),
             debate_active: Arc::new(AtomicBool::new(false)),
+            state_store: Arc::new(StateStore::new()),
         }
+    }
+
+    /// Cria uma instância com StateStore customizado (testes).
+    pub fn with_state_store(state_store: StateStore) -> Self {
+        let (reply_tx, reply_rx) = mpsc::channel(REPLY_CHANNEL_CAPACITY);
+        Self {
+            reply_tx,
+            reply_rx: Arc::new(Mutex::new(reply_rx)),
+            missions: Arc::new(RwLock::new(HashMap::new())),
+            last_outcome: Arc::new(RwLock::new(None)),
+            last_dispatch: Arc::new(RwLock::new(None)),
+            debate_active: Arc::new(AtomicBool::new(false)),
+            state_store: Arc::new(state_store),
+        }
+    }
+
+    /// Retorna referência ao repositório durável de estado.
+    pub fn state_store(&self) -> &StateStore {
+        &self.state_store
     }
 
     /// Clonador do transmissor do canal (usado pelas rotas IPC `maestro_receive_reply`).
@@ -334,8 +366,8 @@ impl MaestroEngine {
     // Fase 3 - Ciclo de debate multi-agente
     // ----------------------------------------------------------------------------------
 
-    /// Executa um ciclo completo de debate: injeta o prompt nas WebViews ocultas de todos os provedores,
-    /// aguarda as respostas no canal assíncrono e produz o consenso.
+    /// Executa o ciclo de debate multi-agente com suporte a loop autônomo ReAct (até 3 turnos),
+    /// preflight de workspace index e persistência de histórico durável.
     pub async fn run_debate_cycle(
         &self,
         app: &AppHandle,
@@ -358,43 +390,227 @@ impl MaestroEngine {
         // Libera a trava mesmo se a tarefa for cancelada no meio do ciclo.
         let _guard = DebateGuard(&self.debate_active);
 
-        let result = self.debate_cycle_inner(app, prompt).await;
+        let mission_id = new_mission_id();
+        let mut base_prompt = prompt.to_string();
 
-        match &result {
-            Ok(outcome) => {
-                *self.last_outcome.write().await = Some(outcome.clone());
+        // 0a. Pré-leitura de arquivos explicitamente mencionados no prompt (ex: caminhos absolutos ou relativos)
+        if let Some(mentioned_files) = preflight_read_mentioned_files(prompt) {
+            emit_log(
+                app,
+                LogLevel::Success,
+                "Arquivo(s) mencionado(s) no prompt pré-carregado(s) diretamente do disco para as IAs.",
+            );
+            base_prompt.push_str(&mentioned_files);
+        }
+
+        // 0b. Preflight do workspace index (timeout 1500ms, fallback silencioso)
+        let preflight_info = preflight_workspace_index().await;
+        if let Some(ref index) = preflight_info {
+            emit_log(
+                app,
+                LogLevel::Info,
+                "Workspace index pré-carregado via daemon local.",
+            );
+            base_prompt.push_str("\n\n[ARQUIVOS DO WORKSPACE NO PC]:\n");
+            base_prompt.push_str(index);
+        }
+
+        // 0c. Incorpora instruções de protocolo para que as IAs saibam operar ferramentas locais
+        base_prompt.push_str("\n\n");
+        base_prompt.push_str(PROTOCOL_INSTRUCTIONS);
+
+        // 0d. Incorpora cabeçalho compactado de sessões anteriores se disponível
+        if let Some(compacted) = self.state_store.get_compacted_header().await {
+            base_prompt = format!("[CONTEXTO DE SESSÕES ANTERIORES]:\n{compacted}\n\n{base_prompt}");
+        }
+
+        let mut current_turn = 1;
+        let mut current_prompt = format!(
+            "{base_prompt}\n\n[RODADA 1 DO DEBATE - ANÁLISE, PROPOSTA E AUTO-ATRIBUIÇÃO DE FUNÇÕES]:\n1. Analisem criticamente o pedido e o código fornecido.\n2. Identifiquem as falhas de mecânica, bugs, gargalos de performance e oportunidades de melhoria.\n3. Cada IA DEVE escolher e declarar explicitamente uma função especializada no time (ex: Mecânicas & Combate, Visual & Partículas/Canvas, Performance/Game Loop, ou Arquitetura/HUD).\n4. NÃO entreguem o código final completo ainda nesta rodada. Apresentem a estratégia técnica e o que farão na sua parte."
+        );
+        let mut final_outcome: Option<DebateOutcome> = None;
+
+        while current_turn <= MAX_AUTO_READ_TURNS {
+            emit_log(
+                app,
+                LogLevel::Info,
+                format!("Iniciando Turno {current_turn} da missão {mission_id}..."),
+            );
+
+            let outcome = match self.debate_cycle_inner(app, &mission_id, &current_prompt).await {
+                Ok(mut o) => {
+                    o.turns_count = current_turn;
+                    o
+                }
+                Err(err) => {
+                    emit_log(
+                        app,
+                        LogLevel::Error,
+                        format!("Ciclo de debate falhou no turno {current_turn}: {err}"),
+                    );
+                    let _ = app.emit("maestro-debate-failed", err.clone());
+                    return Err(err);
+                }
+            };
+
+            let (has_readonly, has_mutating, readonly_steps) = classify_tools(&outcome.consensus);
+
+            // ReAct Loop: se alguma IA solicitou leitura de arquivos via MCP local
+            if has_readonly && !readonly_steps.is_empty() && current_turn < MAX_AUTO_READ_TURNS {
                 emit_log(
                     app,
-                    LogLevel::Success,
+                    LogLevel::Info,
                     format!(
-                        "Consenso [{}] gerado com {} de {} agentes em {} ms.",
-                        outcome.mission_id,
-                        outcome.coverage,
-                        PROVIDERS.len(),
-                        outcome.elapsed_ms
+                        "Turno {current_turn}: Consenso gerou {} leitura(s) autônoma(s). Consultando daemon local...",
+                        readonly_steps.len()
                     ),
                 );
-                let _ = app.emit("maestro-consensus-ready", outcome);
+
+                let auto_read_payload = serde_json::json!({
+                    "mission_id": mission_id,
+                    "turn": current_turn,
+                    "steps": readonly_steps,
+                });
+                let _ = app.emit("maestro-auto-read-started", &auto_read_payload);
+
+                let read_order = serde_json::json!({
+                    "schema": DAEMON_ORDER_SCHEMA,
+                    "source": "rdc-maestro",
+                    "kind": "auto_read",
+                    "mission_id": mission_id,
+                    "payload": {
+                        "steps": readonly_steps
+                    }
+                });
+
+                let read_str = serde_json::to_string(&read_order).unwrap_or_default();
+                if let Ok(receipt) = self.execute_approved_plan(&read_str).await {
+                    if receipt.acknowledged {
+                        let parsed_ack: serde_json::Value = receipt
+                            .response
+                            .as_deref()
+                            .and_then(|r| serde_json::from_str(r).ok())
+                            .unwrap_or_default();
+
+                        let observations = format_read_observations(&parsed_ack);
+                        emit_log(
+                            app,
+                            LogLevel::Success,
+                            format!(
+                                "Turno {current_turn}: Observações do PC coletadas. Realimentando agentes para a próxima rodada..."
+                            ),
+                        );
+
+                        let mut replies_summary = String::new();
+                        for r in &outcome.replies {
+                            let name = WebviewManager::find_config(&r.provider)
+                                .map(|c| c.name.to_string())
+                                .unwrap_or_else(|| r.provider.clone());
+                            replies_summary.push_str(&format!("### Posição de [{name}]:\n{}\n\n", truncate_chars(&r.text, 2500)));
+                        }
+
+                        current_prompt = format!(
+                            "{base_prompt}\n\n[OBSERVAÇÕES AUTÔNOMAS DO PC - TURNO {current_turn}]:\n{observations}\n\n[RESUMO DO CONSELHO NA RODADA ANTERIOR]:\n{replies_summary}\nContinuem o debate e aprimorem suas propostas com base nessas leituras reais do computador."
+                        );
+                        final_outcome = Some(outcome);
+                        current_turn += 1;
+                        continue;
+                    }
+                }
             }
-            Err(err) => {
+
+            // Debate Multi-Rodadas: avança pelos estágios colaborativos até a síntese final
+            if current_turn == 1 {
                 emit_log(
                     app,
-                    LogLevel::Error,
-                    format!("Ciclo de debate falhou: {err}"),
+                    LogLevel::Info,
+                    "Rodada 1 concluída: IAs apresentaram suas análises e papéis. Iniciando Rodada 2 de debate cruzado e implementação...".to_string(),
                 );
-                let _ = app.emit("maestro-debate-failed", err.clone());
+
+                let mut replies_summary = String::new();
+                for r in &outcome.replies {
+                    let name = WebviewManager::find_config(&r.provider)
+                        .map(|c| c.name.to_string())
+                        .unwrap_or_else(|| r.provider.clone());
+                    replies_summary.push_str(&format!("### Análise e Papel Assumido por [{name}]:\n{}\n\n", truncate_chars(&r.text, 2500)));
+                }
+
+                current_prompt = format!(
+                    "{base_prompt}\n\n[RODADA 2 DO DEBATE - CONFRONTO DE IDEIAS E IMPLEMENTAÇÃO]:\nO conselho de IAs analisou a missão e propôs as seguintes abordagens na Rodada 1:\n\n{replies_summary}\nAgora, conversem e debatam diretamente entre si:\n1. Critiquem os pontos fracos dos colegas e concordem na arquitetura unificada para que tudo se encaixe perfeitamente.\n2. Implemente detalhadamente o código da função que você assumiu no time, garantindo que suas variáveis e estruturas funcionem com as dos outros membros.\n3. Apresente o código da sua parte especializada."
+                );
+                final_outcome = Some(outcome);
+                current_turn = 2;
+                continue;
+            } else if current_turn == 2 && !has_mutating {
+                emit_log(
+                    app,
+                    LogLevel::Info,
+                    "Rodada 2 concluída: IAs debateram e implementaram suas partes. Iniciando Rodada 3 para síntese final e montagem unificada...".to_string(),
+                );
+
+                let mut replies_summary = String::new();
+                for r in &outcome.replies {
+                    let name = WebviewManager::find_config(&r.provider)
+                        .map(|c| c.name.to_string())
+                        .unwrap_or_else(|| r.provider.clone());
+                    replies_summary.push_str(&format!("### Implementação de [{name}]:\n{}\n\n", truncate_chars(&r.text, 3000)));
+                }
+
+                current_prompt = format!(
+                    "{base_prompt}\n\n[RODADA 3 DO DEBATE - SÍNTESE FINAL, HARMONIZAÇÃO E ENCAIXE UNIFICADO]:\nAqui estão as implementações e decisões consolidadas na Rodada 2:\n\n{replies_summary}\nCom base nas contribuições do time, integrem todas as partes em uma solução final única, coesa e completa.\nEntreguem agora o context_log e o código executável final (bloco cirúrgico <<<<<<< SEARCH ... ======= ... >>>>>>> REPLACE ou bloco completo {{\"tool\": \"filesystem.write\", ...}})."
+                );
+                final_outcome = Some(outcome);
+                current_turn = 3;
+                continue;
+            } else {
+                final_outcome = Some(outcome);
+                break;
             }
         }
 
-        result
+        let mut outcome = final_outcome.ok_or_else(|| "Nenhum resultado de debate foi produzido.".to_string())?;
+        outcome.turns_count = current_turn;
+
+        *self.last_outcome.write().await = Some(outcome.clone());
+
+        // Grava no armazenamento durável de estado
+        let persisted = PersistedMission {
+            mission_id: outcome.mission_id.clone(),
+            prompt: prompt.to_string(),
+            status: outcome.status.clone(),
+            turns_count: outcome.turns_count,
+            started_at: outcome.started_at,
+            finished_at: Some(outcome.finished_at),
+            consensus: Some(outcome.consensus.clone()),
+            last_checkpoint_id: None,
+            context_log: outcome.context_log.clone(),
+            execution_ack: None,
+        };
+        let _ = self.state_store.record_mission(persisted).await;
+
+        emit_log(
+            app,
+            LogLevel::Success,
+            format!(
+                "Consenso [{}] pronto após {} turno(s) com {} de {} agentes em {} ms.",
+                outcome.mission_id,
+                outcome.turns_count,
+                outcome.coverage,
+                PROVIDERS.len(),
+                outcome.elapsed_ms
+            ),
+        );
+        let _ = app.emit("maestro-consensus-ready", &outcome);
+
+        Ok(outcome)
     }
 
     async fn debate_cycle_inner(
         &self,
         app: &AppHandle,
+        mission_id: &str,
         prompt: &str,
     ) -> Result<DebateOutcome, String> {
-        let mission_id = new_mission_id();
         let started_at = now_ms();
         let clock = Instant::now();
 
@@ -446,30 +662,34 @@ impl MaestroEngine {
 
         {
             let mut missions = self.missions.write().await;
-            // Histórico limitado: descarta a missão mais antiga ao atingir o teto.
-            #[allow(clippy::collapsible_if)]
-            if missions.len() >= MAX_MISSION_HISTORY {
-                if let Some(oldest) = missions
-                    .values()
-                    .min_by_key(|record| record.started_at)
-                    .map(|record| record.mission_id.clone())
-                {
-                    missions.remove(&oldest);
+            if let Some(record) = missions.get_mut(mission_id) {
+                record.prompt = prompt.to_string();
+                record.status = "collecting".to_string();
+            } else {
+                #[allow(clippy::collapsible_if)]
+                if missions.len() >= MAX_MISSION_HISTORY {
+                    if let Some(oldest) = missions
+                        .values()
+                        .min_by_key(|record| record.started_at)
+                        .map(|record| record.mission_id.clone())
+                    {
+                        missions.remove(&oldest);
+                    }
                 }
+                missions.insert(
+                    mission_id.to_string(),
+                    MissionRecord {
+                        mission_id: mission_id.to_string(),
+                        prompt: prompt.to_string(),
+                        status: "collecting".to_string(),
+                        injected: injected.clone(),
+                        missing: missing.clone(),
+                        received: Vec::new(),
+                        started_at,
+                        finished_at: None,
+                    },
+                );
             }
-            missions.insert(
-                mission_id.clone(),
-                MissionRecord {
-                    mission_id: mission_id.clone(),
-                    prompt: prompt.to_string(),
-                    status: "collecting".to_string(),
-                    injected: injected.clone(),
-                    missing: missing.clone(),
-                    received: Vec::new(),
-                    started_at,
-                    finished_at: None,
-                },
-            );
         }
 
         emit_progress(
@@ -515,7 +735,7 @@ impl MaestroEngine {
 
                 match tokio::time::timeout(remaining, rx.recv()).await {
                     Ok(Some(mut reply)) => {
-                        if reply.mission_id.as_deref() != Some(mission_id.as_str()) {
+                        if reply.mission_id.as_deref() != Some(mission_id) {
                             if reply.mission_id.is_some() {
                                 // Resposta de missão anterior: ignora sem interromper o ciclo.
                                 late_replies += 1;
@@ -523,7 +743,7 @@ impl MaestroEngine {
                             }
                             // WebView antiga que ainda não recebeu o carimbo da missão:
                             // assume a missão corrente para não perder o resultado.
-                            reply.mission_id = Some(mission_id.clone());
+                            reply.mission_id = Some(mission_id.to_string());
                         }
 
                         if !injected_set.contains(reply.provider.as_str()) {
@@ -597,7 +817,7 @@ impl MaestroEngine {
         missing.dedup();
 
         let outcome = build_outcome(
-            mission_id.clone(),
+            mission_id.to_string(),
             prompt,
             replies,
             missing,
@@ -607,7 +827,7 @@ impl MaestroEngine {
 
         {
             let mut missions = self.missions.write().await;
-            if let Some(record) = missions.get_mut(&mission_id) {
+            if let Some(record) = missions.get_mut(mission_id) {
                 record.status = outcome.status.clone();
                 record.received = received_ids;
                 record.missing = outcome.missing.clone();
@@ -711,8 +931,110 @@ impl MaestroEngine {
             response,
         };
 
+        if let Some(ref mid) = receipt.mission_id {
+            let parsed_ack: Option<serde_json::Value> = receipt
+                .response
+                .as_deref()
+                .and_then(|r| serde_json::from_str(r).ok());
+            let checkpoint_id = parsed_ack
+                .as_ref()
+                .and_then(|p| p.get("checkpoint_id"))
+                .and_then(|c| c.as_str())
+                .map(String::from);
+            let status = if receipt.acknowledged {
+                if parsed_ack.as_ref().and_then(|p| p.get("status")).and_then(|s| s.as_str()) == Some("failed") {
+                    "failed"
+                } else {
+                    "executed"
+                }
+            } else {
+                "dispatched"
+            };
+            let _ = self.state_store.update_execution_result(mid, status, parsed_ack, checkpoint_id).await;
+        }
+
         *self.last_dispatch.write().await = Some(receipt.clone());
         Ok(receipt)
+    }
+
+    /// Executa o rollback de um checkpoint_id contra o daemon e atualiza o histórico durável.
+    pub async fn rollback_checkpoint(&self, checkpoint_id: &str) -> Result<PlanExecutionReceipt, String> {
+        let order = serde_json::json!({
+            "schema": DAEMON_ORDER_SCHEMA,
+            "source": "rdc-maestro",
+            "kind": "rollback_checkpoint",
+            "checkpoint_id": checkpoint_id,
+            "payload": {}
+        });
+        let payload_str = serde_json::to_string(&order).map_err(|e| e.to_string())?;
+        let receipt = self.execute_approved_plan(&payload_str).await?;
+
+        // Atualiza a missão correspondente para "rolled_back"
+        let history = self.state_store.get_history().await;
+        for m in history {
+            if m.last_checkpoint_id.as_deref() == Some(checkpoint_id) {
+                let _ = self.state_store.update_execution_result(&m.mission_id, "rolled_back", None, None).await;
+                break;
+            }
+        }
+
+        Ok(receipt)
+    }
+
+    /// Compacta o histórico em um resumo executivo e reinicia as sessões dos provedores (novo chat).
+    pub async fn compact_and_reset_sessions(
+        &self,
+        app: &AppHandle,
+        summary_override: Option<String>,
+    ) -> Result<String, String> {
+        let history = self.state_store.get_history().await;
+        let count = history.len();
+        let header = if let Some(override_text) = summary_override {
+            override_text
+        } else {
+            let last_summary = history
+                .first()
+                .map(|m| {
+                    format!(
+                        "Missão {}: {}\nStatus: {}\nConsenso: {}",
+                        m.mission_id,
+                        truncate_chars(&m.prompt, 150),
+                        m.status,
+                        truncate_chars(m.consensus.as_deref().unwrap_or(""), 400)
+                    )
+                })
+                .unwrap_or_else(|| "Nenhuma missão anterior gravada.".to_string());
+            format!("Resumo de sessões anteriores ({count} missões):\n{last_summary}")
+        };
+        self.state_store.set_compacted_header(Some(header.clone())).await?;
+
+        // Reseta WebViews dos provedores
+        for config in PROVIDERS {
+            if let Some(window) = app.get_webview_window(config.label) {
+                let script = r#"(function() {
+                    try {
+                        if (window.__MAESTRO_BRIDGE__ && typeof window.__MAESTRO_BRIDGE__.startFreshChat === "function") {
+                            window.__MAESTRO_BRIDGE__.startFreshChat();
+                        } else {
+                            window.postMessage({ source: "rdc-maestro", action: "start_fresh_chat" }, "*");
+                        }
+                    } catch(e) {
+                        console.error("Falha ao resetar chat:", e);
+                    }
+                })();"#;
+                let _ = window.eval(script);
+            }
+        }
+
+        *self.last_outcome.write().await = None;
+
+        emit_log(
+            app,
+            LogLevel::Success,
+            format!("Histórico compactado ({count} missões) e sessões reiniciadas com sucesso."),
+        );
+
+        Ok(header)
     }
 }
 
@@ -763,7 +1085,7 @@ fn build_outcome(
         mission_id,
         prompt: prompt.to_string(),
         status: status.to_string(),
-        consensus,
+        consensus: consensus.clone(),
         convergences,
         divergences,
         replies,
@@ -774,6 +1096,8 @@ fn build_outcome(
         elapsed_ms,
         started_at,
         finished_at: now_ms(),
+        turns_count: 1,
+        context_log: extract_context_log_from_text(&consensus, prompt),
     }
 }
 
@@ -1061,6 +1385,427 @@ fn truncate_chars(text: &str, max: usize) -> String {
 }
 
 // --------------------------------------------------------------------------------------
+// ReAct Loop, Pré-voo de Workspace e Classificação de Ferramentas
+// --------------------------------------------------------------------------------------
+
+/// Instruções do protocolo de 2 fases do RDC Maestro injetadas no prompt para orientar os LLMs.
+pub const PROTOCOL_INSTRUCTIONS: &str = r#"
+[PROTOCOLO DE DOIS ESTÁGIOS - RDC MAESTRO MCP]:
+Você é um agente com acesso ao computador local através do RDC Maestro.
+- FASE 1 (Inspeção): Se precisar inspecionar ou ler arquivos adicionais no PC antes de formular o código, responda APENAS com o bloco JSON:
+```json
+[
+  {"tool": "filesystem.read", "input": {"path": "caminho/do/arquivo"}}
+]
+```
+O Maestro buscará o arquivo no computador em milissegundos e devolverá o conteúdo no próximo turno autônomo.
+- FASE 2 (Execução): Quando tiver as informações necessárias para resolver a tarefa, apresente:
+1. O registro de intenção:
+```json
+"context_log": {
+  "intent": "explicação da alteração",
+  "files_inspected": ["caminho"],
+  "verification_plan": "como verificar"
+}
+```
+2. O patch cirúrgico no formato SEARCH/REPLACE:
+<<<<<<< SEARCH: caminho/do/arquivo
+trecho original existente
+=======
+trecho novo substituído
+>>>>>>> REPLACE
+ou o bloco JSON {"tool": "filesystem.write", "input": {"path": "...", "content": "..."}} caso seja um arquivo novo.
+"#;
+
+/// Extrai e lê arquivos mencionados explicitamente no prompt (ex: "C:\caminho\arquivo.ext" ou caminhos relativos).
+/// Lê até 150 KB por arquivo com segurança para alimentar o primeiro turno do debate.
+pub fn preflight_read_mentioned_files(prompt: &str) -> Option<String> {
+    let mut result = String::new();
+    let mut found_paths = Vec::new();
+
+    // 1. Caminhos entre aspas: "C:\..." ou "arquivo.ext" ou "caminho/..."
+    for cap in prompt.split('"').enumerate() {
+        if cap.0 % 2 == 1 {
+            let candidate = cap.1.trim();
+            if candidate.contains('.') && !candidate.contains('\n') && candidate.len() < 260 {
+                found_paths.push(candidate.to_string());
+            }
+        }
+    }
+
+    // 2. Caminhos absolutos do Windows sem aspas: C:\...
+    for word in prompt.split_whitespace() {
+        let trimmed = word.trim_matches(|c| c == '\'' || c == '"' || c == '(' || c == ')' || c == '[' || c == ']' || c == '<' || c == '>');
+        if (trimmed.len() > 3 && trimmed.chars().nth(1) == Some(':') && (trimmed.chars().nth(2) == Some('\\') || trimmed.chars().nth(2) == Some('/')))
+            || (trimmed.contains('.') && (trimmed.contains('\\') || trimmed.contains('/')))
+        {
+            if !found_paths.iter().any(|p| p == trimmed) {
+                found_paths.push(trimmed.to_string());
+            }
+        }
+    }
+
+    for path_str in found_paths {
+        let mut target_path = std::path::PathBuf::from(&path_str);
+        if !target_path.is_file() {
+            // Tenta caminhos relativos ao diretório de trabalho ou seus ancestrais
+            if let Ok(cur) = std::env::current_dir() {
+                let c1 = cur.join(&path_str);
+                let c2 = cur.join("../../").join(&path_str);
+                let c3 = cur.join("..").join(&path_str);
+                if c1.is_file() {
+                    target_path = c1;
+                } else if c2.is_file() {
+                    target_path = c2;
+                } else if c3.is_file() {
+                    target_path = c3;
+                }
+            }
+        }
+
+        if target_path.is_file() {
+            if let Ok(metadata) = std::fs::metadata(&target_path) {
+                if metadata.len() <= 250_000 {
+                    if let Ok(content) = std::fs::read_to_string(&target_path) {
+                        result.push_str(&format!(
+                            "\n\n[CONTEÚDO DO ARQUIVO LOCAL ({path_str})]:\n```\n{content}\n```\n"
+                        ));
+                    }
+                } else if let Ok(mut file) = std::fs::File::open(&target_path) {
+                    use std::io::Read;
+                    let mut buf = vec![0u8; 150_000];
+                    if let Ok(n) = file.read(&mut buf) {
+                        let content = String::from_utf8_lossy(&buf[..n]);
+                        result.push_str(&format!(
+                            "\n\n[CONTEÚDO DO ARQUIVO LOCAL ({path_str}) - PRIMEIROS 150KB]:\n```\n{content}\n```\n"
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    if result.is_empty() {
+        None
+    } else {
+        Some(result)
+    }
+}
+
+/// Pré-voo do índice de arquivos do workspace via Named Pipe (`filesystem.list`, timeout 1500ms).
+/// Executado de forma não bloqueante antes do primeiro turno com fallback silencioso.
+pub async fn preflight_workspace_index() -> Option<String> {
+    let endpoints = daemon_pipe_candidates();
+    let order = serde_json::json!({
+        "schema": DAEMON_ORDER_SCHEMA,
+        "source": "rdc-maestro",
+        "kind": "inspect_workspace",
+        "payload": {
+            "steps": [{
+                "tool": "filesystem.list",
+                "input": { "path": "." }
+            }]
+        }
+    });
+
+    let line = serde_json::to_string(&order).ok()?;
+
+    let query_fut = async {
+        #[cfg(windows)]
+        {
+            use tokio::net::windows::named_pipe::ClientOptions;
+            for ep in &endpoints {
+                if let Ok(mut client) = ClientOptions::new().open(ep.as_str()) {
+                    let write_res = client.write_all(format!("{line}\n").as_bytes()).await;
+                    if write_res.is_ok() && client.flush().await.is_ok() {
+                        if let Some(ack) = read_daemon_ack(&mut client).await {
+                            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&ack) {
+                                if parsed["status"] == "completed" {
+                                    if let Some(preview) = parsed["steps"][0]["output_preview"].as_str() {
+                                        return Some(preview.to_string());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            None
+        }
+        #[cfg(not(windows))]
+        {
+            None
+        }
+    };
+
+    match tokio::time::timeout(Duration::from_millis(1500), query_fut).await {
+        Ok(res) => res,
+        Err(_) => None,
+    }
+}
+
+/// Formata as observações capturadas pelo daemon em uma string legível para realimentar o turno seguinte.
+pub fn format_read_observations(ack_json: &serde_json::Value) -> String {
+    let mut out = String::new();
+    if let Some(steps) = ack_json.get("steps").and_then(|s| s.as_array()) {
+        for (i, step) in steps.iter().enumerate() {
+            let tool = step.get("tool").and_then(|t| t.as_str()).unwrap_or("tool");
+            let status = step.get("status").and_then(|s| s.as_str()).unwrap_or("ok");
+            let preview = step
+                .get("output_preview")
+                .and_then(|p| p.as_str())
+                .unwrap_or("");
+            out.push_str(&format!(
+                "Passo {}: [{}] status={}\n{}\n\n",
+                i + 1,
+                tool,
+                status,
+                preview
+            ));
+        }
+    } else if let Some(preview) = ack_json.get("output_preview").and_then(|p| p.as_str()) {
+        out.push_str(preview);
+    } else {
+        out.push_str(&ack_json.to_string());
+    }
+    out
+}
+
+/// Classifica os passos propostos no texto de consenso em ferramentas de somente-leitura ou mutações físicas.
+pub fn classify_tools(text: &str) -> (bool, bool, Vec<serde_json::Value>) {
+    let mut has_readonly = false;
+    let mut has_mutating = false;
+    let mut readonly_steps: Vec<serde_json::Value> = Vec::new();
+
+    // 1. SEARCH/REPLACE é sempre uma mutação (filesystem.patch)
+    if text.contains("<<<<<<< SEARCH") {
+        has_mutating = true;
+    }
+
+    // 2. Extrai passos estruturados de blocos JSON
+    let candidate_steps = extract_candidate_steps(text);
+    for step in candidate_steps {
+        if let Some(tool) = step.get("tool").and_then(|t| t.as_str()) {
+            let tool_lower = tool.to_lowercase();
+            if is_readonly_tool_name(&tool_lower) {
+                has_readonly = true;
+                readonly_steps.push(step);
+            } else if is_mutating_tool_name(&tool_lower) {
+                has_mutating = true;
+            }
+        }
+    }
+
+    // 3. Fallback textual quando os agentes não formatam em JSON válido
+    let lower = text.to_lowercase();
+    if lower.contains("filesystem.write")
+        || lower.contains("filesystem.patch")
+        || lower.contains("filesystem.batch_edit")
+        || lower.contains("filesystem.delete")
+        || lower.contains("process.spawn")
+        || lower.contains("process.exec")
+        || lower.contains("checkpoint.rollback")
+        || lower.contains("checkpoint.restore")
+    {
+        has_mutating = true;
+    }
+    if lower.contains("filesystem.read")
+        || lower.contains("filesystem.read_range")
+        || lower.contains("filesystem.list")
+        || lower.contains("filesystem.search")
+        || lower.contains("filesystem.stat")
+        || lower.contains("git.status")
+        || lower.contains("git.diff")
+        || lower.contains("git.show")
+        || lower.contains("context.overview")
+        || lower.contains("code.inspect")
+        || lower.contains("code.symbols")
+        || lower.contains("git.log")
+    {
+        has_readonly = true;
+    }
+
+    (has_readonly, has_mutating, readonly_steps)
+}
+
+fn is_readonly_tool_name(tool: &str) -> bool {
+    let lower = tool.to_lowercase();
+    matches!(
+        lower.as_str(),
+        "filesystem.read"
+            | "filesystem.read_range"
+            | "filesystem.list"
+            | "filesystem.search"
+            | "filesystem.stat"
+            | "git.status"
+            | "git.diff"
+            | "git.show"
+            | "git.log"
+            | "context.overview"
+            | "code.inspect"
+            | "code.symbols"
+            | "read"
+            | "list"
+            | "search"
+            | "stat"
+            | "dir"
+            | "cat"
+    )
+}
+
+fn is_mutating_tool_name(tool: &str) -> bool {
+    let lower = tool.to_lowercase();
+    matches!(
+        lower.as_str(),
+        "filesystem.write"
+            | "filesystem.patch"
+            | "filesystem.batch_edit"
+            | "filesystem.delete"
+            | "process.spawn"
+            | "process.exec"
+            | "checkpoint.rollback"
+            | "checkpoint.restore"
+            | "write"
+            | "patch"
+            | "batch_edit"
+            | "delete"
+            | "spawn"
+            | "exec"
+            | "run"
+            | "bash"
+            | "cmd"
+            | "powershell"
+            | "rollback"
+    )
+}
+
+fn extract_candidate_steps(text: &str) -> Vec<serde_json::Value> {
+    let mut steps = Vec::new();
+
+    let mut cursor = 0;
+    while let Some(start) = text[cursor..].find("```") {
+        let abs_start = cursor + start;
+        let fence_open = abs_start + 3;
+        let content_start = if let Some(nl) = text[fence_open..].find('\n') {
+            fence_open + nl + 1
+        } else {
+            fence_open
+        };
+        if let Some(end) = text[content_start..].find("```") {
+            let abs_end = content_start + end;
+            let block = text[content_start..abs_end].trim();
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(block) {
+                collect_steps_from_json(&val, &mut steps);
+            }
+            cursor = abs_end + 3;
+        } else {
+            break;
+        }
+    }
+
+    if steps.is_empty() {
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(text.trim()) {
+            collect_steps_from_json(&val, &mut steps);
+        }
+    }
+
+    steps
+}
+
+fn collect_steps_from_json(val: &serde_json::Value, out: &mut Vec<serde_json::Value>) {
+    if let Some(arr) = val.get("steps").and_then(|s| s.as_array()) {
+        for item in arr {
+            if item.is_object() {
+                out.push(item.clone());
+            }
+        }
+    } else if let Some(payload_steps) = val.get("payload").and_then(|p| p.get("steps")).and_then(|s| s.as_array()) {
+        for item in payload_steps {
+            if item.is_object() {
+                out.push(item.clone());
+            }
+        }
+    } else if let Some(arr) = val.as_array() {
+        for item in arr {
+            if item.is_object() && item.get("tool").is_some() {
+                out.push(item.clone());
+            }
+        }
+    } else if val.get("tool").is_some() {
+        out.push(val.clone());
+    }
+}
+
+/// Extrai ou infere o objeto `context_log` do plano (garantindo conformidade com a gate do daemon).
+pub fn extract_context_log_from_text(text: &str, prompt: &str) -> Option<serde_json::Value> {
+    if let Ok(val) = serde_json::from_str::<serde_json::Value>(text.trim()) {
+        if let Some(ctx) = val.get("context_log") {
+            return Some(ctx.clone());
+        }
+    }
+
+    if let Some(pos) = text.find("\"context_log\"") {
+        if let Some(start) = text[..pos].rfind('{') {
+            if let Some(end) = text[pos..].find('}') {
+                let chunk = &text[start..=pos + end];
+                if let Ok(val) = serde_json::from_str::<serde_json::Value>(chunk) {
+                    if let Some(ctx) = val.get("context_log") {
+                        return Some(ctx.clone());
+                    }
+                }
+            }
+        }
+    }
+
+    let mut files: Vec<String> = Vec::new();
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("<<<<<<< SEARCH") {
+            let path = trimmed
+                .strip_prefix("<<<<<<< SEARCH:")
+                .or_else(|| trimmed.strip_prefix("<<<<<<< SEARCH :"))
+                .or_else(|| trimmed.strip_prefix("<<<<<<< SEARCH"))
+                .unwrap_or("")
+                .trim()
+                .trim_matches(':')
+                .trim()
+                .trim_matches('`')
+                .trim_matches('"')
+                .trim_matches('\'')
+                .trim()
+                .to_string();
+            if !path.is_empty() && !files.contains(&path) {
+                files.push(path);
+            }
+        }
+    }
+
+    // Se não encontrou em SEARCH/REPLACE, procura em passos JSON estruturados
+    if files.is_empty() {
+        let candidate_steps = extract_candidate_steps(text);
+        for step in candidate_steps {
+            let input = step.get("input").or_else(|| step.get("args"));
+            if let Some(p) = input.and_then(|i| i.get("path")).and_then(|v| v.as_str()) {
+                let path_str = p.trim().trim_matches('`').trim_matches('"').trim_matches('\'');
+                if !path_str.is_empty() && !files.iter().any(|f| f == path_str) {
+                    files.push(path_str.to_string());
+                }
+            }
+        }
+    }
+
+    if !files.is_empty() {
+        return Some(serde_json::json!({
+            "intent": truncate_chars(prompt.trim(), 200),
+            "files_inspected": files,
+            "verification_plan": "Validar sintaxe e integridade após SEARCH/REPLACE"
+        }));
+    }
+
+    None
+}
+
+// --------------------------------------------------------------------------------------
 // Fase 4 - Cliente do Named Pipe do daemon
 // --------------------------------------------------------------------------------------
 
@@ -1078,25 +1823,74 @@ fn build_daemon_order(
         Err(_) => (serde_json::Value::String(payload.to_string()), "text"),
     };
 
-    let mission_id = serde_json::from_str::<serde_json::Value>(payload)
-        .ok()
-        .and_then(|value| {
-            value
-                .get("mission_id")
-                .or_else(|| value.get("missionId"))
-                .and_then(|m| m.as_str())
-                .map(|m| m.to_string())
-        });
+    // Se já é um envelope de ordem completo, preserva e garante context_log se necessário
+    if let serde_json::Value::Object(ref map) = value {
+        if map.get("schema").and_then(|s| s.as_str()) == Some(DAEMON_ORDER_SCHEMA) {
+            let mission_id = map.get("mission_id").and_then(|m| m.as_str()).map(String::from);
+            let mut full_order = value.clone();
+            if full_order.get("context_log").is_none() {
+                if let Some(ctx) = extract_context_log_from_text(payload, "Maestro Execution") {
+                    full_order["context_log"] = ctx;
+                }
+            }
+            return Ok((full_order, encoding.to_string(), mission_id));
+        }
+    }
 
-    let order = serde_json::json!({
+    let mission_id = match &value {
+        serde_json::Value::Object(map) => map
+            .get("mission_id")
+            .or_else(|| map.get("missionId"))
+            .and_then(|m| m.as_str())
+            .map(String::from),
+        _ => None,
+    };
+
+    let kind = match &value {
+        serde_json::Value::Object(map) => map
+            .get("kind")
+            .and_then(|k| k.as_str())
+            .unwrap_or("execute_approved_plan"),
+        _ => "execute_approved_plan",
+    };
+
+    let checkpoint_id = match &value {
+        serde_json::Value::Object(map) => map.get("checkpoint_id").and_then(|c| c.as_str()).map(String::from),
+        _ => None,
+    };
+
+    let mut context_log = match &value {
+        serde_json::Value::Object(map) => map.get("context_log").cloned(),
+        _ => None,
+    };
+
+    if context_log.is_none() {
+        context_log = extract_context_log_from_text(payload, "Maestro execution");
+    }
+
+    let inner_payload = match &value {
+        serde_json::Value::Object(map) if map.contains_key("payload") => {
+            map.get("payload").cloned().unwrap()
+        }
+        _ => value.clone(),
+    };
+
+    let mut order = serde_json::json!({
         "schema": DAEMON_ORDER_SCHEMA,
         "source": "rdc-maestro",
-        "kind": "execute_approved_plan",
+        "kind": kind,
         "issued_at": now_ms(),
         "mission_id": mission_id.clone(),
         "payload_encoding": encoding,
-        "payload": value,
+        "payload": inner_payload,
     });
+
+    if let Some(cp) = checkpoint_id {
+        order["checkpoint_id"] = serde_json::Value::String(cp);
+    }
+    if let Some(ctx) = context_log {
+        order["context_log"] = ctx;
+    }
 
     Ok((order, encoding.to_string(), mission_id))
 }
@@ -1548,5 +2342,123 @@ mod tests {
 
         assert!(error.contains("Nenhum Named Pipe do daemon acessível"));
         assert!(engine.last_dispatch().await.is_none());
+    }
+
+    #[test]
+    fn classifies_readonly_and_mutating_tools() {
+        // Readonly puro
+        let text_ro = r#"
+        Vamos inspecionar os arquivos:
+        ```json
+        {
+            "steps": [
+                { "tool": "filesystem.read", "input": { "path": "src/App.tsx" } },
+                { "tool": "filesystem.list", "input": { "path": "src/components" } }
+            ]
+        }
+        ```
+        "#;
+        let (ro, muta, steps) = classify_tools(text_ro);
+        assert!(ro);
+        assert!(!muta);
+        assert_eq!(steps.len(), 2);
+
+        // Mutating via SEARCH/REPLACE
+        let text_sr = "<<<<<<< SEARCH: src/App.tsx\nlet a = 1;\n=======\nlet a = 2;\n>>>>>>> REPLACE";
+        let (ro_sr, muta_sr, _) = classify_tools(text_sr);
+        assert!(muta_sr);
+        assert!(!ro_sr);
+
+        // Mutating via JSON
+        let text_write = r#"
+        ```json
+        {
+            "tool": "filesystem.write",
+            "input": { "path": "test.txt", "content": "hello" }
+        }
+        ```
+        "#;
+        let (_, muta_write, _) = classify_tools(text_write);
+        assert!(muta_write);
+
+        // Misto: read + write => mutating deve prevalecer
+        let text_mixed = r#"
+        ```json
+        {
+            "steps": [
+                { "tool": "filesystem.read", "input": { "path": "test.txt" } },
+                { "tool": "filesystem.write", "input": { "path": "test.txt", "content": "hi" } }
+            ]
+        }
+        ```
+        "#;
+        let (ro_mixed, muta_mixed, _) = classify_tools(text_mixed);
+        assert!(ro_mixed);
+        assert!(muta_mixed);
+    }
+
+    #[test]
+    fn extracts_context_log_from_search_replace_and_prompt() {
+        let text = "<<<<<<< SEARCH: src/index.ts\nfoo\n=======\nbar\n>>>>>>> REPLACE\n<<<<<<< SEARCH: package.json\n1.0.0\n=======\n1.0.1\n>>>>>>> REPLACE";
+        let ctx = extract_context_log_from_text(text, "Atualizar versao e funcao").unwrap();
+        assert_eq!(ctx["intent"], "Atualizar versao e funcao");
+        let files = ctx["files_inspected"].as_array().unwrap();
+        assert_eq!(files.len(), 2);
+        assert_eq!(files[0], "src/index.ts");
+        assert_eq!(files[1], "package.json");
+    }
+
+    #[test]
+    fn builds_rollback_checkpoint_envelope() {
+        let payload = r#"{"kind":"rollback_checkpoint","checkpoint_id":"cp-123","mission_id":"m-rb"}"#;
+        let (order, encoding, mission_id) = build_daemon_order(payload).unwrap();
+        assert_eq!(encoding, "json");
+        assert_eq!(mission_id.as_deref(), Some("m-rb"));
+        assert_eq!(order["kind"], "rollback_checkpoint");
+        assert_eq!(order["checkpoint_id"], "cp-123");
+    }
+
+    #[tokio::test]
+    async fn preflight_workspace_index_falls_back_silently_when_pipe_missing() {
+        // Sem daemon ouvindo, preflight deve retornar None sem causar pânico nem travar
+        let index = preflight_workspace_index().await;
+        assert!(index.is_none());
+    }
+
+    #[test]
+    fn parses_raw_array_of_steps() {
+        let text = r#"[
+            {"tool": "filesystem.search", "input": {"query": "test"}},
+            {"tool": "filesystem.stat", "input": {"path": "src/main.rs"}}
+        ]"#;
+        let (ro, muta, steps) = classify_tools(text);
+        assert!(ro);
+        assert!(!muta);
+        assert_eq!(steps.len(), 2);
+    }
+
+    #[test]
+    fn extracts_context_log_from_json_steps() {
+        let text = r#"{
+            "steps": [
+                {"tool": "filesystem.write", "input": {"path": "src/new_file.rs", "content": "fn test() {}"}}
+            ]
+        }"#;
+        let ctx = extract_context_log_from_text(text, "Criar novo arquivo").unwrap();
+        assert_eq!(ctx["intent"], "Criar novo arquivo");
+        let files = ctx["files_inspected"].as_array().unwrap();
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0], "src/new_file.rs");
+    }
+
+    #[test]
+    fn reads_mentioned_existing_file_in_prompt() {
+        // Cargo.toml existe na raiz do workspace
+        let prompt = r#"por favor revise o arquivo "Cargo.toml" para mim"#;
+        let read = preflight_read_mentioned_files(prompt);
+        assert!(read.is_some());
+        let content = read.unwrap();
+        assert!(content.contains("[CONTEÚDO DO ARQUIVO LOCAL (Cargo.toml)]"));
+        assert!(content.contains("[package]") || content.contains("[workspace]"));
     }
 }

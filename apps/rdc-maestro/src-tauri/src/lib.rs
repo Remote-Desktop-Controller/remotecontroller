@@ -6,6 +6,7 @@
 // Fase 4: ponte IPC com o daemon local via Named Pipe nativo.
 
 pub mod orchestrator;
+pub mod state_store;
 pub mod stealth;
 pub mod webview_manager;
 
@@ -166,12 +167,66 @@ async fn maestro_get_mission(
     Ok(engine.mission(&mission_id).await)
 }
 
+/// Maestro v0.2.0: Histórico durável das últimas 50 missões.
+#[tauri::command]
+async fn maestro_get_mission_history(
+    engine: State<'_, MaestroEngine>,
+) -> Result<Vec<state_store::PersistedMission>, String> {
+    Ok(engine.state_store().get_history().await)
+}
+
+/// Maestro v0.2.0: Rollback imediato no PC a partir de um checkpoint_id existente.
+#[tauri::command]
+async fn maestro_rollback_checkpoint(
+    app: AppHandle,
+    engine: State<'_, MaestroEngine>,
+    checkpoint_id: String,
+) -> Result<PlanExecutionReceipt, String> {
+    orchestrator::emit_log(
+        &app,
+        orchestrator::LogLevel::Warn,
+        format!("Iniciando rollback para o checkpoint [{checkpoint_id}]..."),
+    );
+
+    let receipt = engine.rollback_checkpoint(&checkpoint_id).await?;
+
+    orchestrator::emit_log(
+        &app,
+        orchestrator::LogLevel::Success,
+        format!("Rollback do checkpoint [{checkpoint_id}] despachado com sucesso."),
+    );
+    let _ = tauri::Emitter::emit(&app, "maestro-rollback-completed", &receipt);
+
+    Ok(receipt)
+}
+
+/// Maestro v0.2.0: Compacta o contexto atual e abre um novo chat limpo em todos os provedores.
+#[tauri::command]
+async fn maestro_compact_and_reset_sessions(
+    app: AppHandle,
+    engine: State<'_, MaestroEngine>,
+    summary_override: Option<String>,
+) -> Result<String, String> {
+    orchestrator::emit_log(
+        &app,
+        orchestrator::LogLevel::Info,
+        "Compactando histórico e reiniciando sessões de chat...",
+    );
+
+    let header = engine
+        .compact_and_reset_sessions(&app, summary_override)
+        .await?;
+    let _ = tauri::Emitter::emit(&app, "maestro-sessions-reset", &header);
+
+    Ok(header)
+}
+
 pub fn run() {
     tracing_subscriber::fmt()
         .with_env_filter("info,rdc_maestro=debug")
         .init();
 
-    info!("Iniciando RDC Maestro v0.1.0...");
+    info!("Iniciando RDC Maestro v0.2.0...");
 
     let webview_manager = WebviewManager::new();
     let maestro_engine = MaestroEngine::new();
@@ -199,7 +254,10 @@ pub fn run() {
             maestro_start_mission,
             maestro_execute_plan,
             maestro_get_last_consensus,
-            maestro_get_mission
+            maestro_get_mission,
+            maestro_get_mission_history,
+            maestro_rollback_checkpoint,
+            maestro_compact_and_reset_sessions
         ])
         .run(tauri::generate_context!())
         .expect("Erro fatal ao executar a aplicação RDC Maestro");

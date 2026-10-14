@@ -377,8 +377,14 @@ impl Services {
             return Err(error);
         }
         self.store.rollback_recorded(cp.id).await?;
+        let restored_files: Vec<String> = cp.files.iter().map(|f| f.path.clone()).collect();
         Ok(
-            json!({"checkpoint_id":inverse.id.to_string(),"restored_checkpoint_id":cp.id.to_string(),"changed":cp.files.len()}),
+            json!({
+                "checkpoint_id": inverse.id.to_string(),
+                "restored_checkpoint_id": cp.id.to_string(),
+                "changed": restored_files.len(),
+                "restored_files": restored_files,
+            }),
         )
     }
 }

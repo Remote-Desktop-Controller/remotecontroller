@@ -189,6 +189,12 @@
           "markdownDescription": "Enables the hide_provider_window command without any pre-configured scope."
         },
         {
+          "description": "Enables the maestro_compact_and_reset_sessions command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-maestro-compact-and-reset-sessions",
+          "markdownDescription": "Enables the maestro_compact_and_reset_sessions command without any pre-configured scope."
+        },
+        {
           "description": "Enables the maestro_execute_plan command without any pre-configured scope.",
           "type": "string",
           "const": "allow-maestro-execute-plan",
@@ -207,10 +213,22 @@
           "markdownDescription": "Enables the maestro_get_mission command without any pre-configured scope."
         },
         {
+          "description": "Enables the maestro_get_mission_history command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-maestro-get-mission-history",
+          "markdownDescription": "Enables the maestro_get_mission_history command without any pre-configured scope."
+        },
+        {
           "description": "Enables the maestro_receive_reply command without any pre-configured scope.",
           "type": "string",
           "const": "allow-maestro-receive-reply",
           "markdownDescription": "Enables the maestro_receive_reply command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the maestro_rollback_checkpoint command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-maestro-rollback-checkpoint",
+          "markdownDescription": "Enables the maestro_rollback_checkpoint command without any pre-configured scope."
         },
         {
           "description": "Enables the maestro_start_mission command without any pre-configured scope.",
@@ -249,6 +267,12 @@
           "markdownDescription": "Denies the hide_provider_window command without any pre-configured scope."
         },
         {
+          "description": "Denies the maestro_compact_and_reset_sessions command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-maestro-compact-and-reset-sessions",
+          "markdownDescription": "Denies the maestro_compact_and_reset_sessions command without any pre-configured scope."
+        },
+        {
           "description": "Denies the maestro_execute_plan command without any pre-configured scope.",
           "type": "string",
           "const": "deny-maestro-execute-plan",
@@ -267,10 +291,22 @@
           "markdownDescription": "Denies the maestro_get_mission command without any pre-configured scope."
         },
         {
+          "description": "Denies the maestro_get_mission_history command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-maestro-get-mission-history",
+          "markdownDescription": "Denies the maestro_get_mission_history command without any pre-configured scope."
+        },
+        {
           "description": "Denies the maestro_receive_reply command without any pre-configured scope.",
           "type": "string",
           "const": "deny-maestro-receive-reply",
           "markdownDescription": "Denies the maestro_receive_reply command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the maestro_rollback_checkpoint command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-maestro-rollback-checkpoint",
+          "markdownDescription": "Denies the maestro_rollback_checkpoint command without any pre-configured scope."
         },
         {
           "description": "Denies the maestro_start_mission command without any pre-configured scope.",

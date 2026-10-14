@@ -94,9 +94,9 @@ fn main() {
     }
 }
 
-/// Comandos IPC do Maestro (Fases 1, 3 e 4). Mantenha em sincronia com `invoke_handler`
+/// Comandos IPC do Maestro (Fases 1, 3 e 4 + v0.2.0). Mantenha em sincronia com `invoke_handler`
 /// em `src/lib.rs` e com as capabilities em `capabilities/`.
-const APP_COMMANDS: [&str; 10] = [
+const APP_COMMANDS: [&str; 13] = [
     // Fase 1 - sessões web headless
     "open_provider_login",
     "hide_provider_window",
@@ -110,4 +110,8 @@ const APP_COMMANDS: [&str; 10] = [
     "maestro_get_mission",
     // Fase 4 - ponte com o daemon local
     "maestro_execute_plan",
+    // Maestro v0.2.0 - ReAct loop, rollback e histórico durável
+    "maestro_get_mission_history",
+    "maestro_rollback_checkpoint",
+    "maestro_compact_and_reset_sessions",
 ];

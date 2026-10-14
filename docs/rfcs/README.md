@@ -14,6 +14,7 @@ Cada RFC documenta decisões arquiteturais fundamentais, especificações de pro
 | [RFC-0003](0003-full-computer-access-enclave.md) | **Controle Total do Computador, Isolamento por Enclave e Telemetria em Tempo Real** | Aprovado & Implementado | v0.4.0 | 2026-10-09 |
 | [RFC-0004](0004-rdc-maestro-stealth-orchestrator.md) | **RDC Maestro — Orquestrador Multi-Provedor Desktop e Motor Furtivo de Execução** | Aprovado & Implementado | v0.5.0 | 2026-10-13 |
 | [RFC-0005](0005-commercial-portal-distribution.md) | **Portal Comercial SaaS, Faturamento Integrado e Distribuição Tri-Plataforma v0.5.0** | Aprovado & Implementado | v0.5.0 | 2026-10-13 |
+| [RFC-0006](0006-rdc-maestro-autonomous-debate-surgical-patch.md) | **Loop Autônomo de Debate Colaborativo, Patches Cirúrgicos, Portão de Compliance e Reversão em 1-Clique** | Aprovado & Implementado | v0.5.0 | 2026-10-14 |
 
 ---
 
@@ -63,6 +64,22 @@ flowchart TD
         DistPackage[Pacotes Auto-Contidos v0.5.0]
         Portal --> Supabase
         Portal --> Asaas
+    end
+
+    subgraph RFC0006["RFC-0006: Debate Autônomo & Patches Cirúrgicos (v0.5.0)"]
+        ReActLoop[Loop Multi-Round ReAct R1/R2/R3]
+        Preflight[Pré-Voo de Arquivos Mencionados & Índice]
+        Surgical[Motor Cirúrgico SEARCH/REPLACE]
+        Compliance[Portão de Compliance context_log]
+        Rollback[Rollback Físico em 1-Clique]
+        StateStore[State Store Durável & Compact/Resume]
+        MaestroApp --> ReActLoop
+        ReActLoop --> Preflight
+        MaestroApp --> Compliance
+        Compliance --> Surgical
+        Surgical --> Daemon
+        Daemon --> Rollback
+        MaestroApp --> StateStore
     end
 ```
 

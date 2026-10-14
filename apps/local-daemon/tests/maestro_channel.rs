@@ -132,9 +132,24 @@ async fn dispatch_order(pipe: &str, order: &str) -> String {
 }
 
 fn write_order(path: &str, content: &str) -> String {
-    format!(
-        r#"{{"schema":"rdc.maestro.order.v1","source":"rdc-maestro","kind":"execute_approved_plan","issued_at":1,"mission_id":"m-e2e","payload_encoding":"json","payload":{{"steps":[{{"tool":"filesystem.write","input":{{"path":"{path}","content":"{content}"}}}}]}}}}"#
-    )
+    serde_json::to_string(&serde_json::json!({
+        "schema": "rdc.maestro.order.v1",
+        "source": "rdc-maestro",
+        "kind": "execute_approved_plan",
+        "issued_at": 1,
+        "mission_id": "m-e2e",
+        "payload_encoding": "json",
+        "payload": {
+            "steps": [{
+                "tool": "filesystem.write",
+                "input": {
+                    "path": path,
+                    "content": content
+                }
+            }]
+        }
+    }))
+    .unwrap()
 }
 
 #[test]
@@ -195,5 +210,113 @@ fn maestro_channel_executes_and_gates_orders() {
     assert!(
         !daemon.workspace.join("bloqueado.txt").exists(),
         "a ordem foi aplicada apesar da política negar a escrita"
+    );
+    drop(daemon);
+
+    // ---- Cenário 3: leitura (preview), SEARCH/REPLACE cirúrgico, context_log e rollback
+    let e2e_dir = tempfile::tempdir().unwrap();
+    let daemon = spawn_daemon(e2e_dir.path(), &["--allow-write"]);
+
+    // 3a. Cria um arquivo inicial via filesystem.write
+    let initial_order = write_order("code.txt", "function test() {\n    return 42;\n}");
+    let ack_write = runtime.block_on(dispatch_order(&daemon.pipe, &initial_order));
+    let parsed_write: serde_json::Value = serde_json::from_str(ack_write.trim()).unwrap();
+    assert_eq!(parsed_write["status"], "completed", "ack_write: {parsed_write}");
+    let _checkpoint_id = parsed_write["checkpoint_id"].as_str().map(String::from);
+
+    // 3b. Leitura automática (auto_read) com output_preview
+    let read_order = serde_json::to_string(&serde_json::json!({
+        "schema": "rdc.maestro.order.v1",
+        "source": "rdc-maestro",
+        "kind": "auto_read",
+        "mission_id": "m-read",
+        "payload": {
+            "steps": [{
+                "tool": "filesystem.read",
+                "input": { "path": "code.txt" }
+            }]
+        }
+    }))
+    .unwrap();
+    let ack_read = runtime.block_on(dispatch_order(&daemon.pipe, &read_order));
+    let parsed_read: serde_json::Value = serde_json::from_str(ack_read.trim()).unwrap();
+    assert_eq!(parsed_read["status"], "completed", "ack_read: {parsed_read}");
+    assert!(
+        parsed_read["steps"][0]["output_preview"]
+            .as_str()
+            .unwrap()
+            .contains("return 42")
+    );
+
+    // 3c. Falha de SEARCH/REPLACE quando o trecho SEARCH não existe (SearchBlockNotFound)
+    let bad_patch_order = serde_json::to_string(&serde_json::json!({
+        "schema": "rdc.maestro.order.v1",
+        "source": "rdc-maestro",
+        "kind": "execute_approved_plan",
+        "mission_id": "m-bad-patch",
+        "payload": "<<<<<<< SEARCH: code.txt\nfunction missing()\n=======\nfunction replaced()\n>>>>>>> REPLACE"
+    }))
+    .unwrap();
+    let ack_bad = runtime.block_on(dispatch_order(&daemon.pipe, &bad_patch_order));
+    let parsed_bad: serde_json::Value = serde_json::from_str(ack_bad.trim()).unwrap();
+    assert_eq!(parsed_bad["status"], "failed", "ack_bad: {parsed_bad}");
+    assert_eq!(
+        parsed_bad["failure"]["error"]["code"],
+        "SearchBlockNotFound"
+    );
+
+    // 3d. Sucesso de SEARCH/REPLACE com trecho exato e context_log
+    let good_patch_order = serde_json::to_string(&serde_json::json!({
+        "schema": "rdc.maestro.order.v1",
+        "source": "rdc-maestro",
+        "kind": "execute_approved_plan",
+        "mission_id": "m-good-patch",
+        "context_log": {
+            "intent": "Atualizar retorno para 100",
+            "files_inspected": ["code.txt"],
+            "verification_plan": "Validar conteudo do arquivo"
+        },
+        "payload": "<<<<<<< SEARCH: code.txt\n    return 42;\n=======\n    return 100;\n>>>>>>> REPLACE"
+    }))
+    .unwrap();
+    let ack_good = runtime.block_on(dispatch_order(&daemon.pipe, &good_patch_order));
+    let parsed_good: serde_json::Value = serde_json::from_str(ack_good.trim()).unwrap();
+    assert_eq!(parsed_good["status"], "completed", "ack_good: {parsed_good}");
+    assert_eq!(
+        parsed_good["context_log"]["intent"],
+        "Atualizar retorno para 100"
+    );
+
+    let patched_file = daemon.workspace.join("code.txt");
+    assert_eq!(
+        std::fs::read_to_string(&patched_file).unwrap(),
+        "function test() {\n    return 100;\n}"
+    );
+
+    // 3e. Rollback do checkpoint_id gerado pelo patch
+    let patch_cp = parsed_good["checkpoint_id"]
+        .as_str()
+        .expect("patch deveria retornar checkpoint_id");
+    let rollback_order = serde_json::to_string(&serde_json::json!({
+        "schema": "rdc.maestro.order.v1",
+        "source": "rdc-maestro",
+        "kind": "rollback_checkpoint",
+        "checkpoint_id": patch_cp,
+        "mission_id": "m-rollback"
+    }))
+    .unwrap();
+    let ack_rb = runtime.block_on(dispatch_order(&daemon.pipe, &rollback_order));
+    let parsed_rb: serde_json::Value = serde_json::from_str(ack_rb.trim()).unwrap();
+    assert_eq!(parsed_rb["status"], "completed", "ack_rb: {parsed_rb}");
+    assert!(
+        parsed_rb["restored_files"]
+            .as_array()
+            .map(|arr| arr.iter().any(|f| f == "code.txt"))
+            .unwrap_or(false),
+        "ack_rb should report restored_files containing code.txt: {parsed_rb}"
+    );
+    assert_eq!(
+        std::fs::read_to_string(&patched_file).unwrap(),
+        "function test() {\n    return 42;\n}"
     );
 }
